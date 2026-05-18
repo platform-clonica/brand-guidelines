@@ -1,0 +1,136 @@
+{
+  "meta": {
+    "title": "Interactius · Brand Guidelines 2026",
+    "description": "Guías de marca vivas e IA-ready para Interactius. Logotipo, tipografía, paleta cromática y universo visual."
+  },
+  "chrome": {
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "downloadPdf": "Descargar PDF original",
+    "version": "v1 · mayo 2026"
+  },
+  "menu": {
+    "index": "Índice",
+    "locale": "Idioma"
+  },
+  "ui": {
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "download": "Descargar",
+    "downloadSvg": "Descargar SVG",
+    "soon": "Próximamente"
+  },
+  "intro": {
+    "tagline": "Actitud liminal",
+    "kicker": "Introducción",
+    "lead": "Esta plataforma no es un conjunto de normas estáticas ni un catálogo de restricciones cosméticas. Es la fuente de verdad técnica y conceptual de Interactius. Su función es concreta: dotar al equipo humano y a nuestros sistemas automatizados del criterio necesario para tomar decisiones alineadas con la identidad.",
+    "body": "En las siguientes secciones se despliegan los parámetros que definen cómo operamos, cómo nos estructuramos visualmente y cómo se modula nuestra voz. Este documento es un sistema vivo, diseñado para ser ejecutado con el mismo rigor tanto en el diseño de un producto como en la ingesta de directrices para modelos de inteligencia artificial."
+  },
+  "tonoMarca": {
+    "title": "Tono de marca",
+    "voiceTitle": "La Voz de Interactius",
+    "voiceBody": "No escribimos para demostrar nuestro pensamiento crítico, sino para activar el de quien nos lee. Nuestra voz no busca el aplauso ni la complacencia; busca mover el marco de la conversación. Nos posicionamos como una mirada exploradora con el rigor de quien sabe dónde pisa.",
+    "axesTitle": "Los Cuatro Ejes de Tono",
+    "ax1Title": "Directos pero reflexivos",
+    "ax1Body": "Vamos al grano sin rodeos corporativos ni introducciones de relleno. Decimos las cosas de forma afilada, pero cada afirmación está sustentada en un criterio sólido.",
+    "ax2Title": "Cercanos pero profesionales",
+    "ax2Body": "Hablamos entre personas reales, no de corporación a corporación. El tono es accesible y humano (Tribu), pero mantiene la distancia justa que exige el rigor técnico.",
+    "ax3Title": "Críticos pero constructivos",
+    "ax3Body": "Cuestionamos los supuestos del mercado y las soluciones evidentes, pero siempre desde la honestidad de proponer una hipótesis de trabajo superadora.",
+    "ax4Title": "Sobrios pero sugerentes",
+    "ax4Body": "Eliminamos el ruido visual y el adorno literario. La sofisticación reside en la precisión de la palabra elegida, no en la cantidad de texto.",
+    "redTitle": "Restricciones Semánticas (Lista Roja)",
+    "redBody": "Para mantener el carácter, Interactius renuncia explícitamente al vocabulario comodín de las consultoras tradicionales. Sustituimos los conceptos vacíos por descripciones concretas.",
+    "redHeadWord": "Palabras Prohibidas",
+    "redHeadRule": "Criterio de Sustitución",
+    "red1Word": "Innovación / Innovador",
+    "red1Rule": "Sustituir por la solución o el cambio técnico real que se está proponiendo.",
+    "red2Word": "Holístico / 360",
+    "red2Rule": "Sustituir por \"contexto integrado\", \"análisis de sistema\" o describir las variables que conviven.",
+    "red3Word": "Disruptivo",
+    "red3Rule": "Describir el impacto o la anomalía sin usar el adjetivo.",
+    "red4Word": "Soluciones / Casos de éxito",
+    "red4Rule": "Hablar de \"resultados\", \"hipótesis validadas\" o \"dirección estratégica\".",
+    "red5Word": "Empoderar / Mindset / Sinergia",
+    "red5Rule": "Eliminar por completo. Usar lenguaje directo: \"capacitar\", \"criterio de equipo\", \"colaboración\".",
+    "puncTitle": "Criterio de Puntuación Estricto",
+    "punc1": "Queda estrictamente prohibido el uso de signos de exclamación (¡ !). El énfasis se logra mediante el argumento, nunca alterando la puntuación.",
+    "punc2": "Evitar los puntos suspensivos (…) como recurso retórico. Las frases terminan con un punto firme.",
+    "copyPromptLabel": "Copiar prompt del tono de marca",
+    "copyPromptToast": "Prompt del tono de marca copiado"
+  },
+  "concepto": {
+    "title": "Concepto de marca",
+    "part1Title": "Construcción y Función Fonética",
+    "part1P1": "La morfología de la palabra exige que la acentuación y el peso rítmico recaigan de forma estricta en la segunda vocal débil (Interactíus). Para contrarrestar la inercia natural del lector de desplazar el acento hacia la sílaba central, el logotipo interviene la tipografía mediante la inclusión de un macrón sobre la última i.",
+    "macronDef": "/ˈmakrɒn/ una marca escrita o impresa (¯) que se utiliza para indicar una vocal larga en algunos idiomas, o una vocal acentuada en verso.",
+    "part1P2": "Este elemento gráfico no es ornamental; actúa como un regulador fonético que fija la cadencia correcta y desplaza deliberadamente el eje de atención visual hacia el margen de la palabra.",
+    "part2Title": "Actitud liminal y Dinamismo vertical",
+    "part2P1": "La elongación del punto de la i para formar el macrón rompe la línea superior de la tipografía y define el comportamiento del sistema. Este estiramiento vertical delimita la zona de transición —el espacio liminal— y se establece como el vector primario que rige los movimientos, transiciones y la carga de elementos en la interfaz digital, convirtiendo una corrección acústica en la firma visual de la marca."
+  },
+  "logo": {
+    "title": "Marca principal",
+    "principal": "Marca principal",
+    "positive": "Versión positiva",
+    "negative": "Versión negativa",
+    "isotipo": "Isotipo",
+    "downloadPositive": "Descargar logo positivo",
+    "downloadNegative": "Descargar logo negativo",
+    "downloadIsoPositive": "Descargar isotipo positivo",
+    "downloadIsoNegative": "Descargar isotipo negativo"
+  },
+  "areaReserva": {
+    "title": "Área de reserva",
+    "body": "Para garantizar la legibilidad del logotipo, debemos mantener siempre un campo de espacio libre. El espacio libre aísla el logotipo de elementos gráficos competitivos, como texto o fotografías, que pueden desviar la atención del logotipo.",
+    "measure": "Esta área se mide utilizando la altura de la a minúscula en el logotipo. No deben aparecer otros elementos gráficos, tipografía, reglas o imágenes dentro de este espacio libre."
+  },
+  "tamanoMinimo": {
+    "title": "Tamaño mínimo",
+    "body": "El tamaño mínimo se refiere a las dimensiones más pequeñas permitidas para el logotipo de Interactius.",
+    "print": "Para impresión",
+    "printValue": "10 mm de altura mínima",
+    "digital": "Para soportes digitales",
+    "digitalValue": "20 píxeles de altura mínima"
+  },
+  "usosIncorrectos": {
+    "title": "Do/Dont's",
+    "body": "El logotipo de Interactius no debe ajustarse ni editarse de ninguna manera. A continuación se muestran algunos ejemplos de los usos no permitidos:",
+    "rules": {
+      "1": "No cambiar los colores.",
+      "2": "No colocar elementos en el espacio libre.",
+      "3": "No condensar, expandir ni distorsionar.",
+      "4": "No agregar ningún efecto de texto.",
+      "5": "No colocar el logotipo sobre imagen sin legibilidad.",
+      "6": "No cambiar ningún elemento individual del logotipo.",
+      "7": "No rotar (excepto uso a 90º).",
+      "8": "No recortar."
+    }
+  },
+  "tipografia": {
+    "title": "Tipografía",
+    "brandTitle": "Tipografía de marca",
+    "brandBody": "La identidad se construye sobre la IBM Plex Mono, una fuente que refleja la precisión y el carácter técnico de la marca, sirviendo como base para la construcción del logotipo.",
+    "brandNotes": "Uso preferente de pesos Regular y Semibold para destacados. Evitar el uso de cursiva.",
+    "contrastTitle": "Tipografía de contraste",
+    "contrastBody": "La IBM Plex Serif se establece como la tipografía de contraste del sistema visual, aportando una dimensión humanista y sofisticada a la identidad. Su uso está destinado a titulares y destacados.",
+    "contrastNotes": "Uso preferente de pesos Light y Regular para destacados. Evitar el uso de cursiva.",
+    "downloadGoogleFonts": "Descargar Google Fonts"
+  },
+  "color": {
+    "title": "Paleta cromática",
+    "baseTitle": "Colores base",
+    "baseBody": "La paleta institucional se basa en una gama de tonos neutros y cálidos que refuerzan el carácter sobrio y sofisticado de la identidad. Estos colores establecen la atmósfera visual de la marca, priorizando la legibilidad y el descanso visual mediante un contraste suave y una estética editorial contemporánea.",
+    "accentTitle": "Colores de acento",
+    "accentBody": "Sistema de colores de acento para la identificación y segmentación de los servicios de la empresa. Cada tono actúa como un identificador visual específico, sin romper la coherencia global del sistema.",
+    "clickHint": "Haz clic en cualquier valor para copiarlo"
+  },
+  "universoVisual": {
+    "title": "Universo visual",
+    "lead": "El tratamiento de la imagen se basa en la representación de lo liminal: el espacio de transición y el concepto del Entre (el vacío con significado).",
+    "body": "Priorizamos el uso de fotografía conceptual que capture el movimiento, la ambigüedad y la pausa. No buscamos la literalidad, sino generar una atmósfera que hable de precisión técnica conviviendo con la sensibilidad artística. Las imágenes deben actuar como extensiones del espacio negativo, permitiendo que la marca respire y trabaje 'en el entre'."
+  },
+  "prompts": {
+    "title": "Prompts IA",
+    "soon": "Próximamente · prompts copy-on-click para generar imagen, copy y presentaciones respetando la marca."
+  }
+}

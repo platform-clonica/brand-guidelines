@@ -1,0 +1,136 @@
+{
+  "meta": {
+    "title": "Interactius · Brand Guidelines 2026",
+    "description": "Living, AI-ready brand guidelines for Interactius. Logotype, typography, colour palette and visual universe."
+  },
+  "chrome": {
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "downloadPdf": "Download original PDF",
+    "version": "v1 · May 2026"
+  },
+  "menu": {
+    "index": "Index",
+    "locale": "Language"
+  },
+  "ui": {
+    "copy": "Copy",
+    "copied": "Copied",
+    "download": "Download",
+    "downloadSvg": "Download SVG",
+    "soon": "Coming soon"
+  },
+  "intro": {
+    "tagline": "Liminal attitude",
+    "kicker": "Introduction",
+    "lead": "This platform is not a set of static rules or a catalogue of cosmetic restrictions. It is the technical and conceptual source of truth for Interactius. Its function is concrete: to equip our human team and our automated systems with the criteria needed to make decisions aligned with the identity.",
+    "body": "The sections that follow lay out the parameters that define how we operate, how we structure ourselves visually and how our voice is modulated. This document is a living system, designed to be executed with the same rigour whether shaping a product or feeding directives to artificial intelligence models."
+  },
+  "tonoMarca": {
+    "title": "Brand voice",
+    "voiceTitle": "The Voice of Interactius",
+    "voiceBody": "We don't write to display our critical thinking, but to activate the reader's. Our voice doesn't seek applause or complacency; it aims to shift the frame of the conversation. We position ourselves as an exploratory perspective with the rigour of someone who knows where they stand.",
+    "axesTitle": "The Four Tone Axes",
+    "ax1Title": "Direct yet reflective",
+    "ax1Body": "We get to the point — no corporate detours, no filler intros. We say things sharply, but every assertion is backed by solid criteria.",
+    "ax2Title": "Close yet professional",
+    "ax2Body": "We speak between real people, not corporation to corporation. The tone is accessible and human (Tribe), while keeping the precise distance technical rigour demands.",
+    "ax3Title": "Critical yet constructive",
+    "ax3Body": "We question market assumptions and obvious solutions, but always from the honesty of proposing a better working hypothesis.",
+    "ax4Title": "Restrained yet suggestive",
+    "ax4Body": "We strip out visual noise and literary ornament. Sophistication lives in the precision of the chosen word, not in the volume of text.",
+    "redTitle": "Semantic Restrictions (Red List)",
+    "redBody": "To preserve character, Interactius explicitly rejects the wildcard vocabulary of traditional consultancies. We replace empty concepts with concrete descriptions.",
+    "redHeadWord": "Forbidden Words",
+    "redHeadRule": "Substitution Criterion",
+    "red1Word": "Innovation / Innovative",
+    "red1Rule": "Replace with the actual technical solution or change being proposed.",
+    "red2Word": "Holistic / 360",
+    "red2Rule": "Replace with \"integrated context\", \"system analysis\" or describe the variables that coexist.",
+    "red3Word": "Disruptive",
+    "red3Rule": "Describe the impact or anomaly without using the adjective.",
+    "red4Word": "Solutions / Success cases",
+    "red4Rule": "Speak of \"results\", \"validated hypotheses\" or \"strategic direction\".",
+    "red5Word": "Empower / Mindset / Synergy",
+    "red5Rule": "Remove entirely. Use direct language: \"enable\", \"team criterion\", \"collaboration\".",
+    "puncTitle": "Strict Punctuation Criterion",
+    "punc1": "The use of exclamation marks (!) is strictly forbidden. Emphasis is achieved through argument, never by altering punctuation.",
+    "punc2": "Avoid ellipses (…) as a rhetorical device. Sentences end with a firm full stop.",
+    "copyPromptLabel": "Copy brand voice prompt",
+    "copyPromptToast": "Brand voice prompt copied"
+  },
+  "concepto": {
+    "title": "Brand concept",
+    "part1Title": "Construction & Phonetic Function",
+    "part1P1": "The word's morphology demands that the stress and rhythmic weight fall strictly on the second weak vowel (Interactíus). To counter the reader's natural inertia of shifting the stress toward the central syllable, the logotype intervenes the typography by inserting a macron over the final i.",
+    "macronDef": "/ˈmakrɒn/ a written or printed mark (¯) used to indicate a long vowel in some languages, or a stressed vowel in verse.",
+    "part1P2": "This graphic element is not ornamental; it acts as a phonetic regulator that locks in the correct cadence and deliberately shifts the visual axis of attention toward the margin of the word.",
+    "part2Title": "Liminal attitude & Vertical Dynamism",
+    "part2P1": "The elongation of the i's dot to form the macron breaks the typography's upper line and defines the system's behaviour. This vertical stretch delimits the transition zone — the liminal space — and is established as the primary vector that governs movements, transitions and element loading in the digital interface, turning an acoustic correction into the visual signature of the brand."
+  },
+  "logo": {
+    "title": "Primary mark",
+    "principal": "Primary mark",
+    "positive": "Positive version",
+    "negative": "Negative version",
+    "isotipo": "Brand mark",
+    "downloadPositive": "Download positive logo",
+    "downloadNegative": "Download negative logo",
+    "downloadIsoPositive": "Download positive brand mark",
+    "downloadIsoNegative": "Download negative brand mark"
+  },
+  "areaReserva": {
+    "title": "Clear space",
+    "body": "To guarantee the legibility of the logotype, we must always maintain a field of free space. The clear space isolates the logotype from competing graphic elements — text or imagery — that can pull attention away from the mark.",
+    "measure": "This area is measured using the height of the lowercase 'a' in the logotype. No other graphic elements, typography, rules or images may appear within this clear space."
+  },
+  "tamanoMinimo": {
+    "title": "Minimum size",
+    "body": "The minimum size refers to the smallest allowed dimensions of the Interactius logotype.",
+    "print": "Print",
+    "printValue": "10 mm minimum height",
+    "digital": "Digital",
+    "digitalValue": "20 pixels minimum height"
+  },
+  "usosIncorrectos": {
+    "title": "Do/Dont's",
+    "body": "The Interactius logotype must not be adjusted or edited in any way. Below are examples of usage that is not permitted:",
+    "rules": {
+      "1": "Don't change the colours.",
+      "2": "Don't place elements inside the clear space.",
+      "3": "Don't condense, expand or distort.",
+      "4": "Don't add any text effects.",
+      "5": "Don't place the logotype over an image without legibility.",
+      "6": "Don't alter any individual element of the logotype.",
+      "7": "Don't rotate (except a strict 90° use).",
+      "8": "Don't crop."
+    }
+  },
+  "tipografia": {
+    "title": "Typography",
+    "brandTitle": "Brand typeface",
+    "brandBody": "Our identity is built on IBM Plex Mono, a typeface that reflects the precision and technical character of the brand and underpins the construction of the logotype.",
+    "brandNotes": "Prefer Regular and Semibold weights for highlights. Avoid italics.",
+    "contrastTitle": "Contrast typeface",
+    "contrastBody": "IBM Plex Serif is the contrast typeface of the visual system, bringing a humanist and sophisticated dimension to the identity. Used for headlines and key highlights.",
+    "contrastNotes": "Prefer Light and Regular weights for highlights. Avoid italics.",
+    "downloadGoogleFonts": "Download Google Fonts"
+  },
+  "color": {
+    "title": "Colour palette",
+    "baseTitle": "Base colours",
+    "baseBody": "The institutional palette is built on neutral, warm tones that reinforce the sober and sophisticated character of the identity. These colours set the brand's visual atmosphere, prioritising legibility and visual ease through soft contrast and a contemporary editorial aesthetic.",
+    "accentTitle": "Accent colours",
+    "accentBody": "An accent colour system for identifying and segmenting the company's services. Each tone acts as a specific visual identifier, without breaking the overall coherence of the system.",
+    "clickHint": "Click any value to copy"
+  },
+  "universoVisual": {
+    "title": "Visual universe",
+    "lead": "Image treatment is grounded in the liminal: the space of transition and the concept of the In-between (the void with meaning).",
+    "body": "We prioritise conceptual photography that captures movement, ambiguity and pause. We don't seek the literal — we generate an atmosphere in which technical precision and artistic sensibility coexist. Images should act as extensions of negative space, letting the brand breathe and work 'in the in-between'."
+  },
+  "prompts": {
+    "title": "AI prompts",
+    "soon": "Coming soon · copy-on-click prompts to generate imagery, copy and presentations that respect the brand."
+  }
+}

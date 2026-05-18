@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Brand colour tokens */
+  --c-dark: #1C1A17;
+  --c-white: #FFFFFF;
+  --c-grey: #E8E6E3;
+  --c-warm-light: #F5F2ED;
+  --c-warm-dark: #E0DAD2;
+  --c-opal: #B0B5B0;
+  --c-bordeaux: #99335F;
+  --c-emerald: #5999A6;
+
+  /* Layout */
+  --sidebar-w: 0px;
+  --grid-margin: clamp(20px, 12vw - 45px, 128px);
+
+  /* Motion */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 768px) {
+  :root { --sidebar-w: 240px; }
+}
+@media (min-width: 1024px) {
+  :root { --sidebar-w: 260px; }
+}
+
+html, body {
+  background: var(--c-warm-light);
+  color: var(--c-dark);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-ibm-plex-mono), ui-monospace, monospace;
+}
+
+/* All sections share scroll-margin so anchor jumps land below mobile header */
+section[id] {
+  scroll-margin-top: 0;
+}
+
+/* Hover wipe underline (canonical Interactius)
+   Default: opacity 0.6, underline visible.
+   Hover: opacity 1, underline re-wipes from left → right. */
+.hover-wipe-underline {
+  position: relative;
+  display: inline-block;
+  text-decoration: none;
+  opacity: 0.6;
+  transition: opacity 0.5s cubic-bezier(.45, 0, .15, 1);
+}
+.hover-wipe-underline:hover,
+.hover-wipe-underline:focus-visible {
+  opacity: 1;
+}
+.hover-wipe-underline::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -4px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(1);
+  transform-origin: left;
+  pointer-events: none;
+}
+.hover-wipe-underline:hover::after,
+.hover-wipe-underline:focus-visible::after {
+  animation: link-wipe-in 0.5s cubic-bezier(.45, 0, .15, 1) forwards;
+}
+@keyframes link-wipe-in {
+  0%   { transform: scaleX(0); transform-origin: left; }
+  100% { transform: scaleX(1); transform-origin: left; }
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--c-dark);
+  color: var(--c-warm-light);
+  padding: 10px 16px;
+  font-family: var(--font-ibm-plex-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  z-index: 80;
+  border-radius: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms var(--ease);
+}
+.toast.is-visible { opacity: 1; }
+
+/* Focus visible */
+:focus-visible {
+  outline: 2px solid var(--c-dark);
+  outline-offset: 3px;
+}
+
+/* Avoid text inflation on iOS */
+* { -webkit-text-size-adjust: 100%; }
+
+/* Brand rule: italics are forbidden in both IBM Plex Mono and IBM Plex Serif.
+   Neutralises <em>, <i>, address, cite, dfn, var and the .italic utility. */
+em, i, address, cite, dfn, var, .italic {
+  font-style: normal;
+}
