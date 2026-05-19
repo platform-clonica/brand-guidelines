@@ -47,6 +47,54 @@ export async function SectionLogo() {
           />
         </div>
       </div>
+
+      {/* Vertical use — uso especial permitido, refuerza concepto liminal */}
+      <div className="mt-16 sm:mt-24">
+        <div className="font-mono text-caption uppercase tracking-[0.08em] text-dark/60 mb-6">
+          {t('verticalEyebrow')}
+        </div>
+        <h3 className="font-serif text-[22px] sm:text-[26px] leading-[1.25] tracking-tight mb-10 sm:mb-12">
+          {t('verticalTitle')}
+        </h3>
+
+        <div className="grid grid-cols-12 gap-6 sm:gap-10 lg:gap-12 items-stretch">
+          {/* Stage vertical — SVG rotado, abraza la altura del bloque de texto */}
+          <div
+            className="col-span-12 sm:col-span-4 lg:col-span-3 bg-pure-white flex items-center justify-center overflow-hidden min-h-[320px] self-stretch"
+            aria-label={t('verticalCaption')}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo/interactius-positivo.svg"
+              alt={t('verticalCaption')}
+              className="block h-auto"
+              style={{
+                transform: 'rotate(-90deg)',
+                transformOrigin: 'center',
+                width: 'min(70%, 280px)',
+              }}
+            />
+          </div>
+
+          {/* Concepto + aplicaciones */}
+          <div className="col-span-12 sm:col-span-8 lg:col-span-9 flex flex-col gap-6 max-w-[640px]">
+            <p className="font-mono font-semibold text-body-sm text-dark leading-[1.7]">
+              {t('verticalLead')}
+            </p>
+            <p className="font-mono text-body-sm text-dark leading-[1.7]">
+              {t('verticalBody')}
+            </p>
+            <div className="pt-6 border-t border-dark/15 flex flex-col gap-3">
+              <div className="font-mono text-caption uppercase tracking-[0.08em] text-dark/50">
+                {t('verticalApplicationsLabel')}
+              </div>
+              <p className="font-mono text-body-sm text-dark leading-[1.7]">
+                {t('verticalApplications')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </SectionShell>
   );
 }

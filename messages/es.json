@@ -23,22 +23,22 @@
   "intro": {
     "tagline": "Actitud liminal",
     "kicker": "Introducción",
-    "lead": "Esta plataforma no es un conjunto de normas estáticas ni un catálogo de restricciones cosméticas. Es la fuente de verdad técnica y conceptual de Interactius. Su función es concreta: dotar al equipo humano y a nuestros sistemas automatizados del criterio necesario para tomar decisiones alineadas con la identidad.",
-    "body": "En las siguientes secciones se despliegan los parámetros que definen cómo operamos, cómo nos estructuramos visualmente y cómo se modula nuestra voz. Este documento es un sistema vivo, diseñado para ser ejecutado con el mismo rigor tanto en el diseño de un producto como en la ingesta de directrices para modelos de inteligencia artificial."
+    "lead": "Esta plataforma no es un conjunto de normas estáticas ni un catálogo de restricciones cosméticas. Funciona como la fuente de verdad técnica y conceptual sobre la que se construye toda decisión de marca. Su función es concreta: dotar al equipo humano y a nuestros sistemas automatizados del criterio para tomar decisiones alineadas con la identidad.",
+    "body": "En las siguientes secciones se despliegan los parámetros que definen cómo operamos, cómo nos estructuramos visualmente y cómo se modula nuestra voz. Este documento es un sistema vivo, diseñado para ser ejecutado con el mismo rigor en cada decisión de marca. Aplica tanto al diseño de un producto como a la ingesta de directrices para modelos de inteligencia artificial."
   },
   "tonoMarca": {
     "title": "Tono de marca",
     "voiceTitle": "La Voz de Interactius",
-    "voiceBody": "No escribimos para demostrar nuestro pensamiento crítico, sino para activar el de quien nos lee. Nuestra voz no busca el aplauso ni la complacencia; busca mover el marco de la conversación. Nos posicionamos como una mirada exploradora con el rigor de quien sabe dónde pisa.",
+    "voiceBody": "No escribimos para demostrar nuestro pensamiento crítico, sino para activar el de quien nos lee. Nuestra voz no busca el aplauso ni la complacencia; busca mover el marco de la conversación. Nos posicionamos como una mirada exploradora que conserva el rigor de quien sabe dónde pisa al avanzar.",
     "axesTitle": "Los Cuatro Ejes de Tono",
     "ax1Title": "Directos pero reflexivos",
-    "ax1Body": "Vamos al grano sin rodeos corporativos ni introducciones de relleno. Decimos las cosas de forma afilada, pero cada afirmación está sustentada en un criterio sólido.",
+    "ax1Body": "Vamos al grano sin rodeos corporativos ni introducciones de relleno que diluyan el argumento central. Decimos las cosas de forma afilada, pero cada afirmación está sustentada en un criterio sólido.",
     "ax2Title": "Cercanos pero profesionales",
-    "ax2Body": "Hablamos entre personas reales, no de corporación a corporación. El tono es accesible y humano (Tribu), pero mantiene la distancia justa que exige el rigor técnico.",
+    "ax2Body": "Hablamos entre personas reales, no de corporación a corporación ni de plataforma a plataforma anónima. El tono es accesible y humano (Tribu), pero mantiene la distancia justa que exige el rigor técnico.",
     "ax3Title": "Críticos pero constructivos",
-    "ax3Body": "Cuestionamos los supuestos del mercado y las soluciones evidentes, pero siempre desde la honestidad de proponer una hipótesis de trabajo superadora.",
+    "ax3Body": "Cuestionamos los supuestos del mercado y las respuestas evidentes, pero siempre desde la honestidad de proponer una hipótesis de trabajo superadora.",
     "ax4Title": "Sobrios pero sugerentes",
-    "ax4Body": "Eliminamos el ruido visual y el adorno literario. La sofisticación reside en la precisión de la palabra elegida, no en la cantidad de texto.",
+    "ax4Body": "Eliminamos el ruido visual y el adorno literario para que el contenido respire en cada decisión editorial. La sofisticación reside en la precisión de la palabra elegida, no en la cantidad de texto.",
     "redTitle": "Restricciones Semánticas (Lista Roja)",
     "redBody": "Para mantener el carácter, Interactius renuncia explícitamente al vocabulario comodín de las consultoras tradicionales. Sustituimos los conceptos vacíos por descripciones concretas.",
     "redHeadWord": "Palabras Prohibidas",
@@ -69,6 +69,14 @@
     "part2P1": "La elongación del punto de la i para formar el macrón rompe la línea superior de la tipografía y define el comportamiento del sistema. Este estiramiento vertical delimita la zona de transición —el espacio liminal— y se establece como el vector primario que rige los movimientos, transiciones y la carga de elementos en la interfaz digital, convirtiendo una corrección acústica en la firma visual de la marca."
   },
   "logo": {
+    "verticalTitle": "Uso vertical",
+    "verticalEyebrow": "Marca en el margen",
+    "verticalLead": "El logo puede componerse en vertical para ocupar el margen lateral de una pieza digital o impresa.",
+    "verticalBody": "Esta variante refuerza el concepto liminal del sistema visual: la marca no domina el centro, sustenta el borde. Operamos en el espacio entre la pieza y su límite, donde el lector elige si entrar o salir del relato.",
+    "verticalApplicationsLabel": "Aplicaciones canónicas",
+    "verticalApplications": "Aparece en el sidebar lateral de interfaces web, en la columna marginal de presentaciones y en la cubierta vertical de documentos.",
+    "verticalDownload": "Descargar logo vertical",
+    "verticalCaption": "Logo vertical",
     "title": "Marca principal",
     "principal": "Marca principal",
     "positive": "Versión positiva",
@@ -124,12 +132,42 @@
     "accentBody": "Sistema de colores de acento para la identificación y segmentación de los servicios de la empresa. Cada tono actúa como un identificador visual específico, sin romper la coherencia global del sistema.",
     "clickHint": "Haz clic en cualquier valor para copiarlo"
   },
+  "sistemaTexto": {
+    "title": "Sistema de texto",
+    "lead": "Esta tabla documenta los tokens reales de tipografía que utilizamos para construir cada interfaz digital de Interactius.",
+    "body": "Cada nivel define un uso concreto, una familia tipográfica recomendada y un conjunto de pesos canónicos. Quien diseña, desarrolla o entrena un modelo de IA con este manual debe operar sobre estos tokens, no sobre tamaños arbitrarios."
+  },
   "universoVisual": {
     "title": "Universo visual",
-    "lead": "El tratamiento de la imagen se basa en la representación de lo liminal: el espacio de transición y el concepto del Entre (el vacío con significado).",
+    "lead": "El tratamiento de la imagen se basa en la representación de lo liminal, es decir, en el espacio de transición. Trabajamos el concepto del Entre como un vacío que carga significado en lugar de eliminarlo.",
     "body": "Priorizamos el uso de fotografía conceptual que capture el movimiento, la ambigüedad y la pausa. No buscamos la literalidad, sino generar una atmósfera que hable de precisión técnica conviviendo con la sensibilidad artística. Las imágenes deben actuar como extensiones del espacio negativo, permitiendo que la marca respire y trabaje 'en el entre'.",
     "copyPromptLabel": "Copiar prompt técnico de imagen para IA",
     "copyPromptToast": "Prompt técnico de imagen copiado"
+  },
+  "sistemaGrafico": {
+    "title": "Sistema gráfico",
+    "lead": "Esta sección agrupa los recursos gráficos del sistema, empezando por las formas asociadas a cada servicio.",
+    "body": "Cada forma encarna el carácter del servicio que representa y comparte su color de acento. El catálogo crece conforme la marca añade patterns, marcas decorativas o cualquier otro recurso gráfico operativo.",
+    "shapesTitle": "Formas por servicio",
+    "downloadLabel": "Descargar SVG"
+  },
+  "aplicaciones": {
+    "title": "Aplicaciones",
+    "lead": "Esta sección recoge mockups que muestran la marca aplicada sobre piezas reales del sistema de identidad.",
+    "captionMovil": "Aplicación digital · móvil",
+    "captionTarjetas": "Tarjetas de visita",
+    "captionFolder": "Folder editorial"
+  },
+  "movimiento": {
+    "title": "Movimiento",
+    "lead": "El movimiento no es decoración: es el vehículo con el que la marca aparece, se transita y desaparece de cada pieza.",
+    "body": "Cada curva y cada duración del sistema está pensada para sostener la sensación liminal: entrar sin estridencia, salir sin truncar la atención. Quien diseña o anima una pieza para Interactius debe operar sobre estos easings, no sobre curvas inventadas en el momento.",
+    "easingsTitle": "Curvas de easing",
+    "durationsTitle": "Tiempos canónicos",
+    "referenceTitle": "Referencia aplicada",
+    "referenceLabel": "Ver el hero en producción",
+    "playLabel": "Reproducir easing",
+    "videoFallback": "Tu navegador no soporta vídeo HTML5."
   },
   "prompts": {
     "title": "Prompts IA",

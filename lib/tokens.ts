@@ -3,6 +3,9 @@ export type ColorToken = {
   hex: string;
   rgb: string;
   cmyk: string;
+  /* Servicio asociado. Solo en colores de acento — cada acento identifica
+     uno de los tres servicios canónicos de Interactius. */
+  service?: { es: string; en: string };
 };
 
 export const colorsBase: ColorToken[] = [
@@ -14,9 +17,9 @@ export const colorsBase: ColorToken[] = [
 ];
 
 export const colorsAccent: ColorToken[] = [
-  { name: 'Opal',       hex: '#B0B5B0', rgb: '176,181,176', cmyk: '3,0,3,29'   },
-  { name: 'Bordeaux',   hex: '#99335F', rgb: '153,51,95',   cmyk: '0,67,38,40' },
-  { name: 'Emerald',    hex: '#5999A6', rgb: '89,153,166',  cmyk: '46,8,0,35'  },
+  { name: 'Opal',     hex: '#B0B5B0', rgb: '176,181,176', cmyk: '3,0,3,29',   service: { es: 'Pensamiento estratégico',  en: 'Strategic thinking' } },
+  { name: 'Bordeaux', hex: '#99335F', rgb: '153,51,95',   cmyk: '0,67,38,40', service: { es: 'Diseño de experiencias',   en: 'Experience design' } },
+  { name: 'Emerald',  hex: '#5999A6', rgb: '89,153,166',  cmyk: '46,8,0,35',  service: { es: 'Transformación cultural',  en: 'Cultural transformation' } },
 ];
 
 export const typography = {
@@ -82,11 +85,74 @@ export const voiceAxes = [
   },
 ] as const;
 
-export const forbiddenVocabulary = [
-  'innovación', 'innovador', 'holístico', 'disruptivo', 'soluciones',
-  'impacto (sin contexto)', 'storytelling', 'empoderamiento', 'mindset',
-  'líderes', 'sinergia', '360', 'revolucionario', 'caso de éxito',
-] as const;
+/* Forbidden vocabulary con estructura tipada para eval automático.
+   Cada entry: un concepto (root) + todas las formas que un LLM puede generar (family ES+EN).
+   El eval engine usa `family` con regex word-boundary. La UI y los prompts usan
+   `forbiddenVocabulary` (lista plana de términos canónicos para lectura humana). */
+
+export type ForbiddenEntry = {
+  root: string;
+  family: readonly string[];
+};
+
+export const forbiddenVocabularyDetailed: readonly ForbiddenEntry[] = [
+  // Núcleo histórico (v0)
+  { root: 'innov',                  family: ['innovación','innovaciones','innovador','innovadora','innovadores','innovadoras','innovar','innovamos','innovate','innovates','innovating','innovation','innovations','innovative'] },
+  { root: 'holist',                 family: ['holístico','holística','holísticos','holísticas','holistic','holistically'] },
+  { root: 'disrupt',                family: ['disruptivo','disruptiva','disruptivos','disruptivas','disrupción','disruption','disruptive','disrupting','disrupt'] },
+  { root: 'soluci',                 family: ['solución','soluciones','solution','solutions'] },
+  { root: 'impacto',                family: ['impacto','impactos','impactar','impactamos','impactando','impact','impacts','impactful','impacting'] },
+  { root: 'storytell',              family: ['storytelling','storyteller','storytellers','story-telling'] },
+  { root: 'empoder',                family: ['empoderar','empoderamiento','empoderado','empoderada','empoderar','empower','empowerment','empowering','empowered'] },
+  { root: 'mindset',                family: ['mindset','mindsets'] },
+  { root: 'lider',                  family: ['líder','líderes','liderar','liderazgo','lideramos','leader','leaders','leading','leadership','lead'] },
+  { root: 'sinergi',                family: ['sinergia','sinergias','synergy','synergies','synergistic'] },
+  { root: '360',                    family: ['360','360º','360 grados','360-degree','360-grados'] },
+  { root: 'revoluc',                family: ['revolucionario','revolucionaria','revolucionarios','revolucionarias','revolucionar','revolutionary','revolution','revolutionise','revolutionize','revolutionizing'] },
+  { root: 'caso-exito',             family: ['caso de éxito','casos de éxito','success story','success stories','success case','case study'] },
+
+  // Tics estratégicos / transformación
+  { root: 'transform',              family: ['transformación','transformaciones','transformacional','transformador','transformadora','transformative','transformation','transforming','transformational'] },
+  { root: 'ecosistema',             family: ['ecosistema','ecosistemas','ecosystem','ecosystems'] },
+  { root: 'framework',              family: ['framework','frameworks'] },
+  { root: 'journey',                family: ['journey','journeys','customer journey','user journey','journey del usuario','journey del cliente','viaje del usuario','viaje del cliente'] },
+  { root: 'propuesta-valor',        family: ['propuesta de valor','propuestas de valor','propuesta única de valor','value proposition','value props','unique value proposition','uvp'] },
+  { root: 'engagement',             family: ['engagement','engaging','engaged','engager'] },
+  { root: 'stakeholder',            family: ['stakeholder','stakeholders','grupos de interés'] },
+  { root: 'accionable',             family: ['accionable','accionables','actionable','actionables'] },
+  { root: 'agil',                   family: ['ágil','ágiles','agile','agile-first','agility'] },
+  { root: 'agnostico',              family: ['agnóstico','agnóstica','agnósticos','agnósticas','agnostic'] },
+  { root: 'escalable',              family: ['escalable','escalables','escalabilidad','scalable','scalability'] },
+  { root: 'valor-anadido',          family: ['valor añadido','valor agregado','added value','value-add','value-added','value add'] },
+  { root: 'co-creacion',            family: ['co-creación','cocreación','co-crear','co-create','co-creation','cocreate','cocreation','co-creating'] },
+  { root: 'diferencial',            family: ['diferencial','diferenciales','differentiator','differentiators'] },
+  { root: 'data-driven',            family: ['data-driven','basado en datos','basada en datos','data driven','datadriven','data-led'] },
+  { root: 'human-centric',          family: ['human-centric','human centric','centrado en el usuario','centrado en la persona','user-centric','user centric','people-centric'] },
+  { root: 'end-to-end',             family: ['end-to-end','end to end','de extremo a extremo','extremo a extremo','endtoend'] },
+  { root: 'experiencia-memorable',  family: ['experiencia memorable','experiencias memorables','memorable experience','memorable experiences','experiencia única','unique experience'] },
+  { root: 'palanca',                family: ['palanca','palancas','palanca de cambio','palancas de crecimiento','lever','levers','growth lever','growth levers'] },
+  { root: 'adn-marca',              family: ['adn de marca','adn de la marca','adn de empresa','brand dna','brand-dna'] },
+  { root: 'partner-estrategico',    family: ['partner estratégico','partners estratégicos','strategic partner','strategic partners','strategic partnership'] },
+  { root: 'vanguardia',             family: ['de vanguardia','a la vanguardia','vanguardista','cutting-edge','cutting edge','state-of-the-art','state of the art'] },
+  { root: 'next-gen',               family: ['next-gen','next gen','next generation','nueva generación','siguiente generación','next-generation'] },
+  { root: 'best-in-class',          family: ['best-in-class','best in class','el mejor de su clase','best-of-breed','best of breed'] },
+  { root: 'world-class',            family: ['world-class','world class','de clase mundial'] },
+  { root: 'maximiz',                family: ['maximizar','maximizamos','maximización','maximize','maximises','maximise','maximised','maximized','maximising','maximizing'] },
+  { root: 'desbloquear',            family: ['desbloquear potencial','desbloquear valor','desbloquear el potencial','desbloquear el valor','unlock potential','unlock value','unlocking potential','unlocking value'] },
+  { root: 'impulsar',               family: ['impulsar el cambio','impulsar el crecimiento','impulsar valor','impulsar la transformación','drive change','drive growth','driving change','driving growth'] },
+  { root: 'abrazar-cambio',         family: ['abrazar el cambio','abrazamos el cambio','embrace change','embracing change'] },
+  { root: 'expertise',              family: ['expertise'] },
+  { root: 'de-la-mano',             family: ['de la mano','de la mano de','de la mano con','hand-in-hand','hand in hand'] },
+  { root: 'punto-inflexion',        family: ['punto de inflexión','puntos de inflexión','inflection point','tipping point'] },
+  { root: 'roadmap',                family: ['roadmap','roadmaps','hoja de ruta','hojas de ruta'] },
+];
+
+/* Lista plana de términos canónicos (un display por entry) — para lectura humana,
+   /llms.txt, /api/brand.json y el master prompt. Mantiene la forma del export
+   original para no romper consumidores. */
+export const forbiddenVocabulary: readonly string[] = forbiddenVocabularyDetailed.map(
+  (e) => e.family[0],
+);
 
 export const substitutionMatrix = [
   {

@@ -3,9 +3,15 @@
 import { CopyButton } from '@/components/ui/CopyButton';
 import type { ColorToken } from '@/lib/tokens';
 
-type Props = { token: ColorToken; isBorderless?: boolean };
+type Props = {
+  token: ColorToken;
+  isBorderless?: boolean;
+  /* Etiqueta opcional renderizada bajo el código hex. Pensada para indicar el
+     servicio asociado en los colores de acento. El caller resuelve el locale. */
+  serviceLabel?: string;
+};
 
-export function ColorSwatch({ token, isBorderless }: Props) {
+export function ColorSwatch({ token, isBorderless, serviceLabel }: Props) {
   return (
     <div className="flex flex-col gap-3">
       <CopyButton
@@ -17,6 +23,11 @@ export function ColorSwatch({ token, isBorderless }: Props) {
       </CopyButton>
       <div className="flex flex-col gap-1.5 font-mono">
         <div className="text-body-sm text-dark">{token.name}</div>
+        {serviceLabel && (
+          <div className="text-caption uppercase tracking-[0.08em] text-dark/55">
+            {serviceLabel}
+          </div>
+        )}
         <CopyButton
           value={token.hex}
           className="text-caption uppercase tracking-[0.04em] text-dark/70 text-left hover:text-dark transition-colors duration-200 ease-expo"

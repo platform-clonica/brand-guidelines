@@ -74,13 +74,23 @@ export function MenuOverlay() {
             <div className="font-serif font-normal text-[28px] leading-[1.05] text-dark tracking-tight">
               Brand<br />Guidelines<br />2026
             </div>
-            <div className="mt-3 flex items-center gap-2 font-mono text-[11px] tracking-wide">
-              <span className="text-dark/40">v1_05.26</span>
+            <div className="mt-3 font-mono text-[11px] tracking-wide text-dark/40">
+              v1_05.26
+            </div>
+            <div className="mt-1.5 flex items-center gap-x-2 font-mono text-[11px] tracking-wide">
+              <a
+                href="/Brand-Kit.zip"
+                download
+                className="text-dark/70 hover:text-dark transition-colors duration-300 ease-expo inline-flex items-center gap-2"
+              >
+                <span aria-hidden>↓</span>
+                <span>BRAND KIT</span>
+              </a>
               <span aria-hidden className="text-dark/25">·</span>
               <a
                 href="/brand-guidelines-2026.pdf"
                 download
-                className="text-dark/70 hover:text-dark transition-colors duration-300 ease-expo inline-flex items-center gap-1.5"
+                className="text-dark/70 hover:text-dark transition-colors duration-300 ease-expo inline-flex items-center gap-2"
               >
                 <span aria-hidden>↓</span>
                 <span>PDF</span>

@@ -16,6 +16,9 @@ import {
 } from '@/lib/tokens';
 import { sections } from '@/lib/sections';
 import { getMasterPrompt, getTonePrompt } from '@/lib/prompts';
+import { typeScale } from '@/lib/typeScale';
+import { easings, durations, heroReferenceUrl } from '@/lib/motion';
+import { serviceShapes } from '@/lib/graphics';
 
 export const dynamic = 'force-static';
 
@@ -55,6 +58,18 @@ export function GET() {
       brand: typography.brand,
       contrast: typography.contrast,
       italicsAllowed: false,
+    },
+    typeScale,
+    motion: {
+      easings,
+      durations,
+      heroReferenceUrl,
+    },
+    graphics: {
+      serviceShapes: serviceShapes.map((s) => ({
+        ...s,
+        assetUrl: `${SITE}${s.assetPath}`,
+      })),
     },
     logo: {
       minSize: logoMinSize,

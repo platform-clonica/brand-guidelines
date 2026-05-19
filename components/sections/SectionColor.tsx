@@ -1,11 +1,13 @@
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import { SectionShell } from './SectionShell';
 import { ColorSwatch } from '@/components/brand/ColorSwatch';
 import { colorsBase, colorsAccent } from '@/lib/tokens';
+import type { Locale } from '@/lib/i18n/routing';
 
 export async function SectionColor() {
   const t = await getTranslations('color');
+  const locale = (await getLocale()) as Locale;
   return (
     <SectionShell
       id="color"
@@ -38,7 +40,11 @@ export async function SectionColor() {
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 mt-2">
             {colorsAccent.map((c) => (
-              <ColorSwatch key={c.hex} token={c} />
+              <ColorSwatch
+                key={c.hex}
+                token={c}
+                serviceLabel={c.service?.[locale]}
+              />
             ))}
           </div>
         </div>

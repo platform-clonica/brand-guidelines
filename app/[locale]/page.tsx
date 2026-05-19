@@ -9,8 +9,12 @@ import { SectionAreaReserva } from '@/components/sections/SectionAreaReserva';
 import { SectionTamanoMinimo } from '@/components/sections/SectionTamanoMinimo';
 import { SectionUsosIncorrectos } from '@/components/sections/SectionUsosIncorrectos';
 import { SectionTipografia } from '@/components/sections/SectionTipografia';
+import { SectionSistemaTexto } from '@/components/sections/SectionSistemaTexto';
 import { SectionColor } from '@/components/sections/SectionColor';
 import { SectionUniversoVisual } from '@/components/sections/SectionUniversoVisual';
+import { SectionSistemaGrafico } from '@/components/sections/SectionSistemaGrafico';
+import { SectionAplicaciones } from '@/components/sections/SectionAplicaciones';
+import { SectionMovimiento } from '@/components/sections/SectionMovimiento';
 import { SectionIaReady } from '@/components/sections/SectionIaReady';
 
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
@@ -27,8 +31,12 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
       <SectionTamanoMinimo />
       <SectionUsosIncorrectos />
       <SectionTipografia />
+      <SectionSistemaTexto />
       <SectionColor />
       <SectionUniversoVisual />
+      <SectionSistemaGrafico />
+      <SectionAplicaciones />
+      <SectionMovimiento />
       <SectionIaReady />
     </ToastProvider>
   );

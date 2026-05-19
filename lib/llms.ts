@@ -19,6 +19,9 @@ import {
 } from '@/lib/tokens';
 import { sections } from '@/lib/sections';
 import { getMasterPrompt } from '@/lib/prompts';
+import { typeScale } from '@/lib/typeScale';
+import { easings, durations, heroReferenceUrl } from '@/lib/motion';
+import { serviceShapes } from '@/lib/graphics';
 
 const SITE = 'https://brand.interactius.com';
 
@@ -45,8 +48,10 @@ export function buildLlmsMarkdown(): string {
     'No utilices signos de exclamación ni puntos suspensivos.',
   ];
 
-  const colorLine = (c: typeof colorsBase[number]) =>
-    `- ${c.name}: ${c.hex} · RGB(${c.rgb}) · CMYK(${c.cmyk})`;
+  const colorLine = (c: typeof colorsBase[number]) => {
+    const service = c.service ? ` · servicio asociado: ${c.service.es} / ${c.service.en}` : '';
+    return `- ${c.name}: ${c.hex} · RGB(${c.rgb}) · CMYK(${c.cmyk})${service}`;
+  };
 
   const sectionsLine = sections
     .map((s) => `- ${s.num} ${s.label.es} → ${SITE}/#${s.id}`)
@@ -161,7 +166,22 @@ ${substitutionBlock}
 - Descarga: ${typography.contrast.download}
 - Notas: ${typography.contrast.notes}
 
-## 4 · Paleta cromática
+## 4 · Sistema de texto (tokens aplicados)
+
+Tokens reales de la web del manual. Reutilizables al construir interfaces, decks o generar componentes vía IA. Cualquier salida que mencione tipografía debe referenciar uno de estos tokens, no inventar tamaños.
+
+${typeScale
+  .map((e) => {
+    const ls = e.letterSpacing ? ` · letter-spacing ${e.letterSpacing}` : '';
+    return `### .${e.className} (${e.id})
+- Familia: ${e.family === 'mono' ? 'IBM Plex Mono' : 'IBM Plex Serif'} · pesos ${e.weights.join(', ')}
+- Tamaño: ${e.clamp} · line-height ${e.lineHeight}${ls}
+- Uso (ES): ${e.usage.es}
+- Uso (EN): ${e.usage.en}`;
+  })
+  .join('\n\n')}
+
+## 5 · Paleta cromática
 
 ### Base
 ${colorsBase.map(colorLine).join('\n')}
@@ -169,7 +189,7 @@ ${colorsBase.map(colorLine).join('\n')}
 ### Acento
 ${colorsAccent.map(colorLine).join('\n')}
 
-## 5 · Logo
+## 6 · Logo
 
 - Versión positiva (SVG): ${SITE}/logo/interactius-positivo.svg
 - Versión negativa (SVG): ${SITE}/logo/interactius-negativo.svg
@@ -178,22 +198,72 @@ ${colorsAccent.map(colorLine).join('\n')}
 - Área de reserva: equivalente a la altura de la "a" minúscula.
 - Tamaño mínimo: ${logoMinSize.print} (impresión) · ${logoMinSize.digital} (digital).
 
-## 6 · Reglas — Do
+## 7 · Reglas — Do
 ${dos.map((d) => `- ${d}`).join('\n')}
 
-## 7 · Reglas — Don't
+## 8 · Reglas — Don't
 ${donts.map((d) => `- ${d}`).join('\n')}
 
-## 8 · Universo visual
+## 9 · Universo visual
 
 ES — ${brand.visualUniverse.es}
 EN — ${brand.visualUniverse.en}
 
-## 9 · Índice (anchors)
+## 10 · Sistema gráfico
+
+Recursos gráficos del sistema. Empieza por las tres formas asociadas a los servicios; crecerá con patterns, marcas decorativas y otros recursos operativos.
+
+${serviceShapes
+  .map(
+    (s) => `- **shape-${s.id}** · color ${s.colorName} (${s.fillColor}) · servicio: ${s.serviceLabel.es} / ${s.serviceLabel.en}
+  - SVG: ${SITE}${s.assetPath}
+  - Uso (ES): ${s.usage.es}
+  - Uso (EN): ${s.usage.en}`,
+  )
+  .join('\n')}
+
+## 11 · Aplicaciones
+
+Mockups que muestran la marca aplicada sobre piezas reales del sistema. El conjunto crece conforme se aplican nuevos canales (redes sociales, plantillas operativas, papelería).
+
+- Aplicación digital · móvil: ${SITE}/aplicaciones/aplicaciones-movil.png
+- Tarjetas de visita: ${SITE}/aplicaciones/aplicaciones-tarjetas.png
+- Folder editorial: ${SITE}/aplicaciones/aplicaciones-folder.png
+
+## 12 · Movimiento
+
+El movimiento es vehículo del concepto liminal. Cada curva y cada duración listadas aquí está en uso real en producción.
+
+### Curvas de easing
+
+${easings
+  .map((e) => {
+    const tokens = [
+      e.tailwindToken ? `tailwind: ${e.tailwindToken}` : null,
+      e.gsapToken ? `GSAP: ${e.gsapToken}` : null,
+      e.recommendedMs ? `~${e.recommendedMs}ms` : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
+    return `- **${e.name}** · \`${e.cssCubic}\`${tokens ? ` · ${tokens}` : ''}
+  - ES: ${e.usage.es}
+  - EN: ${e.usage.en}`;
+  })
+  .join('\n')}
+
+### Tiempos canónicos
+
+${durations.map((d) => `- **${d.ms}ms** — ${d.usage.es} / ${d.usage.en}`).join('\n')}
+
+### Referencia aplicada
+
+Hero del sitio en producción: ${heroReferenceUrl}
+
+## 13 · Índice (anchors)
 
 ${sectionsLine}
 
-## 10 · Referencia · Ejemplos few-shot (v0)
+## 14 · Referencia · Ejemplos few-shot (v0)
 
 Esta sección es la pieza pedagógica del manual para cualquier LLM o agente. Antes de generar copy, lee los aprobados como ancla de estilo y los rechazados como mapa de fronteras. Cualquier output debe parecerse más a los aprobados que a los rechazados — y debe poder explicar por qué.
 
@@ -209,7 +279,7 @@ ${rejectedBlock}
 
 ---
 
-## 11 · Recursos
+## 15 · Recursos
 
 - PDF original: ${SITE}/brand-guidelines-2026.pdf
 - Tokens JSON: ${SITE}/api/brand.json
