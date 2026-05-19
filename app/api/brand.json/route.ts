@@ -12,6 +12,7 @@ import {
   substitutionMatrix,
   punctuationRules,
   sentenceLength,
+  examples,
 } from '@/lib/tokens';
 import { sections } from '@/lib/sections';
 import { getMasterPrompt, getTonePrompt } from '@/lib/prompts';
@@ -68,6 +69,10 @@ export function GET() {
     prompts: {
       master: { es: getMasterPrompt('es'), en: getMasterPrompt('en') },
       tone: { es: getTonePrompt('es'), en: getTonePrompt('en') },
+    },
+    examples: {
+      approved: examples.filter((e) => e.status === 'approved'),
+      rejected: examples.filter((e) => e.status === 'rejected'),
     },
     sections: sections.map((s) => ({
       id: s.id,

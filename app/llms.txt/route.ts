@@ -10,6 +10,7 @@ import {
   substitutionMatrix,
   punctuationRules,
   sentenceLength,
+  examples,
 } from '@/lib/tokens';
 import { sections } from '@/lib/sections';
 import { getMasterPrompt } from '@/lib/prompts';
@@ -60,6 +61,35 @@ export function GET() {
     .join('\n');
 
   const masterPrompt = getMasterPrompt('es');
+
+  const renderExample = (e: typeof examples[number], n: number) => {
+    const tag = e.status === 'approved' ? 'APPROVED' : 'REJECTED';
+    const head = `### ${String(n).padStart(2, '0')} · ${tag} · ${e.format} · \`${e.id}\``;
+    const body = [
+      `**ES** — ${e.text.es.replace(/\n+/g, ' / ')}`,
+      `**EN** — ${e.text.en.replace(/\n+/g, ' / ')}`,
+      `_Rationale (ES)_: ${e.rationale.es}`,
+      `_Rationale (EN)_: ${e.rationale.en}`,
+    ];
+    if (e.violations?.length) {
+      body.push(`_Violations_: ${e.violations.map((v) => `\`${v}\``).join(', ')}`);
+    }
+    if (e.rewrite) {
+      body.push(`_Rewrite (ES)_: ${e.rewrite.es}`);
+      body.push(`_Rewrite (EN)_: ${e.rewrite.en}`);
+    }
+    return `${head}\n\n${body.join('\n\n')}`;
+  };
+
+  const approvedBlock = examples
+    .filter((e) => e.status === 'approved')
+    .map((e, i) => renderExample(e, i + 1))
+    .join('\n\n---\n\n');
+
+  const rejectedBlock = examples
+    .filter((e) => e.status === 'rejected')
+    .map((e, i) => renderExample(e, i + 1))
+    .join('\n\n---\n\n');
 
   const md = `# Interactius · Brand Guidelines (IA-ready)
 
@@ -160,7 +190,23 @@ EN — ${brand.visualUniverse.en}
 
 ${sectionsLine}
 
-## 10 · Recursos
+## 10 · Referencia · Ejemplos few-shot (v0)
+
+Esta sección es la pieza pedagógica del manual para cualquier LLM o agente. Antes de generar copy, lee los aprobados como ancla de estilo y los rechazados como mapa de fronteras. Cualquier output debe parecerse más a los aprobados que a los rechazados — y debe poder explicar por qué.
+
+### Aprobados (5)
+
+${approvedBlock}
+
+---
+
+### Rechazados (5)
+
+${rejectedBlock}
+
+---
+
+## 11 · Recursos
 
 - PDF original: ${SITE}/brand-guidelines-2026.pdf
 - Tokens JSON: ${SITE}/api/brand.json

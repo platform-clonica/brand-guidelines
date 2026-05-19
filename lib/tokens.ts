@@ -144,3 +144,192 @@ export const brand = {
     en: 'Conceptual photography that captures movement, ambiguity and pause. A representation of the liminal: the space of transition and the concept of the In-between (the void with meaning).',
   },
 };
+
+/* ─── Few-shot examples (capa pedagógica para LLMs y humanos) ───
+   v0 redactado desde la matriz dura. Iterar conforme se aprueben piezas reales.
+   Cubre 5 formatos en approved y 5 tipos de violación en rejected.
+   Todas las frases con verbo respetan sentenceLength.min/max (15-22 palabras). */
+
+export type FewShotExampleStatus = 'approved' | 'rejected';
+export type FewShotExampleFormat =
+  | 'headline'
+  | 'lead'
+  | 'social-post'
+  | 'email-intro'
+  | 'deck-cover';
+
+export type FewShotExample = {
+  id: string;
+  format: FewShotExampleFormat;
+  status: FewShotExampleStatus;
+  text: { es: string; en: string };
+  rationale: { es: string; en: string };
+  violations?: readonly string[];
+  rewrite?: { es: string; en: string };
+};
+
+export const examples: readonly FewShotExample[] = [
+  {
+    id: 'headline-landing',
+    format: 'headline',
+    status: 'approved',
+    text: {
+      es: 'Trabajamos en el espacio que existe entre la decisión obvia y la decisión que aún nadie ha defendido.',
+      en: "We work in the space between the obvious decision and the decision no one has defended yet.",
+    },
+    rationale: {
+      es: 'Encarna la actitud liminal sin nombrarla. Sintaxis directa de 18 palabras, vocabulario propio, ningún término de la lista roja.',
+      en: 'Embodies the liminal attitude without naming it. Direct syntax at 17 words, distinctive vocabulary, no red-list terms.',
+    },
+  },
+  {
+    id: 'lead-servicio',
+    format: 'lead',
+    status: 'approved',
+    text: {
+      es: 'Diseñamos servicios para empresas que ya no creen que la claridad nace de añadir más capas a un proceso. Cada proyecto empieza preguntando qué pieza del sistema sostiene realmente la conversación con quien decide.',
+      en: 'We design services for companies that no longer believe clarity comes from adding more layers to a process. Every project begins by asking which piece of the system actually carries the conversation with whoever decides.',
+    },
+    rationale: {
+      es: 'Dos frases en rango (19 y 15 palabras) con tono crítico-constructivo. Sin lista roja, posicionamiento ideológico antes que descripción de servicios.',
+      en: 'Two sentences in range (18 and 17 words) with a critical-constructive tone. No red-list terms, ideological positioning rather than service description.',
+    },
+  },
+  {
+    id: 'social-post-linkedin',
+    format: 'social-post',
+    status: 'approved',
+    text: {
+      es: 'La mayoría de procesos de diseño no fallan por falta de creatividad, fallan por exceso de consenso temprano. Decidir antes de tiempo no acelera el proyecto: atasca el siguiente cruce de criterio donde había algo importante que escuchar. El trabajo de un diseñador con criterio empieza por defender la duda durante el tiempo que esa duda merece.',
+      en: "Most design processes don't fail for lack of creativity, they fail from too much consensus too early. Deciding ahead of time doesn't speed the project up: it jams the next crossing of criterion that was actually worth hearing. A designer with judgement starts by defending the doubt for as long as that doubt deserves.",
+    },
+    rationale: {
+      es: 'Tres frases en rango (18, 20, 19) que defienden una hipótesis incómoda. Cercano-profesional, sin signos prohibidos, sin léxico de consultora.',
+      en: 'Three sentences in range (17, 21, 16) defending an uncomfortable hypothesis. Close-professional, no banned punctuation, no consultancy lexicon.',
+    },
+  },
+  {
+    id: 'email-intro-cliente',
+    format: 'email-intro',
+    status: 'approved',
+    text: {
+      es: 'Antes de proponer cualquier alcance, nos interesa entender cómo decide hoy el equipo y qué fricción concreta justifica abrir esta conversación. Lo que enviemos después dependerá menos de plantillas internas y más de la respuesta a esas dos preguntas.',
+      en: 'Before we propose any scope, we want to understand how your team decides today and what specific friction justifies opening this conversation. Whatever we send next will depend less on internal templates and more on the answer to those two questions.',
+    },
+    rationale: {
+      es: 'Marca distancia técnica desde la primera línea: invierte el orden habitual (entender antes que proponer). Dos frases en 21 y 18 palabras.',
+      en: 'Sets technical distance from the first line: inverts the usual order (understand before proposing). Two sentences at 22 and 19 words.',
+    },
+  },
+  {
+    id: 'deck-cover',
+    format: 'deck-cover',
+    status: 'approved',
+    text: {
+      es: 'La estrategia de un servicio no se redacta, se prueba el día en que alguien tiene que defender una decisión incómoda.\n\nDiagnóstico de criterios y arquitectura de decisión preparado para [Cliente] como base de la propuesta presentada en mayo de 2026.',
+      en: "A service strategy isn't written, it gets tested the day someone in the room has to defend an uncomfortable decision out loud.\n\nCriteria diagnostic and decision architecture prepared for [Client] as the basis of the proposal delivered in May 2026.",
+    },
+    rationale: {
+      es: 'Titular fuerte (21 palabras) que activa criterio en lugar de declararlo. Bajada formal completa como frase, no como etiqueta.',
+      en: 'A sharp title (22 words) that activates judgement rather than declaring it. A full-sentence subtitle, not a label.',
+    },
+  },
+  {
+    id: 'rejected-multi-forbidden',
+    format: 'headline',
+    status: 'rejected',
+    text: {
+      es: 'Diseñamos soluciones innovadoras y holísticas para empresas líderes que buscan un impacto disruptivo y revolucionario en su sector.',
+      en: 'We design innovative, holistic solutions for leading companies seeking disruptive impact and revolutionary momentum in their sector.',
+    },
+    violations: [
+      'forbidden:soluciones',
+      'forbidden:innovadoras',
+      'forbidden:holísticas',
+      'forbidden:líderes',
+      'forbidden:impacto',
+      'forbidden:disruptivo',
+      'forbidden:revolucionario',
+    ],
+    rationale: {
+      es: 'Acumula siete términos de la lista roja en una sola frase. Suena a folleto genérico de consultora de los años 2010.',
+      en: 'Stacks seven red-list terms in a single sentence. Reads like a generic consultancy brochure from the 2010s.',
+    },
+    rewrite: {
+      es: 'Diseñamos servicios para equipos que necesitan rediscutir las decisiones que su industria da por descontadas.',
+      en: 'We design services for teams that need to re-question the decisions their industry takes for granted.',
+    },
+  },
+  {
+    id: 'rejected-length-over',
+    format: 'lead',
+    status: 'rejected',
+    text: {
+      es: 'En interactīus diseñamos servicios pensando en cada detalle del recorrido completo del usuario desde el momento exacto en que descubre la marca hasta que decide volver, asegurando que cada paso intermedio refleje una atención obsesiva al criterio del cliente final, sin perder el espíritu de la marca.',
+      en: "At interactīus we design services thinking carefully about every detail of the user's complete journey from the precise moment they discover the brand until they decide to return, making sure each intermediate step reflects an obsessive attention to the final client's criterion without losing the spirit of the brand.",
+    },
+    violations: ['length:over_max'],
+    rationale: {
+      es: 'Una única frase de 47 palabras: rompe el techo de sentenceLength (22) y diluye la idea principal en aposiciones sucesivas.',
+      en: 'A single 48-word sentence: breaks the sentenceLength ceiling (22) and dilutes the core idea across successive appositions.',
+    },
+    rewrite: {
+      es: 'En interactīus diseñamos servicios cuidando cada paso del recorrido del usuario, desde el primer contacto hasta el retorno. Cada decisión intermedia refleja el criterio del cliente final sin diluir el carácter de la marca durante el proceso.',
+      en: "At interactīus we design services caring for every step of the user's journey, from first contact to return. Every intermediate decision reflects the final client's criterion without diluting the brand's character along the way.",
+    },
+  },
+  {
+    id: 'rejected-exclamation',
+    format: 'email-intro',
+    status: 'rejected',
+    text: {
+      es: '¡Bienvenido a interactīus! Creemos firmemente en transformar la manera en que las marcas conversan con sus audiencias…',
+      en: 'Welcome to interactīus! We firmly believe in transforming the way brands talk to their audiences…',
+    },
+    violations: ['punctuation:exclamation', 'punctuation:ellipsis'],
+    rationale: {
+      es: 'Combina exclamación y puntos suspensivos en dos frases. Rompe ambas reglas de puntuación y suena complaciente desde la primera palabra.',
+      en: 'Combines an exclamation mark and ellipsis in two sentences. Breaks both punctuation rules and reads complacent from the first word.',
+    },
+    rewrite: {
+      es: 'Damos la bienvenida a interactīus como un sistema de criterio antes que como un proyecto cerrado de diseño. Creemos que las marcas necesitan reaprender la manera en que conversan con quien decide su existencia.',
+      en: 'We welcome interactīus as a system of criterion before treating it as a finished design project. We believe brands need to relearn the way they speak with whoever decides their existence.',
+    },
+  },
+  {
+    id: 'rejected-aplauso',
+    format: 'social-post',
+    status: 'rejected',
+    text: {
+      es: 'Ha sido un absoluto honor acompañar a este increíble equipo que ha demostrado un compromiso ejemplar con cada hito del proyecto.',
+      en: 'It has been an absolute honour to accompany this incredible team that has shown exemplary commitment to every milestone of the project.',
+    },
+    violations: ['voice:aplauso'],
+    rationale: {
+      es: 'Cumple la lista roja y la longitud pero busca aplauso: "absoluto honor", "increíble", "ejemplar". Viola el principio de voz.',
+      en: 'Passes the red list and length but seeks applause: "absolute honour", "incredible", "exemplary". Violates the voice principle.',
+    },
+    rewrite: {
+      es: 'El equipo cumplió cada hito sin necesitar refuerzos retóricos, lo que hace que la lectura del proyecto sea más honesta.',
+      en: "The team hit every milestone without needing rhetorical reinforcement, which makes the project's reading more honest.",
+    },
+  },
+  {
+    id: 'rejected-consultora-generica',
+    format: 'lead',
+    status: 'rejected',
+    text: {
+      es: 'Acompañamos a organizaciones complejas en procesos de cambio cultural, desde la definición estratégica hasta la activación operativa en la estructura.',
+      en: 'We accompany complex organisations through cultural change processes, from strategic definition to operational activation at every level of the structure.',
+    },
+    violations: ['voice:generic-consultancy'],
+    rationale: {
+      es: 'El caso más peligroso: pasa todos los filtros automáticos pero podría ser de McKinsey. Léxico institucional vacío, cero posicionamiento.',
+      en: 'The most dangerous case: passes every automated filter but could be McKinsey. Empty institutional lexicon, zero positioning.',
+    },
+    rewrite: {
+      es: 'Trabajamos con organizaciones donde cualquier cambio cultural depende de quién en la estructura está dispuesto a defenderlo cuando incomode.',
+      en: 'We work with organisations where any cultural change depends on who in the structure will defend it when it becomes uncomfortable.',
+    },
+  },
+];
