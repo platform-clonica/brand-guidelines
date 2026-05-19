@@ -62,9 +62,6 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-7 py-6">
-        <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-dark/40 mb-4">
-          {t('menu.index')}
-        </div>
         <ul className="flex flex-col gap-[2px]">
           {sections.map((s) => {
             const isActive = active === s.id;
@@ -98,12 +95,21 @@ export function Sidebar() {
         </ul>
       </nav>
 
-      <div className="px-7 py-7 border-t border-dark/10">
+      <div className="px-7 py-7">
         <div className="font-serif font-normal text-[28px] leading-[1.05] text-dark tracking-tight">
           Brand<br />Guidelines<br />2026
         </div>
-        <div className="mt-3 font-mono text-[11px] text-dark/40 tracking-wide">
-          v1_05.26
+        <div className="mt-3 flex items-center gap-2 font-mono text-[11px] tracking-wide">
+          <span className="text-dark/40">v1_05.26</span>
+          <span aria-hidden className="text-dark/25">·</span>
+          <a
+            href="/brand-guidelines-2026.pdf"
+            download
+            className="text-dark/70 hover:text-dark transition-colors duration-300 ease-expo inline-flex items-center gap-1.5"
+          >
+            <span aria-hidden>↓</span>
+            <span>PDF</span>
+          </a>
         </div>
       </div>
     </aside>

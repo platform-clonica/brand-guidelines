@@ -127,7 +127,9 @@
   "universoVisual": {
     "title": "Visual universe",
     "lead": "Image treatment is grounded in the liminal: the space of transition and the concept of the In-between (the void with meaning).",
-    "body": "We prioritise conceptual photography that captures movement, ambiguity and pause. We don't seek the literal — we generate an atmosphere in which technical precision and artistic sensibility coexist. Images should act as extensions of negative space, letting the brand breathe and work 'in the in-between'."
+    "body": "We prioritise conceptual photography that captures movement, ambiguity and pause. We don't seek the literal — we generate an atmosphere in which technical precision and artistic sensibility coexist. Images should act as extensions of negative space, letting the brand breathe and work 'in the in-between'.",
+    "copyPromptLabel": "Copy technical image prompt for AI",
+    "copyPromptToast": "Technical image prompt copied"
   },
   "prompts": {
     "title": "AI prompts",

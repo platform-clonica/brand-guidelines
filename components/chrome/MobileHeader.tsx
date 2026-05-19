@@ -9,9 +9,12 @@ export function MobileHeader({ ariaOpen }: Props) {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-30 md:hidden h-14 px-5
-                 flex items-center justify-between
-                 bg-warm-light/85 backdrop-blur-sm border-b border-dark/10"
+      className={`fixed top-0 left-0 right-0 z-50 md:hidden h-14 px-5
+                  flex items-center justify-between
+                  transition-colors duration-300 ease-expo
+                  ${isOpen
+                    ? 'bg-pure-white border-b border-transparent'
+                    : 'bg-warm-light/85 backdrop-blur-sm border-b border-dark/10'}`}
     >
       <a href="#intro" aria-label="interactīus — al inicio">
         {/* eslint-disable-next-line @next/next/no-img-element */}

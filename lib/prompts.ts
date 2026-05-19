@@ -40,6 +40,38 @@ export function getTonePrompt(locale: Locale): string {
   return locale === 'en' ? TONE_PROMPT_EN : TONE_PROMPT_ES;
 }
 
+/* ─── Image prompt (sección Universo visual, botón "Copiar prompt técnico") ─── */
+
+const IMAGE_PROMPT_ES = `[DIRECTIVA DE IMAGEN CORPORATIVA INTERACTIUS]
+Modo operativo: Generar fotografía editorial premium de estilo analógico que proyecte una "actitud liminal" (espacios de transición, el "entre" las cosas). El tono visual debe ser sobrio, crítico y sugerente, huyendo por completo de la estética alegre y complaciente de los bancos de imágenes tradicionales.
+
+ESTILO TÉCNICO DE CÁMARA:
+- Tipo de película: Fotografía analógica de 35mm (grano fino perceptible, estilo cromático sutil de Kodak Portra 400H). Cero renders 3D o texturas digitales pulidas.
+- Óptica: Lente prime (35mm o 50mm). Profundidad de campo muy baja (fondo suavemente desenfocado).
+- Iluminación: Luz natural, lateral o difusa. El juego de luces y sombras debe generar tensión intelectual, evitando una iluminación de estudio homogénea o artificial.
+- Obturación: Velocidad de obturación lenta deliberada (1/15s - 1/60s). Se busca capturar un movimiento sutil, un barrido o una ligera estela de luz (ghosting) que materialice el concepto de cambio, transición y dinamismo vertical.
+
+COMPOSICIÓN EN EL MARGEN (CONCEPTO VISUAL):
+- Regla de Composición: Espacio negativo extremo. Fiel a operar en los márgenes, el sujeto u objeto principal debe estar desplazado hacia los bordes de la composición (regla de tercios llevada al límite), dejando el centro vacío o en suspenso.
+- Sujetos: Personas reales en entornos profesionales capturadas en momentos de profunda reflexión, análisis crítico u observación deliberada. Nunca posando, nunca mirando a cámara, nunca sonriendo de forma corporativa.`;
+
+const IMAGE_PROMPT_EN = `[INTERACTIUS CORPORATE IMAGE DIRECTIVE]
+Operating mode: Generate premium editorial photography in an analogue style that projects a "liminal attitude" (transition spaces, the "in-between" of things). The visual tone must be sober, critical and suggestive, completely avoiding the cheerful, complacent aesthetic of traditional stock-image libraries.
+
+CAMERA TECHNICAL STYLE:
+- Film type: 35mm analogue photography (perceptible fine grain, subtle chromatic style of Kodak Portra 400H). Zero 3D renders or polished digital textures.
+- Optics: Prime lens (35mm or 50mm). Very shallow depth of field (background softly out of focus).
+- Lighting: Natural, side or diffused light. The interplay of light and shadow must generate intellectual tension, avoiding homogeneous or artificial studio lighting.
+- Shutter: Deliberately slow shutter speed (1/15s – 1/60s). The aim is to capture subtle movement, a sweep or a slight light trail (ghosting) that materialises the concept of change, transition and vertical dynamism.
+
+COMPOSITION AT THE MARGIN (VISUAL CONCEPT):
+- Composition rule: Extreme negative space. Faithful to operating at the margins, the main subject or object must be displaced toward the edges of the composition (rule of thirds pushed to the limit), leaving the centre empty or in suspense.
+- Subjects: Real people in professional environments captured in moments of deep reflection, critical analysis or deliberate observation. Never posing, never looking at the camera, never smiling in a corporate manner.`;
+
+export function getImagePrompt(locale: Locale): string {
+  return locale === 'en' ? IMAGE_PROMPT_EN : IMAGE_PROMPT_ES;
+}
+
 /* ─── Master prompt: capa dura completa para ingesta IA ───
    Esta es la pieza que cualquier LLM (NotebookLM, ChatGPT, Claude Projects)
    debería absorber al pasarle la URL del manual. Mezcla wordmark, paleta,
