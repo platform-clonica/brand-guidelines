@@ -5,7 +5,7 @@ export async function SectionIntro() {
   return (
     <section
       id="intro"
-      className="min-h-dvh w-full bg-warm-light text-dark flex flex-col"
+      className="min-h-lvh w-full bg-warm-light text-dark flex flex-col"
     >
       <div className="grid grid-cols-12 gap-6 px-6 sm:px-10 lg:px-16 pt-20 sm:pt-24 lg:pt-28">
         <div className="col-span-12 lg:col-span-12 flex flex-col gap-6">

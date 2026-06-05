@@ -8,11 +8,8 @@ type Props = {
   downloadLabel: string;
 };
 
-const ALPHABET_LINES = [
-  'Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj',
-  'Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt',
-  'Uu Vv Ww Xx Yy Zz 0123456789',
-];
+const ALPHABET =
+  'Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz 0123456789';
 
 export function TypeSpecimen({ family, role, description, weightsNote, fontClass, downloadHref, downloadLabel }: Props) {
   return (
@@ -34,11 +31,9 @@ export function TypeSpecimen({ family, role, description, weightsNote, fontClass
         </p>
         <p className="font-mono text-caption text-dark/50 mt-1">{weightsNote}</p>
       </div>
-      <div className={`${fontClass} text-[clamp(1.5rem,1rem+2vw,2.5rem)] leading-[1.4] tracking-tight`}>
-        {ALPHABET_LINES.map((line) => (
-          <div key={line}>{line}</div>
-        ))}
-      </div>
+      <p className={`${fontClass} text-[clamp(1.5rem,1rem+2vw,2.5rem)] leading-[1.4] tracking-tight max-w-[30ch]`}>
+        {ALPHABET}
+      </p>
       <a
         href={downloadHref}
         target="_blank"

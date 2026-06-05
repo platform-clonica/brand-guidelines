@@ -38,7 +38,7 @@ const SAMPLES: Record<string, React.ReactNode> = {
     </div>
   ),
   '06': (
-    <div className="font-mono text-[26px] leading-none">
+    <div className="font-mono text-[clamp(12px,calc(7vw-13px),26px)] leading-none whitespace-nowrap">
       <span>inter</span>
       <span className="text-bordeaux">act</span>
       <span>īus</span>

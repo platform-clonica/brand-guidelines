@@ -18,7 +18,20 @@ export function CopyButton({ value, label, className, children, toastMessage }: 
 
   const handle = async () => {
     try {
-      await navigator.clipboard.writeText(value);
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        // Fallback para contextos no seguros (http en LAN durante desarrollo)
+        const ta = document.createElement('textarea');
+        ta.value = value;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
       show(toastMessage ?? `${t('copied')} ${value}`);
     } catch {
       show('Error');

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 
@@ -31,6 +31,22 @@ export function MenuOverlay() {
     setTimeout(() => scrollToSection(id), 240);
   };
 
+  // Fade inferior: visible mientras queden ítems ocultos bajo el borde del scroll
+  const navRef = useRef<HTMLElement>(null);
+  const [atEnd, setAtEnd] = useState(false);
+  const checkScrollEnd = useCallback(() => {
+    const el = navRef.current;
+    if (!el) return;
+    setAtEnd(el.scrollTop + el.clientHeight >= el.scrollHeight - 4);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    // tras el mount del drawer, evaluar si la lista desborda
+    const raf = requestAnimationFrame(checkScrollEnd);
+    return () => cancelAnimationFrame(raf);
+  }, [isOpen, checkScrollEnd]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -46,16 +62,21 @@ export function MenuOverlay() {
           className="fixed left-0 right-0 top-14 z-40 h-[calc(100dvh-3.5rem)]
                      flex flex-col bg-pure-white md:hidden"
         >
-          <div className="px-6 pt-6 pb-5 border-b border-dark/10">
-            <div className="font-serif font-normal text-[20px] leading-[1.05] text-dark tracking-tight">
+          <div className="px-6 pt-0 pb-3.5 border-b border-dark/10">
+            <div className="font-serif font-normal text-[16px] leading-[1] text-dark tracking-tight">
               Brand Guidelines 2026
             </div>
-            <div className="mt-4">
+            <div className="mt-2.5">
               <LocaleSwitch />
             </div>
           </div>
 
-          <nav className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="relative flex-1 min-h-0">
+            <nav
+              ref={navRef}
+              onScroll={checkScrollEnd}
+              className="h-full overflow-y-auto px-6 py-4"
+            >
             <ul className="flex flex-col gap-[2px]">
               {sections.map((s) => (
                 <li key={s.id}>
@@ -72,14 +93,20 @@ export function MenuOverlay() {
                   </button>
                 </li>
               ))}
-            </ul>
-          </nav>
+              </ul>
+            </nav>
+            <div
+              aria-hidden
+              className={`pointer-events-none absolute inset-x-0 bottom-0 h-12
+                          bg-gradient-to-t from-pure-white to-transparent
+                          transition-opacity duration-300 ease-expo
+                          ${atEnd ? 'opacity-0' : 'opacity-100'}`}
+            />
+          </div>
 
-          <div className="px-6 py-5 border-t border-dark/10">
-            <div className="font-mono text-[11px] tracking-wide text-dark/40">
-              v1_05.26
-            </div>
-            <div className="mt-1.5 flex items-center gap-x-2 font-mono text-[11px] tracking-wide">
+          <div className="px-6 py-3.5 border-t border-dark/10">
+            <div className="flex items-baseline gap-x-3 font-mono text-[11px] tracking-wide">
+              <span className="text-dark/40 mr-auto">v1_05.26</span>
               <a
                 href="/Brand-Kit.zip"
                 download

@@ -16,13 +16,13 @@ export function MobileHeader({ ariaOpen }: Props) {
                     ? 'bg-pure-white border-b border-transparent'
                     : 'bg-warm-light/85 backdrop-blur-sm border-b border-dark/10'}`}
     >
-      <a href="#intro" aria-label="interactīus — al inicio">
+      <a href="#intro" aria-label="interactīus — al inicio" className="ml-[5px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/logo/interactius-positivo.svg"
           alt=""
           aria-hidden
-          className="h-[14px] w-auto"
+          className="h-[18px] w-auto"
         />
       </a>
       <button
