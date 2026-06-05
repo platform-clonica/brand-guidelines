@@ -120,6 +120,15 @@ export function Sidebar() {
             <span aria-hidden>↓</span>
             <span>PDF</span>
           </a>
+          <span aria-hidden className="text-dark/25">·</span>
+          <a
+            href="/AI-Kit.zip"
+            download
+            className="text-dark/70 hover:text-dark transition-colors duration-300 ease-expo inline-flex items-center gap-2"
+          >
+            <span aria-hidden>↓</span>
+            <span>AI KIT</span>
+          </a>
         </div>
       </div>
     </aside>
