@@ -63,7 +63,7 @@
     "title": "Concepto de marca",
     "part1Title": "Construcción y Función Fonética",
     "part1P1": "La morfología de la palabra exige que la acentuación y el peso rítmico recaigan de forma estricta en la segunda vocal débil (Interactíus). Para contrarrestar la inercia natural del lector de desplazar el acento hacia la sílaba central, el logotipo interviene la tipografía mediante la inclusión de un macrón sobre la última i.",
-    "macronDef": "/ˈmakrɒn/ una marca escrita o impresa (¯) que se utiliza para indicar una vocal larga en algunos idiomas, o una vocal acentuada en verso.",
+    "macronDef": "/'makron/ una marca escrita o impresa (¯) que se utiliza para indicar una vocal larga en algunos idiomas, o una vocal acentuada en verso.",
     "part1P2": "Este elemento gráfico no es ornamental; actúa como un regulador fonético que fija la cadencia correcta y desplaza deliberadamente el eje de atención visual hacia el margen de la palabra.",
     "part2Title": "Actitud liminal y Dinamismo vertical",
     "part2P1": "La elongación del punto de la i para formar el macrón rompe la línea superior de la tipografía y define el comportamiento del sistema. Este estiramiento vertical delimita la zona de transición —el espacio liminal— y se establece como el vector primario que rige los movimientos, transiciones y la carga de elementos en la interfaz digital, convirtiendo una corrección acústica en la firma visual de la marca."
@@ -85,7 +85,9 @@
     "downloadPositive": "Descargar logo positivo",
     "downloadNegative": "Descargar logo negativo",
     "downloadIsoPositive": "Descargar isotipo positivo",
-    "downloadIsoNegative": "Descargar isotipo negativo"
+    "downloadIsoNegative": "Descargar isotipo negativo",
+    "isotipoConceptTitle": "El Isotipo como <b>El encuentro</b>",
+    "isotipoConceptBody": "Dos masas que se aproximan. La línea que divide sin separar, los cuadrados representan la presencia mínima en el lugar liminal."
   },
   "areaReserva": {
     "title": "Área de reserva",
@@ -156,7 +158,8 @@
     "lead": "Esta sección recoge mockups que muestran la marca aplicada sobre piezas reales del sistema de identidad.",
     "captionMovil": "Aplicación digital · móvil",
     "captionTarjetas": "Tarjetas de visita",
-    "captionFolder": "Folder editorial"
+    "captionFolder": "Folder editorial",
+    "redesLabel": "Redes sociales"
   },
   "movimiento": {
     "title": "Movimiento",

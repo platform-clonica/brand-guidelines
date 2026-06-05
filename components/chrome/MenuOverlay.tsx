@@ -46,8 +46,13 @@ export function MenuOverlay() {
           className="fixed left-0 right-0 top-14 z-40 h-[calc(100dvh-3.5rem)]
                      flex flex-col bg-pure-white md:hidden"
         >
-          <div className="px-6 pt-7 pb-5">
-            <LocaleSwitch />
+          <div className="px-6 pt-6 pb-5 border-b border-dark/10">
+            <div className="font-serif font-normal text-[20px] leading-[1.05] text-dark tracking-tight">
+              Brand Guidelines 2026
+            </div>
+            <div className="mt-4">
+              <LocaleSwitch />
+            </div>
           </div>
 
           <nav className="flex-1 overflow-y-auto px-6 py-5">
@@ -70,11 +75,8 @@ export function MenuOverlay() {
             </ul>
           </nav>
 
-          <div className="px-6 py-7">
-            <div className="font-serif font-normal text-[20px] leading-[1.05] text-dark tracking-tight">
-              Brand<br />Guidelines<br />2026
-            </div>
-            <div className="mt-3 font-mono text-[11px] tracking-wide text-dark/40">
+          <div className="px-6 py-5 border-t border-dark/10">
+            <div className="font-mono text-[11px] tracking-wide text-dark/40">
               v1_05.26
             </div>
             <div className="mt-1.5 flex items-center gap-x-2 font-mono text-[11px] tracking-wide">

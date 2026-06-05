@@ -26,9 +26,15 @@ export const metadata: Metadata = {
     title: 'Interactius · Brand Guidelines 2026',
     description: 'Living, AI-ready brand guidelines for Interactius.',
     type: 'website',
+    images: [{ url: '/og-default.png', width: 1200, height: 630 }],
   },
   icons: {
-    icon: '/logo/isotipo-positivo.svg',
+    icon: [
+      { url: '/logo/isotipo-positivo.svg', type: 'image/svg+xml' },
+      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
   },
 };
 

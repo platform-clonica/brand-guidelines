@@ -63,7 +63,7 @@
     "title": "Concepte de marca",
     "part1Title": "Construcció i Funció Fonètica",
     "part1P1": "La morfologia de la paraula exigeix que l'accentuació i el pes rítmic recaiguin de manera estricta en la segona vocal feble (Interactíus). Per contrarestar la inèrcia natural del lector de desplaçar l'accent cap a la síl·laba central, el logotip intervé la tipografia mitjançant la inclusió d'un macró sobre la última i.",
-    "macronDef": "/ˈmakrɒn/ una marca escrita o impresa (¯) que es fa servir per indicar una vocal llarga en alguns idiomes, o una vocal accentuada en vers.",
+    "macronDef": "/'makron/ una marca escrita o impresa (¯) que es fa servir per indicar una vocal llarga en alguns idiomes, o una vocal accentuada en vers.",
     "part1P2": "Aquest element gràfic no és ornamental; actua com un regulador fonètic que fixa la cadència correcta i desplaça deliberadament l'eix d'atenció visual cap al marge de la paraula.",
     "part2Title": "Actitud liminal i Dinamisme vertical",
     "part2P1": "L'elongació del punt de la i per formar el macró trenca la línia superior de la tipografia i defineix el comportament del sistema. Aquest estirament vertical delimita la zona de transició —l'espai liminal— i s'estableix com el vector primari que regeix els moviments, transicions i la càrrega d'elements a la interfície digital, convertint una correcció acústica en la signatura visual de la marca."
@@ -85,7 +85,9 @@
     "downloadPositive": "Descarregar logo positiu",
     "downloadNegative": "Descarregar logo negatiu",
     "downloadIsoPositive": "Descarregar isotip positiu",
-    "downloadIsoNegative": "Descarregar isotip negatiu"
+    "downloadIsoNegative": "Descarregar isotip negatiu",
+    "isotipoConceptTitle": "L'isotip com <b>La trobada</b>",
+    "isotipoConceptBody": "Dues masses que s'aproximen. La línia que divideix sense separar, els quadrats representen la presència mínima al lloc liminal."
   },
   "areaReserva": {
     "title": "Àrea de reserva",
@@ -156,7 +158,8 @@
     "lead": "Aquesta secció recull mockups que mostren la marca aplicada sobre peces reals del sistema d'identitat.",
     "captionMovil": "Aplicació digital · mòbil",
     "captionTarjetas": "Targetes de visita",
-    "captionFolder": "Folder editorial"
+    "captionFolder": "Folder editorial",
+    "redesLabel": "Xarxes socials"
   },
   "movimiento": {
     "title": "Moviment",

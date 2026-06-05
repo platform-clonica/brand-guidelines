@@ -14,6 +14,8 @@ export const colorsBase: ColorToken[] = [
   { name: 'Grey',       hex: '#E8E6E3', rgb: '232,230,227', cmyk: '0,1,2,9'   },
   { name: 'Warm Light', hex: '#F5F2ED', rgb: '245,242,237', cmyk: '0,1,3,4'   },
   { name: 'Warm Dark',  hex: '#E0DAD2', rgb: '224,218,210', cmyk: '0,3,6,12'  },
+  { name: 'Ash',        hex: '#75706B', rgb: '117,112,107', cmyk: '0,4,9,54'  },
+  { name: 'Ash Dark',   hex: '#46433F', rgb: '70,67,63',    cmyk: '0,4,10,73' },
 ];
 
 export const colorsAccent: ColorToken[] = [

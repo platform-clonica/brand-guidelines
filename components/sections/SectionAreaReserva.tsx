@@ -11,7 +11,7 @@ export async function SectionAreaReserva() {
         <img
           src="/area-reserva/space-area.svg"
           alt="Diagrama del área de reserva del logotipo Interactius"
-          className="block w-1/2 h-auto"
+          className="block w-full sm:w-1/2 h-auto"
         />
 
         <div className="grid grid-cols-12 gap-6 lg:gap-10">

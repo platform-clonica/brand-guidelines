@@ -60,6 +60,40 @@ export async function SectionAplicaciones() {
           </figure>
         </div>
       </div>
+
+      {/* Redes sociales — capturas reales enmarcadas en chrome de navegador */}
+      <div className="mt-16 sm:mt-24">
+        <h3 className="font-mono text-caption uppercase tracking-[0.08em] text-warm-light/60 mb-6">
+          {t('redesLabel')}
+        </h3>
+        <div className="flex flex-col gap-8 sm:gap-10">
+          {[
+            { src: '/aplicaciones/redes-linkedin.png', url: 'linkedin.com/company/interactius', alt: 'LinkedIn' },
+            { src: '/aplicaciones/redes-youtube.png', url: 'youtube.com/@interactius', alt: 'YouTube' },
+            { src: '/aplicaciones/redes-instagram.png', url: 'instagram.com/interactius', alt: 'Instagram' },
+          ].map((red) => (
+            <figure key={red.url} className="m-0 rounded-[6px] overflow-hidden border border-warm-light/15">
+              <div className="flex items-center gap-3 px-4 py-2.5 border-b border-warm-light/15">
+                <div className="flex gap-1.5" aria-hidden>
+                  <span className="w-2 h-2 rounded-full bg-warm-light/25" />
+                  <span className="w-2 h-2 rounded-full bg-warm-light/25" />
+                  <span className="w-2 h-2 rounded-full bg-warm-light/25" />
+                </div>
+                <a
+                  href={`https://www.${red.url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-caption text-warm-light/55 hover:text-warm-light transition-colors duration-300 ease-expo hover-wipe-underline w-fit"
+                >
+                  {red.url}
+                </a>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={red.src} alt={red.alt} className="block w-full h-auto" />
+            </figure>
+          ))}
+        </div>
+      </div>
     </SectionShell>
   );
 }

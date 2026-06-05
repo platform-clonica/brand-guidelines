@@ -24,30 +24,6 @@ export async function SectionLogo() {
         />
       </div>
 
-      <div className="mt-16 sm:mt-24">
-        <h3 className="font-mono text-caption uppercase tracking-[0.08em] text-dark/60 mb-6">
-          {t('isotipo')}
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-          <LogoStage
-            src="/logo/isotipo-positivo.svg"
-            fileName="isotipo-positivo.svg"
-            bg="light"
-            shape="square"
-            caption={t('positive')}
-            downloadLabel={t('downloadIsoPositive')}
-          />
-          <LogoStage
-            src="/logo/isotipo-negativo.svg"
-            fileName="isotipo-negativo.svg"
-            bg="dark"
-            shape="square"
-            caption={t('negative')}
-            downloadLabel={t('downloadIsoNegative')}
-          />
-        </div>
-      </div>
-
       {/* Vertical use — uso especial permitido, refuerza concepto liminal */}
       <div className="mt-16 sm:mt-24">
         <div className="font-mono text-caption uppercase tracking-[0.08em] text-dark/60 mb-6">
@@ -93,6 +69,42 @@ export async function SectionLogo() {
               </p>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-16 sm:mt-24">
+        <h3 className="font-mono text-caption uppercase tracking-[0.08em] text-dark/60 mb-6">
+          {t('isotipo')}
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+          <LogoStage
+            src="/logo/isotipo-positivo.svg"
+            fileName="isotipo-positivo.svg"
+            bg="light"
+            shape="square"
+            caption={t('positive')}
+            downloadLabel={t('downloadIsoPositive')}
+          />
+          <LogoStage
+            src="/logo/isotipo-negativo.svg"
+            fileName="isotipo-negativo.svg"
+            bg="dark"
+            shape="square"
+            caption={t('negative')}
+            downloadLabel={t('downloadIsoNegative')}
+          />
+        </div>
+
+        {/* Concepto del isotipo */}
+        <div className="mt-8 flex flex-col gap-2 max-w-[640px]">
+          <p className="font-mono text-body-sm text-dark leading-[1.7]">
+            {t.rich('isotipoConceptTitle', {
+              b: (chunks) => <strong className="font-semibold">{chunks}</strong>,
+            })}
+          </p>
+          <p className="font-mono text-body-sm text-dark leading-[1.7]">
+            {t('isotipoConceptBody')}
+          </p>
         </div>
       </div>
     </SectionShell>

@@ -34,16 +34,16 @@ export async function SectionUniversoVisual() {
       <div className="grid grid-cols-12 gap-3 sm:gap-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/universo/universo-01.jpg" alt="" aria-hidden
-             className="col-span-6 lg:col-span-4 aspect-[3/4] object-cover w-full h-full" />
+             className="col-span-6 lg:col-span-5 aspect-[3/4] object-cover w-full h-full" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/universo/universo-02.jpg" alt="" aria-hidden
-             className="col-span-6 lg:col-span-5 aspect-[3/2] object-cover w-full h-full" />
+             className="col-span-6 lg:col-span-7 aspect-[3/2] object-cover w-full h-full" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/universo/universo-03.jpg" alt="" aria-hidden
-             className="col-span-6 lg:col-span-3 aspect-square object-cover w-full h-full" />
+             className="col-span-6 lg:col-span-7 aspect-[16/10] object-cover w-full h-full" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/universo/universo-04.jpg" alt="" aria-hidden
-             className="col-span-6 lg:col-span-4 aspect-[2/3] object-cover w-full h-full lg:col-start-9" />
+             className="col-span-6 lg:col-span-5 aspect-[3/4] object-cover w-full h-full" />
       </div>
     </SectionShell>
   );

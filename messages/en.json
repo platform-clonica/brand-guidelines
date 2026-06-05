@@ -63,7 +63,7 @@
     "title": "Brand concept",
     "part1Title": "Construction & Phonetic Function",
     "part1P1": "The word's morphology demands that the stress and rhythmic weight fall strictly on the second weak vowel (Interactíus). To counter the reader's natural inertia of shifting the stress toward the central syllable, the logotype intervenes the typography by inserting a macron over the final i.",
-    "macronDef": "/ˈmakrɒn/ a written or printed mark (¯) used to indicate a long vowel in some languages, or a stressed vowel in verse.",
+    "macronDef": "/'makron/ a written or printed mark (¯) used to indicate a long vowel in some languages, or a stressed vowel in verse.",
     "part1P2": "This graphic element is not ornamental; it acts as a phonetic regulator that locks in the correct cadence and deliberately shifts the visual axis of attention toward the margin of the word.",
     "part2Title": "Liminal attitude & Vertical Dynamism",
     "part2P1": "The elongation of the i's dot to form the macron breaks the typography's upper line and defines the system's behaviour. This vertical stretch delimits the transition zone — the liminal space — and is established as the primary vector that governs movements, transitions and element loading in the digital interface, turning an acoustic correction into the visual signature of the brand."
@@ -85,7 +85,9 @@
     "downloadPositive": "Download positive logo",
     "downloadNegative": "Download negative logo",
     "downloadIsoPositive": "Download positive brand mark",
-    "downloadIsoNegative": "Download negative brand mark"
+    "downloadIsoNegative": "Download negative brand mark",
+    "isotipoConceptTitle": "The isotype as <b>The encounter</b>",
+    "isotipoConceptBody": "Two masses drawing closer. The line that divides without separating, the squares represent the minimal presence in the liminal place."
   },
   "areaReserva": {
     "title": "Clear space",
@@ -156,7 +158,8 @@
     "lead": "This section gathers mockups showing the brand applied to real pieces of the identity system.",
     "captionMovil": "Digital application · mobile",
     "captionTarjetas": "Business cards",
-    "captionFolder": "Editorial folder"
+    "captionFolder": "Editorial folder",
+    "redesLabel": "Social media"
   },
   "movimiento": {
     "title": "Motion",
