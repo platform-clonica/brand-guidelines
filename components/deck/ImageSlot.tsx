@@ -1,17 +1,24 @@
 'use client';
 import { useState } from 'react';
 import type { ImageRef } from '@/lib/deck/types';
+import { optimizeImage } from '@/lib/deck/optimizeImage';
 
-/* Editable image slot: click → pick a file from disk → replace (object URL, local). */
+/* Editable image slot: click → pick a file from disk → downscale/recompress → replace.
+   Optimising on upload keeps the printed PDF light. */
 export function ImageSlot({ image, className }: { image?: ImageRef; className?: string }) {
   const [src, setSrc] = useState<string | undefined>(image?.src);
   const pick = () => {
     const inp = document.createElement('input');
     inp.type = 'file';
     inp.accept = 'image/*';
-    inp.onchange = () => {
+    inp.onchange = async () => {
       const f = inp.files?.[0];
-      if (f) setSrc(URL.createObjectURL(f));
+      if (!f) return;
+      try {
+        setSrc(await optimizeImage(f));
+      } catch {
+        setSrc(URL.createObjectURL(f));
+      }
     };
     inp.click();
   };
