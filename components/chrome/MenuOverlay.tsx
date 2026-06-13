@@ -8,7 +8,7 @@ import { useMenu } from '@/lib/store/menu';
 import { scrollToSection } from '@/lib/hooks/useScrollToSection';
 import { sections } from '@/lib/sections';
 import type { Locale } from '@/lib/i18n/routing';
-import { Link } from '@/lib/i18n/routing';
+import { Link, usePathname } from '@/lib/i18n/routing';
 import { LocaleSwitch } from './LocaleSwitch';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -18,6 +18,7 @@ export function MenuOverlay() {
   const { isOpen, close } = useMenu();
   const t = useTranslations();
   const locale = useLocale() as Locale;
+  const onHome = usePathname() === '/';
 
   useEffect(() => {
     if (!isOpen) return;
@@ -80,21 +81,24 @@ export function MenuOverlay() {
               className="h-full overflow-y-auto px-6 py-4"
             >
             <ul className="flex flex-col gap-[2px]">
-              {sections.map((s) => (
-                <li key={s.id}>
-                  <button
-                    type="button"
-                    onClick={() => handleClick(s.id)}
-                    className="group w-full flex items-baseline gap-3 py-[8px]
-                               text-left font-mono text-[13px] leading-snug
-                               text-dark/70 hover:text-dark
-                               transition-colors duration-300 ease-expo"
-                  >
+              {sections.map((s) => {
+                const cls = `group w-full flex items-baseline gap-3 py-[8px] text-left font-mono text-[13px] leading-snug text-dark/70 hover:text-dark transition-colors duration-300 ease-expo`;
+                const inner = (
+                  <>
                     <span className="tabular-nums text-[10px] text-dark/35">{s.num}/</span>
                     <span className="flex-1">{s.label[locale]}</span>
-                  </button>
-                </li>
-              ))}
+                  </>
+                );
+                return (
+                  <li key={s.id}>
+                    {onHome ? (
+                      <button type="button" onClick={() => handleClick(s.id)} className={cls}>{inner}</button>
+                    ) : (
+                      <Link href={`/#${s.id}`} onClick={() => close()} className={cls}>{inner}</Link>
+                    )}
+                  </li>
+                );
+              })}
               <li className="mt-3 pt-3 border-t border-dark/10">
                 <Link
                   href="/presentaciones"

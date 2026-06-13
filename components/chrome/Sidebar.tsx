@@ -15,6 +15,7 @@ export function Sidebar() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
   const pathname = usePathname();
+  const onHome = pathname === '/';
   const onDeck = pathname === '/presentaciones';
   const [active, setActive] = useState<string>('intro');
 
@@ -45,22 +46,25 @@ export function Sidebar() {
       aria-label={t('menu.index')}
     >
       <div className="px-7 pt-8 pb-5 border-b border-dark/10">
-        <a
-          href="#intro"
-          onClick={(e) => {
-            e.preventDefault();
-            scrollToSection('intro');
-          }}
-          className="block hover:opacity-80 transition-opacity duration-300 ease-expo"
-          aria-label="interactīus"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo/interactius-positivo.svg"
-            alt="interactīus"
-            className="block w-[180px] h-auto"
-          />
-        </a>
+        {onHome ? (
+          <a
+            href="#intro"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToSection('intro');
+            }}
+            className="block hover:opacity-80 transition-opacity duration-300 ease-expo"
+            aria-label="interactīus"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo/interactius-positivo.svg" alt="interactīus" className="block w-[180px] h-auto" />
+          </a>
+        ) : (
+          <Link href="/" className="block hover:opacity-80 transition-opacity duration-300 ease-expo" aria-label="interactīus">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo/interactius-positivo.svg" alt="interactīus" className="block w-[180px] h-auto" />
+          </Link>
+        )}
         <div className="mt-4">
           <LocaleSwitch />
         </div>
@@ -69,31 +73,29 @@ export function Sidebar() {
       <nav className="flex-1 overflow-y-auto px-7 py-6">
         <ul className="flex flex-col gap-[2px]">
           {sections.map((s) => {
-            const isActive = active === s.id;
+            const isActive = onHome && active === s.id;
+            const cls = `group w-full flex items-baseline gap-3 py-[7px]
+                         text-left font-mono text-[12px] leading-snug
+                         transition-colors duration-300 ease-expo
+                         ${isActive ? 'text-dark' : 'text-dark/55 hover:text-dark'}`;
+            const inner = (
+              <>
+                <span className={`tabular-nums text-[10px] transition-colors duration-300 ease-expo ${isActive ? 'text-dark/70' : 'text-dark/35'}`}>
+                  {s.num}/
+                </span>
+                <span className="flex-1">{s.label[locale]}</span>
+                <span aria-hidden className={`block w-1 h-1 rounded-full bg-dark transition-opacity duration-300 ease-expo ${isActive ? 'opacity-100' : 'opacity-0'}`} />
+              </>
+            );
             return (
               <li key={s.id}>
-                <button
-                  type="button"
-                  onClick={() => scrollToSection(s.id)}
-                  className={`group w-full flex items-baseline gap-3 py-[7px]
-                              text-left font-mono text-[12px] leading-snug
-                              transition-colors duration-300 ease-expo
-                              ${isActive ? 'text-dark' : 'text-dark/55 hover:text-dark'}`}
-                  aria-current={isActive ? 'true' : undefined}
-                >
-                  <span
-                    className={`tabular-nums text-[10px] transition-colors duration-300 ease-expo
-                                ${isActive ? 'text-dark/70' : 'text-dark/35'}`}
-                  >
-                    {s.num}/
-                  </span>
-                  <span className="flex-1">{s.label[locale]}</span>
-                  <span
-                    aria-hidden
-                    className={`block w-1 h-1 rounded-full bg-dark transition-opacity duration-300 ease-expo
-                                ${isActive ? 'opacity-100' : 'opacity-0'}`}
-                  />
-                </button>
+                {onHome ? (
+                  <button type="button" onClick={() => scrollToSection(s.id)} className={cls} aria-current={isActive ? 'true' : undefined}>
+                    {inner}
+                  </button>
+                ) : (
+                  <Link href={`/#${s.id}`} className={cls}>{inner}</Link>
+                )}
               </li>
             );
           })}
