@@ -20,6 +20,7 @@ const CONDICIONES = [
 export function Budget({ page }: { page: number }) {
   return (
     <div className="frame theme-light budget">
+      <div className="whitehalf" />
       <Chrome page={page} />
       <div className="title">Presupuesto</div>
       <div className="table">

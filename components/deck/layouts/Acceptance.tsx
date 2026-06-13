@@ -4,11 +4,13 @@ import { Chrome } from '../Chrome';
 export function Acceptance({ page }: { page: number }) {
   return (
     <div className="frame theme-light accept">
+      <div className="whitehalf" />
       <Chrome page={page} />
       <div className="title">Aprobación del presupuesto</div>
 
       <div className="sign">
-        <div className="sigph" aria-hidden />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="sig" src="/presentaciones/sign.png" alt="Firma" />
         <div className="who">
           CARLOS RUIZ RE{'\n'}co-CEO / Administrador{'\n'}Happy User Experiences S.L.{'\n'}B65914848{'\n'}Pau Claris 100, 2ª Planta 08009{'\n'}Barcelona
         </div>
