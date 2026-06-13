@@ -140,6 +140,28 @@
 /* Fixed page · Clients (ref p.41) — image carries its own category labels; contained, not full-bleed */
 .ix-deck .clients .logos{position:absolute; left:var(--ml); top:78px; width:calc(1280px - var(--ml) - var(--mr)); height:auto;}
 
+/* Fixed page · Budget (ref p.42) */
+.ix-deck .budget .title{position:absolute; left:var(--ml); top:78px; font-family:var(--serif); font-weight:400; font-size:56px; line-height:1;}
+.ix-deck .budget .table{position:absolute; left:var(--ml); bottom:92px; width:470px;}
+.ix-deck .budget .row{display:flex; justify-content:space-between; align-items:baseline; padding:15px 0; border-bottom:1px solid rgba(28,26,23,.16); font:400 14px/1 var(--mono); color:var(--ash-dark);}
+.ix-deck .budget .row.total{font-weight:600; color:var(--dark); border-bottom:none; padding-top:18px;}
+.ix-deck .budget .amt{font-variant-numeric:tabular-nums;}
+.ix-deck .budget .cond{position:absolute; left:620px; right:var(--mr); top:150px;}
+.ix-deck .budget .cond h3{font-family:var(--serif); font-weight:400; font-size:26px; line-height:1; margin-bottom:24px; color:var(--dark);}
+.ix-deck .budget .cond .item{display:grid; grid-template-columns:20px 1fr; gap:8px; margin-bottom:15px;}
+.ix-deck .budget .cond .dia{font-size:10px; line-height:1.7; color:var(--dark);}
+.ix-deck .budget .cond .body{font:400 12px/1.55 var(--mono); color:var(--ash-dark);}
+
+/* Fixed page · Acceptance / signature (ref p.43) */
+.ix-deck .accept .title{position:absolute; left:var(--ml); top:64px; font-family:var(--serif); font-weight:400; font-size:48px; line-height:1.1; max-width:330px;}
+.ix-deck .accept .sign{position:absolute; left:560px; top:200px;}
+.ix-deck .accept .sigph{width:200px; height:96px; border-bottom:1px solid rgba(28,26,23,.28); margin-bottom:18px;}
+.ix-deck .accept .who{font:600 11px/1.55 var(--mono); color:var(--dark); white-space:pre-line;}
+.ix-deck .accept .lines{position:absolute; left:1000px; top:250px; display:flex; flex-direction:column; gap:22px;}
+.ix-deck .accept .lines span{display:block; width:160px; border-bottom:1px solid rgba(28,26,23,.35);}
+.ix-deck .accept .note{position:absolute; left:var(--ml); bottom:64px; width:330px; font:400 12px/1.6 var(--mono); color:var(--ash-dark);}
+.ix-deck .accept .cta{position:absolute; right:130px; bottom:62px; font-family:var(--serif); font-weight:400; font-size:30px; color:var(--dark);}
+
 /* Print: one 16:9 slide per page, deck only (no site chrome). */
 @media print{
   @page{ size: 1280px 720px; margin:0; }

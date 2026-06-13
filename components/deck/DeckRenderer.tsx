@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react';
 import './deck.css';
 import type { Deck, Slide } from '@/lib/deck/types';
-import { Cover, Statement, Bullets, Columns, Split, Gantt, Closing, Paragraph, Manifesto, Team, Clients } from './layouts';
+import { Cover, Statement, Bullets, Columns, Split, Gantt, Closing, Paragraph, Manifesto, Team, Clients, Budget, Acceptance } from './layouts';
 
 function renderSlide(slide: Slide, page: number) {
   switch (slide.kind) {
@@ -17,6 +17,8 @@ function renderSlide(slide: Slide, page: number) {
     case 'manifesto': return <Manifesto page={page} />;
     case 'team': return <Team page={page} />;
     case 'clients': return <Clients page={page} />;
+    case 'budget': return <Budget page={page} />;
+    case 'acceptance': return <Acceptance page={page} />;
   }
 }
 

@@ -17,7 +17,9 @@ export type Slide =
   // Fixed brand pages (auto-inserted for commercial proposals; content is boilerplate).
   | { kind: 'manifesto'; theme: Theme }
   | { kind: 'team'; theme: Theme }
-  | { kind: 'clients'; theme: Theme };
+  | { kind: 'clients'; theme: Theme }
+  | { kind: 'budget'; theme: Theme }
+  | { kind: 'acceptance'; theme: Theme };
 
 export type DeckType = 'comercial' | 'informe' | 'generica';
 

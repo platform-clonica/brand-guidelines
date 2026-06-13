@@ -9,3 +9,5 @@ export { Paragraph } from './Paragraph';
 export { Manifesto } from './Manifesto';
 export { Team } from './Team';
 export { Clients } from './Clients';
+export { Budget } from './Budget';
+export { Acceptance } from './Acceptance';

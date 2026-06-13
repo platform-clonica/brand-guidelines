@@ -18,10 +18,9 @@ test('compiles the sample deck to the expected slide kinds (no injection)', () =
   assert.equal('theme' in bullets && bullets.theme, 'light');
 });
 
-test('commercial type injects the 3 fixed pages right after the cover', () => {
+test('commercial type injects fixed pages after cover and before closing', () => {
   const deck = compileDeck(md, 'comercial');
-  assert.deepEqual(
-    deck.slides.slice(0, 4).map((s) => s.kind),
-    ['cover', 'manifesto', 'team', 'clients'],
-  );
+  const kinds = deck.slides.map((s) => s.kind);
+  assert.deepEqual(kinds.slice(0, 4), ['cover', 'manifesto', 'team', 'clients']);
+  assert.deepEqual(kinds.slice(-3), ['budget', 'acceptance', 'closing']);
 });
