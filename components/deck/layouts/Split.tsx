@@ -3,13 +3,12 @@ import { Chrome } from '../Chrome';
 import { ImageSlot } from '../ImageSlot';
 
 export function Split({ slide, page }: { slide: Extract<Slide, { kind: 'split' }>; page: number }) {
-  const iso = slide.theme === 'dark' ? '/logo/isotipo-negativo.svg' : '/logo/isotipo-positivo.svg';
   return (
     <div className={`frame theme-${slide.theme} split`}>
       <ImageSlot image={slide.image} className="photo" />
       <div className="mark">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={iso} alt="" />
+        <img src="/logo/interactius-negativo.svg" alt="interactīus" />
       </div>
       <div className="txt">
         {slide.eyebrow && <div className="eyebrow">{slide.eyebrow}</div>}

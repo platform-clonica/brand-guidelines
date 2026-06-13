@@ -21,7 +21,7 @@
 .ix-deck .slide{width:100%; height:calc(720px * var(--s)); display:flex; justify-content:center; align-items:center; scroll-snap-align:center;}
 .ix-deck .fwrap{width:calc(1280px * var(--s)); height:calc(720px * var(--s)); position:relative;}
 .ix-deck .frame{position:absolute; top:0; left:0; width:1280px; height:720px; overflow:hidden;
-  transform:scale(var(--s)); transform-origin:top left; box-shadow:0 14px 70px rgba(0,0,0,.45);}
+  transform:scale(var(--s)); transform-origin:top left;}
 .ix-deck .theme-dark{background:var(--dark); color:var(--warm-light);}
 .ix-deck .theme-light{background:var(--warm-light); color:var(--dark);}
 
@@ -29,10 +29,8 @@
 .ix-deck .rule{position:absolute; left:64px; top:0; bottom:0; width:1px;}
 .ix-deck .theme-light .rule{background:rgba(28,26,23,.14);}
 .ix-deck .theme-dark .rule{background:rgba(245,242,237,.16);}
-.ix-deck .mark{position:absolute; left:26px; top:28px; width:24px; z-index:3;}
-.ix-deck .mark img{width:24px; height:24px; display:block;}
-.ix-deck .mark .yr{margin-top:7px; text-align:center; font:600 8.5px/1 var(--mono); letter-spacing:.02em;}
-.ix-deck .theme-light .mark .yr{color:var(--ash);} .ix-deck .theme-dark .mark .yr{color:var(--warm-light); opacity:.6;}
+.ix-deck .mark{position:absolute; left:22px; top:40px; width:20px; height:122px; z-index:3;}
+.ix-deck .mark img{position:absolute; top:50%; left:50%; height:14px; transform:translate(-50%,-50%) rotate(-90deg);}
 .ix-deck .pageno{position:absolute; left:26px; bottom:24px; z-index:3; font:400 11px/1 var(--mono); letter-spacing:.02em;}
 .ix-deck .theme-light .pageno{color:var(--ash);} .ix-deck .theme-dark .pageno{color:var(--warm-light); opacity:.55;}
 

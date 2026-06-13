@@ -15,6 +15,12 @@ EL RETO
 
 ---
 
+## El espacio del Entre
+![Universo visual](/universo/universo-01.jpg)
+La marca trabaja en la transición: el momento de ambigüedad y pausa donde una decisión todavía puede cambiar de dirección. Cada proyecto empieza por leer ese espacio antes de proponer nada.
+
+---
+
 ## ¿Cómo lo haremos?
 - Auditoría heurística del recorrido completo, evaluado en los dos momentos que deciden la compra
 - Pruebas con usuarios reales para separar la fricción percibida de la que cuesta dinero
