@@ -15,7 +15,8 @@
   height:100vh; overflow-y:auto; background:#0e0d0b; font-family:var(--mono);
   scroll-snap-type:y proximity;
 }
-.ix-deck *{box-sizing:border-box; margin:0; padding:0;}
+.ix-deck *{box-sizing:border-box; margin:0; padding:0;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact;}
 
 .ix-deck .slide{width:100%; height:calc(720px * var(--s)); display:flex; justify-content:center; align-items:center; scroll-snap-align:center;}
 .ix-deck .fwrap{width:calc(1280px * var(--s)); height:calc(720px * var(--s)); position:relative;}
@@ -120,12 +121,16 @@
 .ix-deck .paragraph p{font-family:var(--serif); font-weight:400; font-size:34px; line-height:1.28; max-width:880px;}
 .ix-deck .theme-dark.paragraph p{color:var(--warm-light);}
 
-/* Print: one 16:9 slide per page */
+/* Print: one 16:9 slide per page, deck only (no site chrome). */
 @media print{
   @page{ size: 1280px 720px; margin:0; }
+  /* Hide everything that isn't the deck: site sidebar, mobile header, menu, studio controls. */
+  aside, header, #menu-overlay{ display:none !important; }
+  main{ padding:0 !important; margin:0 !important; }
+  body{ background:#fff; }
   .ix-deck{ height:auto; overflow:visible; scroll-snap-type:none; background:#fff; }
-  .ix-deck .slide{ height:720px; display:block; page-break-after:always; }
+  .ix-deck .slide{ width:1280px; height:720px; display:block; page-break-after:always; }
+  .ix-deck .slide:last-child{ page-break-after:auto; }
   .ix-deck .fwrap{ width:1280px; height:720px; }
   .ix-deck .frame{ transform:none; box-shadow:none; }
-  .studio-controls{ display:none !important; }
 }
