@@ -125,6 +125,21 @@
 .ix-deck .paragraph p{font-family:var(--serif); font-weight:400; font-size:34px; line-height:1.28; max-width:880px;}
 .ix-deck .theme-dark.paragraph p{color:var(--warm-light);}
 
+/* Fixed page · Manifesto (ref p.10) */
+.ix-deck .manifesto{background:var(--warm-dark);}
+.ix-deck .manifesto .wrap{position:absolute; left:var(--ml); right:var(--mr); top:50%; transform:translateY(-50%);}
+.ix-deck .manifesto h2{font-family:var(--serif); font-weight:400; font-size:40px; line-height:1.26; color:var(--dark); max-width:760px;}
+.ix-deck .manifesto .sub{margin-top:22px; font:400 14px/1.5 var(--mono); color:var(--ash);}
+
+/* Fixed page · Team (ref p.11) */
+.ix-deck .team .txt{position:absolute; left:var(--ml); top:70px; width:330px;}
+.ix-deck .team .txt p{font:400 11.5px/1.6 var(--mono); color:var(--ash-dark); margin-bottom:13px;}
+.ix-deck .team .txt p.bold{font-weight:600; color:var(--dark);}
+.ix-deck .team .grid{position:absolute; right:40px; top:48px; width:720px; height:auto;}
+
+/* Fixed page · Clients (ref p.41) — image carries its own category labels; contained, not full-bleed */
+.ix-deck .clients .logos{position:absolute; left:var(--ml); top:78px; width:calc(1280px - var(--ml) - var(--mr)); height:auto;}
+
 /* Print: one 16:9 slide per page, deck only (no site chrome). */
 @media print{
   @page{ size: 1280px 720px; margin:0; }

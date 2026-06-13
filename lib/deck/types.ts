@@ -13,7 +13,13 @@ export type Slide =
   | { kind: 'split'; theme: Theme; eyebrow?: string; title: string; body?: string; image?: ImageRef }
   | { kind: 'gantt'; theme: Theme; title: string; subtitle?: string; weeks: number; rows: GanttRow[]; milestones: number[]; note?: string }
   | { kind: 'paragraph'; theme: Theme; eyebrow?: string; body: string }
-  | { kind: 'closing'; theme: Theme; title: string; url?: string };
+  | { kind: 'closing'; theme: Theme; title: string; url?: string }
+  // Fixed brand pages (auto-inserted for commercial proposals; content is boilerplate).
+  | { kind: 'manifesto'; theme: Theme }
+  | { kind: 'team'; theme: Theme }
+  | { kind: 'clients'; theme: Theme };
+
+export type DeckType = 'comercial' | 'informe' | 'generica';
 
 export type SlideKind = Slide['kind'];
 export type Deck = { slides: Slide[] };

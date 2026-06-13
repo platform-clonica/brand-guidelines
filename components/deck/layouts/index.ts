@@ -6,3 +6,6 @@ export { Split } from './Split';
 export { Gantt } from './Gantt';
 export { Closing } from './Closing';
 export { Paragraph } from './Paragraph';
+export { Manifesto } from './Manifesto';
+export { Team } from './Team';
+export { Clients } from './Clients';
