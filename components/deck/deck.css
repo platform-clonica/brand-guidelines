@@ -27,10 +27,10 @@
 .ix-deck *{box-sizing:border-box; margin:0; padding:0;
   -webkit-print-color-adjust:exact; print-color-adjust:exact;}
 
-.ix-deck .slide{width:100%; height:calc(720px * var(--s)); display:flex; justify-content:center; align-items:center; scroll-snap-align:center;}
+.ix-deck .slide{position:relative; width:100%; height:calc(720px * var(--s)); display:flex; justify-content:center; align-items:center; scroll-snap-align:center;}
 .ix-deck .fwrap{width:calc(1280px * var(--s)); height:calc(720px * var(--s)); position:relative;}
-/* Horizontal page separator between slides in the webscroll (not in print). */
-.ix-deck .slide + .slide{border-top:1px solid rgba(28,26,23,.45);}
+/* Horizontal page separator drawn ON TOP, at the top edge of each page (webscroll only). */
+.ix-deck .slide + .slide::before{content:''; position:absolute; top:0; left:0; right:0; height:1px; background:rgba(28,26,23,.5); z-index:6;}
 .ix-deck .frame{position:absolute; top:0; left:0; width:1280px; height:720px; overflow:hidden;
   transform:scale(var(--s)); transform-origin:top left;}
 .ix-deck .theme-dark{background:var(--dark); color:var(--warm-light);}
@@ -185,7 +185,7 @@
   body{ background:#fff; }
   .ix-deck{ height:auto; overflow:visible; scroll-snap-type:none; background:#fff; }
   .ix-deck .slide{ width:1280px; height:720px; display:block; page-break-after:always; }
-  .ix-deck .slide + .slide{ border-top:none; }
+  .ix-deck .slide + .slide::before{ display:none; }
   .ix-deck .slide:last-child{ page-break-after:auto; }
   .ix-deck .fwrap{ width:1280px; height:720px; border:none; }
   .ix-deck .frame{ transform:none; box-shadow:none; }
