@@ -7,7 +7,7 @@ export function Gantt({ slide, page }: { slide: Extract<Slide, { kind: 'gantt' }
   const cols = `130px repeat(${slide.weeks}, 1fr)`;
   return (
     <div className={`frame theme-${slide.theme} gantt`}>
-      <Chrome theme={slide.theme} page={page} />
+      <Chrome page={page} />
       <div className="title">{slide.title}</div>
       {slide.subtitle && <div className="sub">{slide.subtitle}</div>}
       <div className="chart" style={{ gridTemplateColumns: cols }}>

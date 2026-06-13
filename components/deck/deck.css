@@ -29,8 +29,14 @@
 .ix-deck .rule{position:absolute; left:64px; top:0; bottom:0; width:1px;}
 .ix-deck .theme-light .rule{background:rgba(28,26,23,.14);}
 .ix-deck .theme-dark .rule{background:rgba(245,242,237,.16);}
-.ix-deck .mark{position:absolute; left:22px; top:40px; width:20px; height:122px; z-index:3;}
-.ix-deck .mark img{position:absolute; top:50%; left:50%; height:14px; transform:translate(-50%,-50%) rotate(-90deg);}
+/* Interior lateral tab — two vertical mono labels (matches the master):
+   "2026" on a white label, "Interactius" on a warm-grey label. */
+.ix-deck .tab{position:absolute; left:22px; top:26px; z-index:3; display:flex; flex-direction:column; gap:7px; align-items:flex-start;}
+.ix-deck .tab .lbl{writing-mode:vertical-rl; transform:rotate(180deg); font:400 11px/1 var(--mono); letter-spacing:.04em; padding:7px 4px;}
+.ix-deck .theme-light .tab .yr{background:var(--white); color:var(--dark);}
+.ix-deck .theme-light .tab .nm{background:var(--warm-dark); color:var(--dark);}
+.ix-deck .theme-dark .tab .yr{background:var(--warm-light); color:var(--dark);}
+.ix-deck .theme-dark .tab .nm{background:rgba(245,242,237,.16); color:var(--warm-light);}
 .ix-deck .pageno{position:absolute; left:26px; bottom:24px; z-index:3; font:400 11px/1 var(--mono); letter-spacing:.02em;}
 .ix-deck .theme-light .pageno{color:var(--ash);} .ix-deck .theme-dark .pageno{color:var(--warm-light); opacity:.55;}
 
