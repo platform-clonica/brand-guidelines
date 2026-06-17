@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { splitSourceBlocks } from '../source.ts';
+import { splitSourceBlocks, setBlockImage } from '../source.ts';
 import { compileDeck } from '../index.ts';
 
 const md = readFileSync(fileURLToPath(new URL('./fixtures/sample.md', import.meta.url)), 'utf8');
@@ -23,4 +23,28 @@ test('provenance is 1:1 with source blocks (no injection, any type)', () => {
   const deck = compileDeck(md, 'comercial');
   assert.deepEqual(deck.provenance, [0, 1, 2, 3, 4, 5]);
   assert.ok(deck.provenance?.every((p) => p !== null));
+});
+
+test('setBlockImage replaces the existing image in the target block, keeping alt', () => {
+  const src = '# Portada\n![Equipo](old.jpg)\n\n---\n\n## Otra\nTexto';
+  const out = setBlockImage(src, 0, 'https://cdn/new.jpg');
+  assert.match(out, /!\[Equipo\]\(https:\/\/cdn\/new\.jpg\)/);
+  assert.doesNotMatch(out, /old\.jpg/);
+  // the second block is untouched
+  assert.match(out, /## Otra\nTexto$/);
+});
+
+test('setBlockImage appends an image when the target block has none', () => {
+  const src = '# Portada\nSin imagen\n\n---\n\n## Split\n![x](a.jpg)';
+  const out = setBlockImage(src, 0, 'https://cdn/new.jpg');
+  // block 0 gains an image line; block 1 keeps its own image
+  assert.match(out, /# Portada\nSin imagen\n\n!\[\]\(https:\/\/cdn\/new\.jpg\)/);
+  assert.match(out, /!\[x\]\(a\.jpg\)/);
+  // still 2 source blocks
+  assert.equal(splitSourceBlocks(out).length, 2);
+});
+
+test('setBlockImage returns md unchanged for an out-of-range slide', () => {
+  const src = '# Portada\n![a](a.jpg)';
+  assert.equal(setBlockImage(src, 9, 'b.jpg'), src);
 });

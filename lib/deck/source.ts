@@ -23,3 +23,18 @@ export function splitSourceBlocks(md: string): SourceBlock[] {
   blocks.push({ index, start, end: md.length, text: md.slice(start) });
   return blocks;
 }
+
+/* Write an image URL into the source block of slide `slideIndex` (slides are 1:1 with
+   blocks — see compileDeck's provenance). Replaces the block's first `![alt](…)` keeping
+   its alt text, or appends a new image line when the block has none yet. Returns the new md. */
+const IMG_RE = /!\[(.*?)\]\([^)]*\)/;
+
+export function setBlockImage(md: string, slideIndex: number, url: string): string {
+  const blocks = splitSourceBlocks(md);
+  const b = blocks[slideIndex];
+  if (!b) return md;
+  const text = IMG_RE.test(b.text)
+    ? b.text.replace(IMG_RE, (_m, alt: string) => `![${alt}](${url})`)
+    : `${b.text.replace(/\s*$/, '')}\n\n![](${url})`;
+  return md.slice(0, b.start) + text + md.slice(b.end);
+}

@@ -7,7 +7,7 @@ export function ElReto({ slide, page }: { slide: Extract<Slide, { kind: 'elreto'
   return (
     <div className={`frame theme-${slide.theme} elreto`}>
       <Chrome page={page} />
-      <ImageSlot image={slide.image} className="photo" />
+      <ImageSlot image={slide.image} className="photo" slideIndex={page - 1} />
       <div className="txt">
         <div className="eyebrow">El reto</div>
         <h2>{slide.title}</h2>

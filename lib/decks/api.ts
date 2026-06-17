@@ -7,9 +7,12 @@ import type {
   DeckListItem,
   DeckRecord,
   DeckUpdateInput,
+  ImageCreateInput,
+  ImageRecord,
 } from './types';
 
 const LOGO_BUCKET = 'deck-assets';
+const IMAGE_BUCKET = 'deck-images';
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -90,4 +93,41 @@ export function publicLogoUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   const sb = supabaseBrowser();
   return sb.storage.from(LOGO_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+// ---- Images (gallery) ----
+/* Upload an (already optimised) image blob to the public bucket and return its
+   storage path + public URL. The URL is what gets written into the deck markdown. */
+export async function uploadImage(file: Blob, name: string): Promise<{ path: string; url: string }> {
+  const sb = supabaseBrowser();
+  const safe = name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const path = `images/${Date.now()}-${safe}`;
+  const { error } = await sb.storage.from(IMAGE_BUCKET).upload(path, file, {
+    cacheControl: '3600',
+    contentType: file.type || 'image/jpeg',
+    upsert: false,
+  });
+  if (error) throw new Error(error.message);
+  const url = sb.storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+  return { path, url };
+}
+
+export function publicImageUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  const sb = supabaseBrowser();
+  return sb.storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+/* Gallery index: list every uploaded/generated image, newest first. */
+export function listImages(): Promise<ImageRecord[]> {
+  return fetch('/api/images', { cache: 'no-store' }).then((r) => json<ImageRecord[]>(r));
+}
+
+/* Register an image in the gallery index after it has been uploaded to Storage. */
+export function registerImage(input: ImageCreateInput): Promise<ImageRecord> {
+  return fetch('/api/images', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  }).then((r) => json<ImageRecord>(r));
 }

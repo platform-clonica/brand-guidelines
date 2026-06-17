@@ -17,7 +17,7 @@ export function Objetivos({ slide, page }: { slide: Extract<Slide, { kind: 'obje
           </li>
         ))}
       </ol>
-      <ImageSlot image={slide.image} className="photo" />
+      <ImageSlot image={slide.image} className="photo" slideIndex={page - 1} />
     </div>
   );
 }

@@ -40,3 +40,27 @@ export interface ClientRecord {
 export type DeckCreateInput = Partial<DeckMeta> & { commercial_id: string; md?: string };
 export type DeckUpdateInput = Partial<DeckMeta & { md: string }>;
 export type ClientCreateInput = { name: string; default_logo_path?: string | null; default_emails?: string[] | null };
+
+/* A reusable image in the gallery. `source` distinguishes manual uploads from
+   AI-generated ones (future); `prompt` records the style-guide prompt used to generate it. */
+export interface ImageRecord {
+  id: string;
+  storage_path: string;
+  url: string;
+  alt: string | null;
+  width: number | null;
+  height: number | null;
+  source: 'upload' | 'generated';
+  prompt: string | null;
+  created_at: string;
+}
+
+export type ImageCreateInput = {
+  storage_path: string;
+  url: string;
+  alt?: string | null;
+  width?: number | null;
+  height?: number | null;
+  source?: 'upload' | 'generated';
+  prompt?: string | null;
+};

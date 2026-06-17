@@ -2,12 +2,12 @@
 import { useEffect, useRef } from 'react';
 import './deck.css';
 import type { Deck, Slide } from '@/lib/deck/types';
-import { ViewerContext } from './viewer';
+import { ImageEditContext, ViewerContext } from './viewer';
 import { Cover, Statement, Bullets, Columns, Split, Gantt, Closing, Paragraph, Manifesto, Team, Clients, Budget, Acceptance, Contexto, ElReto, Objetivos, RoadmapPhases } from './layouts';
 
 export function renderSlide(slide: Slide, page: number) {
   switch (slide.kind) {
-    case 'cover': return <Cover slide={slide} />;
+    case 'cover': return <Cover slide={slide} page={page} />;
     case 'statement': return <Statement slide={slide} page={page} />;
     case 'bullets': return <Bullets slide={slide} page={page} />;
     case 'columns': return <Columns slide={slide} page={page} />;
@@ -27,7 +27,15 @@ export function renderSlide(slide: Slide, page: number) {
   }
 }
 
-export function DeckRenderer({ deck, viewer = false }: { deck: Deck; viewer?: boolean }) {
+export function DeckRenderer({
+  deck,
+  viewer = false,
+  onPickImage,
+}: {
+  deck: Deck;
+  viewer?: boolean;
+  onPickImage?: (slideIndex: number) => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
@@ -45,13 +53,15 @@ export function DeckRenderer({ deck, viewer = false }: { deck: Deck; viewer?: bo
 
   return (
     <ViewerContext.Provider value={viewer}>
-      <div className="ix-deck" ref={ref}>
-        {deck.slides.map((slide, i) => (
-          <section className="slide" key={i} id={`ix-slide-${i}`} data-ix-slide={i}>
-            <div className="fwrap">{renderSlide(slide, i + 1)}</div>
-          </section>
-        ))}
-      </div>
+      <ImageEditContext.Provider value={viewer ? null : onPickImage ?? null}>
+        <div className="ix-deck" ref={ref}>
+          {deck.slides.map((slide, i) => (
+            <section className="slide" key={i} id={`ix-slide-${i}`} data-ix-slide={i}>
+              <div className="fwrap">{renderSlide(slide, i + 1)}</div>
+            </section>
+          ))}
+        </div>
+      </ImageEditContext.Provider>
     </ViewerContext.Provider>
   );
 }

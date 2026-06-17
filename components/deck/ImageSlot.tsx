@@ -1,37 +1,32 @@
 'use client';
-import { useContext, useState } from 'react';
+import { useContext } from 'react';
 import type { ImageRef } from '@/lib/deck/types';
-import { optimizeImage } from '@/lib/deck/optimizeImage';
-import { ViewerContext } from './viewer';
+import { ImageEditContext } from './viewer';
 
-/* Editable image slot: click → pick a file from disk → downscale/recompress → replace.
+/* Editable image slot: in the editor, click → opens the image gallery for this slide
+   (pick an existing image or upload a new one). The chosen URL is written back into the
+   markdown by the gallery's onSelect, so the rendered src always comes from the deck.
    In viewer mode (shared presentation) it is a plain, non-editable image. */
-export function ImageSlot({ image, className }: { image?: ImageRef; className?: string }) {
-  const viewer = useContext(ViewerContext);
-  const [src, setSrc] = useState<string | undefined>(image?.src);
-  const pick = () => {
-    const inp = document.createElement('input');
-    inp.type = 'file';
-    inp.accept = 'image/*';
-    inp.onchange = async () => {
-      const f = inp.files?.[0];
-      if (!f) return;
-      try {
-        setSrc(await optimizeImage(f));
-      } catch {
-        setSrc(URL.createObjectURL(f));
-      }
-    };
-    inp.click();
-  };
+export function ImageSlot({
+  image,
+  className,
+  slideIndex,
+}: {
+  image?: ImageRef;
+  className?: string;
+  slideIndex?: number;
+}) {
+  const onPick = useContext(ImageEditContext);
+  const editable = onPick != null && slideIndex != null;
+  const src = image?.src;
   return (
     <div
       className={`imgslot ${className ?? ''}`}
-      style={{ backgroundImage: src ? `url('${src}')` : undefined, cursor: viewer ? 'default' : 'pointer' }}
-      onClick={viewer ? undefined : pick}
+      style={{ backgroundImage: src ? `url('${src}')` : undefined, cursor: editable ? 'pointer' : 'default' }}
+      onClick={editable ? () => onPick(slideIndex) : undefined}
     >
       {!src && <div className="placeholder">{image?.prompt ?? 'Imagen · universo visual'}</div>}
-      {!viewer && <div className="imghint">Clic para reemplazar imagen</div>}
+      {editable && <div className="imghint">Clic para elegir imagen</div>}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { compileDeck } from '@/lib/deck';
 import type { ClientRecord, DeckListItem, DeckMeta, DeckRecord } from '@/lib/decks/types';
 import { createDeck, getDeck, listClients, translateDeck, updateDeck } from '@/lib/decks/api';
-import { splitSourceBlocks } from '@/lib/deck/source';
+import { splitSourceBlocks, setBlockImage } from '@/lib/deck/source';
 import { DeckRenderer } from './DeckRenderer';
 import { ToneReport } from './ToneReport';
 import { DeckToolbar } from './studio/DeckToolbar';
@@ -13,6 +13,7 @@ import { ConfirmModal } from './studio/ConfirmModal';
 import { SlideNavigator } from './studio/SlideNavigator';
 import { IconButton } from './studio/IconButton';
 import { LayoutGallery } from './studio/LayoutGallery';
+import { ImageGallery } from './studio/ImageGallery';
 import { TranslateMenu } from './studio/TranslateMenu';
 import { TranslatingOverlay } from './studio/TranslatingOverlay';
 import { TEMPLATES } from '@/lib/deck/templates';
@@ -97,6 +98,7 @@ export function DeckStudio() {
   const [asideW, setAsideW] = useState(ASIDE_DEFAULT);
   const [navOpen, setNavOpen] = useState(true);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [imageSlot, setImageSlot] = useState<number | null>(null);
   const [translating, setTranslating] = useState(false);
   const [translateError, setTranslateError] = useState<string | null>(null);
   const [pendingTranslate, setPendingTranslate] = useState<'es' | 'ca' | 'en' | null>(null);
@@ -430,11 +432,23 @@ export function DeckStudio() {
         </AnimatePresence>
 
         <div ref={previewRef} className="deck-preview" style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
-          <DeckRenderer deck={deck} />
+          <DeckRenderer deck={deck} onPickImage={setImageSlot} />
         </div>
       </div>
 
       {galleryOpen && <LayoutGallery onClose={() => setGalleryOpen(false)} />}
+
+      {imageSlot != null && (
+        <ImageGallery
+          onClose={() => setImageSlot(null)}
+          onSelect={(url) => {
+            const next = setBlockImage(md, imageSlot, url);
+            setMd(next);
+            setDeck(compileDeck(next, meta.type));
+            setImageSlot(null);
+          }}
+        />
+      )}
 
       {pendingTranslate && (
         <ConfirmModal
