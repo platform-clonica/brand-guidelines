@@ -142,3 +142,15 @@ export function registerImage(input: ImageCreateInput): Promise<ImageRecord> {
     body: JSON.stringify(input),
   }).then((r) => json<ImageRecord>(r));
 }
+
+/* Remove an image from the gallery index and delete its stored file. */
+export function deleteImage(id: string): Promise<{ ok: boolean }> {
+  return fetch(`/api/images/${id}`, { method: 'DELETE' }).then((r) => json<{ ok: boolean }>(r));
+}
+
+/* Which decks reference this image (by URL in their markdown), so we can warn before deleting. */
+export function imageUsage(id: string): Promise<{ count: number; decks: string[] }> {
+  return fetch(`/api/images/${id}/usage`, { cache: 'no-store' }).then((r) =>
+    json<{ count: number; decks: string[] }>(r),
+  );
+}
