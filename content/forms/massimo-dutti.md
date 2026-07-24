@@ -1,7 +1,7 @@
 ---
 id: fk_Hjd81rX
 slug: dutti-taller-estrategia
-title: Taller de Estrategia E-commerce
+title: Taller de Estrategia y Alineamiento
 client: Massimo Dutti
 status: published
 logo: https://static.massimodutti.net/3/cms//assets/uploads/md-logo-white.svg
@@ -67,5 +67,4 @@ fields:
 ---
 
 
-Como parte de la preparación de la sesión del próximo jueves os pedimos unos minutos de reflexión individual, de forma que la sesión parta de un diagnóstico compartido. Responde teniendo en mente nuestro objetivo macro: **definir una estrategia de canales clara y coherente que eleve la percepción de marca, mejore la experiencia del cliente y refuerce nuestro posicionamiento premium.**
-\n  Siéntete libre de responder con total honestidad, valoramos tu opinión real, coincida o no con la de los demás.
+Como parte de la preparación de la sesión del próximo jueves os pedimos unos minutos de reflexión individual, de forma que la sesión parta de un diagnóstico compartido. Responde teniendo en mente nuestro objetivo macro: **definir una estrategia de canales clara y coherente que eleve la percepción de marca, mejore la experiencia del cliente y refuerce nuestro posicionamiento premium.** Siéntete libre de responder con total honestidad, valoramos tu opinión real, coincida o no con la de los demás.
