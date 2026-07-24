@@ -253,6 +253,9 @@ function RankingControl({
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   // Insertion slot for the drop indicator: 0..length ("insert before this index").
   const [dropAt, setDropAt] = useState<number | null>(null);
+  // Just-moved item: value + a counter to re-trigger the fade even on repeated moves.
+  const [flash, setFlash] = useState<{ v: string; n: number } | null>(null);
+  const flag = (v: string) => setFlash((prev) => ({ v, n: (prev?.n ?? 0) + 1 }));
 
   const labelFor = (v: string) => {
     const opt = field.options.find((o) => optionValue(o) === v);
@@ -266,6 +269,7 @@ function RankingControl({
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
     onChange(field.name, next);
+    flag(moved);
   };
 
   // Drag: drop the item into an insertion slot (0..length).
@@ -274,6 +278,7 @@ function RankingControl({
     const [moved] = next.splice(from, 1);
     next.splice(from < slot ? slot - 1 : slot, 0, moved);
     onChange(field.name, next);
+    flag(moved);
   };
 
   const clearDrag = () => {
@@ -291,10 +296,14 @@ function RankingControl({
         if (dragFrom === i) classes.push('is-dragging');
         if (showAt === i) classes.push('is-drop-before');
         if (showAt === order.length && i === order.length - 1) classes.push('is-drop-after');
+        const flashed = flash?.v === v;
+        if (flashed) classes.push('is-just-moved');
         return (
           <li
-            key={v}
+            // Re-key on each flash so the CSS fade restarts even when the same item is moved again.
+            key={flashed ? `${v}::${flash!.n}` : v}
             className={classes.join(' ')}
+            onAnimationEnd={flashed ? () => setFlash(null) : undefined}
             draggable
             onDragStart={() => setDragFrom(i)}
             onDragEnd={clearDrag}

@@ -1,7 +1,7 @@
 ---
 id: fk_Hjd81rX
 slug: dutti-taller-estrategia
-title: Taller de Estrategia y Alineamiento
+title: Taller de Alineamiento estratégico
 client: Massimo Dutti
 status: published
 logo: https://static.massimodutti.net/3/cms//assets/uploads/md-logo-white.svg
@@ -22,6 +22,7 @@ fields:
   - type: scale
     name: posicionamiento_premium
     label: 2 - ¿Qué tan alineada sientes hoy la experiencia digital de Massimo Dutti con el posicionamiento premium que transmite la tienda física?
+    caption: Siendo 1 poco alineada y 10 muy alineada.
     min: 1
     max: 10
     required: true
@@ -52,6 +53,7 @@ fields:
       - Segmentación de nuestros usuarios (Cliente Dashboard)
       - Optimizar el flujo de devoluciones
       - Medir y monitorizar el NPS y la percepción de marca
+    required: true
   - type: textarea
     name: iniciativas-no-contempladas
     label: 5 - Consideras que hay alguna iniciativa que no esté reflejada y que debería contemplarse? ¿Cuál? ¿Por qué?
