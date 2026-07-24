@@ -24,10 +24,13 @@ export function FieldRow({ field, value, error, onChange }: Props) {
 
   return (
     <div className="ixf-field">
-      <label className="ixf-label" htmlFor={id}>
-        <Md inline>{field.label}</Md>
-        {field.required ? <span className="ixf-req" aria-hidden>*</span> : null}
-      </label>
+      {/* boolean renders its label beside the checkbox (in Control) — no top label here, or it duplicates. */}
+      {field.type !== 'boolean' ? (
+        <label className="ixf-label" htmlFor={id}>
+          <Md inline>{field.label}</Md>
+          {field.required ? <span className="ixf-req" aria-hidden>*</span> : null}
+        </label>
+      ) : null}
       {field.caption ? (
         <span className="ixf-caption" id={captionId}>
           <Md inline>{field.caption}</Md>
@@ -148,6 +151,7 @@ function Control({
           />
           <span>
             <Md inline>{field.label}</Md>
+            {field.required ? <span className="ixf-req" aria-hidden>*</span> : null}
           </span>
         </label>
       );
@@ -247,12 +251,15 @@ function RankingControl({
   // Current order = stored value if valid, else declared option order.
   const order = Array.isArray(value) && value.length ? (value as string[]) : all;
   const [dragFrom, setDragFrom] = useState<number | null>(null);
+  // Insertion slot for the drop indicator: 0..length ("insert before this index").
+  const [dropAt, setDropAt] = useState<number | null>(null);
 
   const labelFor = (v: string) => {
     const opt = field.options.find((o) => optionValue(o) === v);
     return opt ? optionLabel(opt) : v;
   };
 
+  // Buttons: swap with the neighbour (remove + reinsert).
   const move = (from: number, to: number) => {
     if (to < 0 || to >= order.length || from === to) return;
     const next = order.slice();
@@ -261,31 +268,59 @@ function RankingControl({
     onChange(field.name, next);
   };
 
+  // Drag: drop the item into an insertion slot (0..length).
+  const drop = (from: number, slot: number) => {
+    const next = order.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(from < slot ? slot - 1 : slot, 0, moved);
+    onChange(field.name, next);
+  };
+
+  const clearDrag = () => {
+    setDragFrom(null);
+    setDropAt(null);
+  };
+
+  // The indicator is meaningful only when it would actually change the order.
+  const showAt = dragFrom !== null && dropAt !== null && dropAt !== dragFrom && dropAt !== dragFrom + 1 ? dropAt : null;
+
   return (
     <ol className="ixf-rank" aria-describedby={describedBy}>
-      {order.map((v, i) => (
-        <li
-          key={v}
-          className={`ixf-rank__item${dragFrom === i ? ' is-dragging' : ''}`}
-          draggable
-          onDragStart={() => setDragFrom(i)}
-          onDragEnd={() => setDragFrom(null)}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            if (dragFrom !== null) move(dragFrom, i);
-            setDragFrom(null);
-          }}
-        >
-          <span className="ixf-rank__num" aria-hidden>{i + 1}</span>
-          <span className="ixf-rank__label">{labelFor(v)}</span>
-          <span className="ixf-rank__handle" aria-hidden title="Arrastra para reordenar">⠿</span>
-          <span className="ixf-rank__btns">
-            <button type="button" onClick={() => move(i, i - 1)} disabled={i === 0} aria-label={`Subir "${labelFor(v)}"`}>↑</button>
-            <button type="button" onClick={() => move(i, i + 1)} disabled={i === order.length - 1} aria-label={`Bajar "${labelFor(v)}"`}>↓</button>
-          </span>
-        </li>
-      ))}
+      {order.map((v, i) => {
+        const classes = ['ixf-rank__item'];
+        if (dragFrom === i) classes.push('is-dragging');
+        if (showAt === i) classes.push('is-drop-before');
+        if (showAt === order.length && i === order.length - 1) classes.push('is-drop-after');
+        return (
+          <li
+            key={v}
+            className={classes.join(' ')}
+            draggable
+            onDragStart={() => setDragFrom(i)}
+            onDragEnd={clearDrag}
+            onDragOver={(e) => {
+              e.preventDefault();
+              // Top half → insert before this item; bottom half → after it.
+              const rect = e.currentTarget.getBoundingClientRect();
+              const before = e.clientY < rect.top + rect.height / 2;
+              setDropAt(before ? i : i + 1);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (dragFrom !== null && dropAt !== null) drop(dragFrom, dropAt);
+              clearDrag();
+            }}
+          >
+            <span className="ixf-rank__num" aria-hidden>{i + 1}</span>
+            <span className="ixf-rank__label">{labelFor(v)}</span>
+            <span className="ixf-rank__handle" aria-hidden title="Arrastra para reordenar">⠿</span>
+            <span className="ixf-rank__btns">
+              <button type="button" onClick={() => move(i, i - 1)} disabled={i === 0} aria-label={`Subir "${labelFor(v)}"`}>↑</button>
+              <button type="button" onClick={() => move(i, i + 1)} disabled={i === order.length - 1} aria-label={`Bajar "${labelFor(v)}"`}>↓</button>
+            </span>
+          </li>
+        );
+      })}
     </ol>
   );
 }

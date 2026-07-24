@@ -17,23 +17,23 @@ fields:
   
   - type: text
     name: nombre
-    label: Nombre y apellidos
+    label: 1 - Nombre y apellidos
     required: true
   - type: scale
     name: posicionamiento_premium
-    label: ¿Qué tan alineada sientes hoy la experiencia digital de Massimo Dutti con el posicionamiento premium que transmite la tienda física?"
+    label: 2 - ¿Qué tan alineada sientes hoy la experiencia digital de Massimo Dutti con el posicionamiento premium que transmite la tienda física?
     min: 1
     max: 10
     required: true
   - type: textarea
     name: funnel
-    label: "¿En qué parte concreta del recorrido del cliente (antes de comprar, durante la compra, o después) sientes que esa distancia se nota más? ¿Por qué?"
+    label: "3 - ¿En qué parte concreta del recorrido del cliente (antes de comprar, durante la compra, o después) sientes que esa distancia se nota más? ¿Por qué?"
     caption: No hace falta que sea exhaustivo; unas líneas bastan.
     rows: 5
     required: true
   - type: ranking
     name: canales
-    label: "De las iniciativas que actualmente estamos trabajando, cuales crees que son prioritarias para alcanzar nuesto objetivo macro?"
+    label: "4 - De las iniciativas que actualmente estamos trabajando, cuales crees que son prioritarias para alcanzar nuesto objetivo macro?"
     caption: Ordénalas de mayor (más arriba) a menor (más abajo) impacto para conseguir nuestro objetivo macro.
     options:
       - Pasar del 90% al 95% de entregas a tiempo
@@ -54,12 +54,14 @@ fields:
       - Medir y monitorizar el NPS y la percepción de marca
   - type: textarea
     name: iniciativas-no-contempladas
-    label: Consideras que hay alguna iniciativa que no esté reflejada y que debería contemplarse? ¿Cuál? ¿Por qué?
+    label: 5 - Consideras que hay alguna iniciativa que no esté reflejada y que debería contemplarse? ¿Cuál? ¿Por qué?
     rows: 3
+    required: true
   - type: textarea
     name: cambio
-    label: "Pensando no en qué construir, sino en cómo trabajamos juntos como equipo, si pudieras cambiar una sola cosa mañana mismo para ayudarnos a conseguir nuestros objetivos, ¿cuál sería? ¿Por qué?"
+    label: "6 - Pensando no en qué construir, sino en cómo trabajamos juntos como equipo, si pudieras cambiar una sola cosa mañana mismo para ayudarnos a conseguir nuestros objetivos, ¿cuál sería? ¿Por qué?"
     rows: 3
+    required: true
   - type: boolean
     name: consentimiento
     label: Acepto que Interactius trate estas respuestas para preparar el taller.
