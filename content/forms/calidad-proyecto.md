@@ -65,6 +65,16 @@ fields:
       - Ritmo y cumplimiento de plazos
       - Comunicación durante el proceso
       - Calidad de las piezas finales
+  - type: ranking
+    name: prioridades
+    label: Ordena estos aspectos según lo que más valoras (arriba = más importante)
+    caption: Arrastra o usa las flechas para reordenar.
+    options:
+      - Criterio y dirección
+      - Plazos
+      - Comunicación
+      - Precio
+      - Calidad del resultado
   - type: number
     name: personas_impacto
     label: ¿A cuántas personas de tu organización afecta directamente este trabajo?

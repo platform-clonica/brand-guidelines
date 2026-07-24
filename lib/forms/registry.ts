@@ -19,12 +19,19 @@ function loadAll(): Map<string, FormDefinition> {
   }
 
   for (const file of files) {
-    const raw = readFileSync(join(FORMS_DIR, file), 'utf8');
-    const def = parseForm(raw, file);
-    if (map.has(def.id)) {
-      throw new Error(`Form id colisión: "${def.id}" está en dos archivos (último: ${file})`);
+    // Diseño líquido: un .md inválido se SALTA y se avisa; nunca tumba a los demás formularios.
+    // El formulario roto queda ausente del registro → su URL da 404 hasta que se corrija.
+    try {
+      const raw = readFileSync(join(FORMS_DIR, file), 'utf8');
+      const def = parseForm(raw, file);
+      if (map.has(def.id)) {
+        console.warn(`[forms] id duplicado "${def.id}" en ${file} — se ignora (se mantiene el primero).`);
+        continue;
+      }
+      map.set(def.id, def);
+    } catch (err) {
+      console.warn(`[forms] ${(err as Error).message} — formulario ignorado.`);
     }
-    map.set(def.id, def);
   }
   return map;
 }

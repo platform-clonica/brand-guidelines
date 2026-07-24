@@ -82,9 +82,16 @@ servidor; el export lee con la sesión de equipo (`supabaseAuthServer`).
 
 ## Formato Markdown
 
-Frontmatter (metadatos + branding + `fields`) + cuerpo Markdown como intro. Tipos de campo (14):
-`text, email, number, tel, url, textarea, radio, checkbox, select, boolean, scale, date, section, content`.
-`options` admite forma corta (`"Sí"`) o larga (`{ value, label }`). `accent`: `opal | bordeaux | emerald`.
+Frontmatter (metadatos + branding + `fields`) + cuerpo Markdown como intro. Tipos de campo (15):
+`text, email, number, tel, url, textarea, radio, checkbox, ranking, select, boolean, scale, date,
+section, content`. `options` admite forma corta (`"Sí"`) o larga (`{ value, label }`). `accent`:
+`opal | bordeaux | emerald`.
+
+- **`ranking`** (extensión sobre los 14 del PRD): dada una `options[]` (mín. 2), el usuario ordena
+  todos los items de arriba a abajo (arrastrar en desktop + botones ↑/↓ accesibles). Guarda un
+  `string[]` con los valores en el orden elegido. El valor es **siempre una permutación completa** de
+  las opciones — `normalizeAnswers` descarta valores desconocidos, deduplica y añade los que falten en
+  orden declarado, así que es a prueba de manipulación.
 Ejemplo de referencia: [content/forms/prework-taller-acme.md](../../content/forms/prework-taller-acme.md).
 
 Nota de marca: `*x*` (énfasis Markdown) se renderiza **sin cursiva** (regla dura, `globals.css`
