@@ -6,7 +6,7 @@
 
 import { useRef, useState } from 'react';
 import type { FormDefinition } from '@/lib/forms/schema';
-import { validateAnswers, normalizeAnswers, isInputField } from '@/lib/forms/schema';
+import { validateAnswers, normalizeAnswers, isInputField, optionValue } from '@/lib/forms/schema';
 import { Md } from './Md';
 import { FieldRow } from './fields/FieldControl';
 import { SuccessPanel } from './SuccessPanel';
@@ -17,7 +17,13 @@ function initialValues(def: FormDefinition): Record<string, unknown> {
   const v: Record<string, unknown> = {};
   for (const f of def.fields) {
     if (!isInputField(f)) continue;
-    if ('default' in f && f.default !== undefined) v[f.name] = f.default;
+    if (f.type === 'ranking') {
+      // Always a full permutation (default order first, then any missing options).
+      const all = f.options.map(optionValue);
+      const start: string[] = [];
+      if (Array.isArray(f.default)) for (const x of f.default) if (all.includes(x) && !start.includes(x)) start.push(x);
+      v[f.name] = [...start, ...all.filter((x) => !start.includes(x))];
+    } else if ('default' in f && f.default !== undefined) v[f.name] = f.default;
     else if (f.type === 'checkbox') v[f.name] = [];
     else if (f.type === 'boolean') v[f.name] = false;
   }

@@ -31,7 +31,7 @@ export function optionLabel(o: FieldOption): string {
 
 /* ── Common input props (PRD §8.2). */
 const inputBase = {
-  name: z.string().min(1).regex(/^[A-Za-z0-9_]+$/, 'name: sólo letras, números y _ (sin espacios)'),
+  name: z.string().min(1).regex(/^[A-Za-z0-9_-]+$/, 'name: sólo letras, números, _ y - (sin espacios)'),
   label: z.string().min(1),
   caption: z.string().optional(),
   required: z.boolean().default(false),
@@ -48,6 +48,7 @@ export const fieldSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('textarea'), ...inputBase, rows: z.number().int().positive().optional(), maxlength: z.number().int().positive().optional(), default: z.string().optional() }),
   z.object({ type: z.literal('radio'), ...inputBase, options: z.array(optionSchema).min(1), default: z.string().optional() }),
   z.object({ type: z.literal('checkbox'), ...inputBase, options: z.array(optionSchema).min(1), min_select: z.number().int().nonnegative().optional(), max_select: z.number().int().positive().optional(), default: z.array(z.string()).optional() }),
+  z.object({ type: z.literal('ranking'), ...inputBase, options: z.array(optionSchema).min(2), default: z.array(z.string()).optional() }),
   z.object({ type: z.literal('select'), ...inputBase, options: z.array(optionSchema).min(1), default: z.string().optional() }),
   z.object({ type: z.literal('boolean'), ...inputBase, default: z.boolean().optional() }),
   z.object({ type: z.literal('scale'), ...inputBase, min: z.number().int(), max: z.number().int(), min_label: z.string().optional(), max_label: z.string().optional(), default: z.number().optional() }),
@@ -60,7 +61,7 @@ export const fieldSchema = z.discriminatedUnion('type', [
 export type Field = z.infer<typeof fieldSchema>;
 export type InputField = Exclude<Field, { type: 'section' } | { type: 'content' }>;
 
-const INPUT_TYPES = ['text', 'email', 'number', 'tel', 'url', 'textarea', 'radio', 'checkbox', 'select', 'boolean', 'scale', 'date'] as const;
+const INPUT_TYPES = ['text', 'email', 'number', 'tel', 'url', 'textarea', 'radio', 'checkbox', 'ranking', 'select', 'boolean', 'scale', 'date'] as const;
 export function isInputField(f: Field): f is InputField {
   return (INPUT_TYPES as readonly string[]).includes(f.type);
 }
@@ -111,6 +112,17 @@ function normalizeValue(f: InputField, v: unknown): unknown {
       if (!Array.isArray(v)) return undefined;
       const arr = v.filter((x): x is string => typeof x === 'string');
       return arr.length ? arr : undefined;
+    }
+    case 'ranking': {
+      // Always return a FULL permutation of the option values: keep the submitted order for known
+      // values (deduped), then append any missing ones in declared order. Tamper-proof.
+      const all = f.options.map(optionValue);
+      const ordered: string[] = [];
+      if (Array.isArray(v)) {
+        for (const x of v) if (typeof x === 'string' && all.includes(x) && !ordered.includes(x)) ordered.push(x);
+      }
+      for (const x of all) if (!ordered.includes(x)) ordered.push(x);
+      return ordered;
     }
     case 'boolean':
       return typeof v === 'boolean' ? v : undefined;
@@ -219,5 +231,8 @@ function fieldValueSchema(f: InputField): z.ZodTypeAny {
       if (f.max_select !== undefined) s = s.max(f.max_select);
       return s.optional();
     }
+    case 'ranking':
+      // normalizeValue already guarantees a full, valid permutation.
+      return z.array(z.string()).optional();
   }
 }

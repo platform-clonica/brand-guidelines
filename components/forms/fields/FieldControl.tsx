@@ -4,6 +4,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import type { InputField, FieldOption } from '@/lib/forms/schema';
 import { optionValue, optionLabel } from '@/lib/forms/schema';
 import { Md } from '../Md';
@@ -131,6 +132,9 @@ function Control({
       );
     }
 
+    case 'ranking':
+      return <RankingControl field={field} value={value} onChange={onChange} describedBy={describedBy} />;
+
     case 'boolean':
       return (
         <label className="ixf-choice">
@@ -221,4 +225,67 @@ function Control({
       );
     }
   }
+}
+
+type RankingField = Extract<InputField, { type: 'ranking' }>;
+
+/* Orderable list: the value is the full set of option values in the chosen order (top → bottom).
+   Reorder by drag (desktop) or the ↑/↓ buttons (keyboard + touch). The buttons are the accessible
+   path; dragging is a progressive enhancement. */
+function RankingControl({
+  field,
+  value,
+  onChange,
+  describedBy,
+}: {
+  field: RankingField;
+  value: unknown;
+  onChange: (name: string, value: unknown) => void;
+  describedBy?: string;
+}) {
+  const all = field.options.map(optionValue);
+  // Current order = stored value if valid, else declared option order.
+  const order = Array.isArray(value) && value.length ? (value as string[]) : all;
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
+
+  const labelFor = (v: string) => {
+    const opt = field.options.find((o) => optionValue(o) === v);
+    return opt ? optionLabel(opt) : v;
+  };
+
+  const move = (from: number, to: number) => {
+    if (to < 0 || to >= order.length || from === to) return;
+    const next = order.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    onChange(field.name, next);
+  };
+
+  return (
+    <ol className="ixf-rank" aria-describedby={describedBy}>
+      {order.map((v, i) => (
+        <li
+          key={v}
+          className={`ixf-rank__item${dragFrom === i ? ' is-dragging' : ''}`}
+          draggable
+          onDragStart={() => setDragFrom(i)}
+          onDragEnd={() => setDragFrom(null)}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (dragFrom !== null) move(dragFrom, i);
+            setDragFrom(null);
+          }}
+        >
+          <span className="ixf-rank__num" aria-hidden>{i + 1}</span>
+          <span className="ixf-rank__label">{labelFor(v)}</span>
+          <span className="ixf-rank__handle" aria-hidden title="Arrastra para reordenar">⠿</span>
+          <span className="ixf-rank__btns">
+            <button type="button" onClick={() => move(i, i - 1)} disabled={i === 0} aria-label={`Subir "${labelFor(v)}"`}>↑</button>
+            <button type="button" onClick={() => move(i, i + 1)} disabled={i === order.length - 1} aria-label={`Bajar "${labelFor(v)}"`}>↓</button>
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
 }

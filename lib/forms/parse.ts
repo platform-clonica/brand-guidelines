@@ -25,6 +25,13 @@ export function parseForm(raw: string, fileName: string): FormDefinition {
     throw new Error(`Form "${fileName}" inválido — ${issues}`);
   }
 
+  // Cross-field: input `name`s must be unique, or one answer silently overwrites another on submit.
+  const names = parsed.data.fields.flatMap((f) => ('name' in f && f.name ? [f.name] : []));
+  const dupes = [...new Set(names.filter((n, i) => names.indexOf(n) !== i))];
+  if (dupes.length) {
+    throw new Error(`Form "${fileName}" inválido — name duplicado: ${dupes.join(', ')} (cada campo necesita un name único)`);
+  }
+
   return {
     ...parsed.data,
     intro: content.trim(),
