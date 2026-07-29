@@ -78,6 +78,11 @@ es peor que no opinar:
 - **IBM Plex Mono** (marca): pesos **400/500/600**.
 - Los tres acentos **no son decorativos**: Opal = pensamiento estratégico · Burdeos = diseño de
   experiencias · Esmeralda = transformación cultural. Cada uno identifica un servicio.
+  - **Burdeos tiene además un rol de interfaz: es el color de alerta del sistema** (avisos,
+    estados críticos, cuenta atrás cumplida). Decidido en julio de 2026 al integrar `/timer`,
+    recogiendo lo que `components/forms/forms.css` ya hacía. Está declarado en `lib/tokens.ts`
+    como `uiRole`. Que Burdeos tenga dos roles **no** abre la puerta a usar los acentos como
+    decoración: un rol se declara en `lib/tokens.ts` o no existe.
 
 ## Desviaciones conocidas (no las "arregles" por tu cuenta)
 

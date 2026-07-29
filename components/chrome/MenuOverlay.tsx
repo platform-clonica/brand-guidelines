@@ -116,6 +116,24 @@ export function MenuOverlay() {
                   <span aria-hidden className="text-[10px] text-dark/35">↗</span>
                 </a>
               </li>
+              <li>
+                {/* Same group as Presentaciones. "Timer" needs no dictionary: it reads
+                    the same in es/en/ca. */}
+                <a
+                  href="/timer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => close()}
+                  className="group w-full flex items-baseline gap-3 py-[8px]
+                             text-left font-mono text-[13px] leading-snug
+                             text-dark/70 hover:text-dark
+                             transition-colors duration-300 ease-expo"
+                >
+                  <span className="text-[10px] text-dark/35" aria-hidden>→</span>
+                  <span className="flex-1">Timer</span>
+                  <span aria-hidden className="text-[10px] text-dark/35">↗</span>
+                </a>
+              </li>
               </ul>
             </nav>
             <div

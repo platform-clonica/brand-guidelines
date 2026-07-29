@@ -1,0 +1,254 @@
+/* Timer — standalone tool at /timer. Scoped to .ix-timer.
+   Colours come straight from the global --c-* tokens (app/globals.css, mirroring
+   lib/tokens.ts): unlike deck.css, a brand colour change does reach this file.
+   Type sizes are the verified clamps from lib/typeScale.ts; the clock is the one
+   deliberate off-scale step (see the note on --fs-clock).
+   Brand rules honoured: IBM Plex Mono 500 + IBM Plex Serif 300/400, italics forbidden.
+   Bordeaux carries the alert role here — a system role, see lib/tokens.ts colorsAccent.
+   The reset the artifact shipped (* margin/padding/box-sizing, html,body height) is
+   gone: Tailwind's preflight already covers it, and global would break the rest of
+   the site. Same reason the state classes hang off this container, not <body>. */
+
+.ix-timer {
+  --mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  --serif: var(--font-ibm-plex-serif), Georgia, serif;
+
+  /* Type scale (verified against lib/typeScale.ts) */
+  --fs-title-sm: clamp(1.25rem, 1rem + 1.25vw, 2rem);  /* title-sm (serif) */
+  --fs-body-sm: clamp(0.75rem, 0.7rem + 0.25vw, 1rem); /* body-sm  (mono)  */
+  --fs-caption: 0.625rem;                              /* caption  (mono)  */
+  /* Off-scale, deliberately. The clock is a 5–8 character number that must fill the
+     viewport: `super` (min 4rem) overflows on mobile at 8 chars, `display` (max 6rem)
+     is too small on desktop. Same argument as the deck's fixed-canvas steps. */
+  --fs-clock: clamp(3.4rem, 1.5rem + 11vw, 11rem);
+
+  /* Three bands: wordmark, stage, shortcuts. The stage takes all the slack, so the
+     clock stays optically centred while the hint sits in the flow at the bottom —
+     it used to be position:fixed, which overlapped the controls on short viewports. */
+  position: relative;
+  min-height: 100dvh;
+  padding: clamp(40px, 6vh, 64px) 32px clamp(28px, 4vh, 44px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  overflow-x: hidden;
+
+  background: var(--c-warm-light);
+  color: var(--c-dark);
+  font-family: var(--mono);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+}
+
+/* Full-bleed wash that breathes once the time is up. Out of flow, so it is not a
+   flex item; z-index keeps it under the controls. */
+.ixt-pulse {
+  position: fixed;
+  inset: 0;
+  background: var(--c-bordeaux);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ix-timer > *:not(.ixt-pulse) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- wordmark ---------- */
+
+.ixt-logo {
+  flex-shrink: 0;
+}
+.ixt-logo img {
+  display: block;
+  width: clamp(132px, 14vw, 172px);
+  height: auto;
+}
+
+/* ---------- escenario ---------- */
+
+.ixt-stage {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(24px, 4vh, 48px) 0;
+}
+
+/* ---------- estado ---------- */
+
+.ixt-eyebrow {
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--c-ash);
+  transition: color 300ms var(--ease);
+}
+.ix-timer.is-warning .ixt-eyebrow,
+.ix-timer.is-overtime .ixt-eyebrow { color: var(--c-bordeaux); }
+
+/* ---------- display + macrón ---------- */
+
+.ixt-stack {
+  display: inline-block;
+  margin-top: 22px;
+}
+
+/* The macrón over the ī: here it doubles as the progress bar. */
+.ixt-macron {
+  position: relative;
+  height: 2px;
+  width: 100%;
+  background: var(--c-warm-dark);
+  margin-bottom: clamp(14px, 2vw, 26px);
+  overflow: hidden;
+}
+.ixt-macron span {
+  position: absolute;
+  inset: 0;
+  background: var(--c-dark);
+  transform-origin: left center;
+  transform: scaleX(1);
+}
+.ix-timer.is-warning .ixt-macron span,
+.ix-timer.is-overtime .ixt-macron span { background: var(--c-bordeaux); }
+
+.ixt-display {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: var(--fs-clock);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  transition: color 300ms var(--ease), opacity 300ms var(--ease);
+}
+.ix-timer.is-warning .ixt-display,
+.ix-timer.is-overtime .ixt-display { color: var(--c-bordeaux); }
+.ix-timer.is-paused .ixt-display { opacity: 0.5; }
+
+.ixt-display input {
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  background: transparent;
+  width: 2ch;
+  text-align: center;
+}
+.ixt-display input[readonly] { cursor: default; }
+/* With hours hidden the minutes field takes three digits (up to 999). */
+.ixt-display input.ixt-input--wide { width: 3ch; }
+
+.ixt-sep { opacity: 0.28; padding: 0 0.04em; }
+.ixt-sign { width: 0.62ch; text-align: center; }
+
+/* ---------- controles ---------- */
+
+.ixt-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: clamp(18px, 3vw, 34px);
+}
+.ixt-row--primary {
+  margin-top: clamp(30px, 4vw, 52px);
+  gap: clamp(22px, 4vw, 44px);
+}
+.ixt-row--secondary { margin-top: 22px; }
+.ixt-row--tertiary { margin-top: 16px; }
+
+.ixt-group-label {
+  font-size: var(--fs-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-ash);
+  align-self: center;
+}
+
+/* Actions read as links, not chrome. The underline animation is the shared
+   .hover-wipe-relay from globals.css — composed in the JSX, not redefined here.
+   --wipe-offset overrides the canonical -4px: these sit tight to their baseline. */
+.ixt-lnk {
+  --wipe-offset: 0px;
+  font-family: var(--mono);
+  font-size: inherit;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--c-dark);
+  padding: 2px 0;
+  cursor: pointer;
+  transition: color 200ms var(--ease);
+}
+.ixt-lnk--lead {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: var(--fs-title-sm);
+  letter-spacing: 0;
+}
+.ixt-lnk--quiet { color: var(--c-ash); }
+.ixt-lnk--accent { color: var(--c-bordeaux); }
+.ixt-lnk--tiny {
+  font-size: var(--fs-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-ash);
+}
+
+/* ---------- pie ---------- */
+
+.ixt-hint {
+  flex-shrink: 0;
+  max-width: 100%;
+  text-align: center;
+  font-size: var(--fs-caption);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-ash);
+}
+.ixt-hint span {
+  white-space: nowrap;
+  margin: 0 12px;
+  display: inline-block;
+}
+
+/* ---------- movimiento ---------- */
+
+@keyframes ixt-breathe {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.07; }
+}
+.ix-timer.is-overtime .ixt-pulse {
+  animation: ixt-breathe 2600ms ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ix-timer,
+  .ix-timer *,
+  .ix-timer *::before,
+  .ix-timer *::after {
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+    animation: none !important;
+  }
+  /* Time's up still has to be visible without the breathing. */
+  .ix-timer.is-overtime .ixt-pulse { opacity: 0.05; }
+}
+
+/* ---------- móvil ---------- */
+
+@media (max-width: 720px) {
+  .ix-timer { padding: 32px 20px 28px; }
+  .ixt-stage { padding: 32px 0; }
+  .ixt-hint span { margin: 0 8px; }
+}

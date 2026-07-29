@@ -50,7 +50,8 @@ export function buildLlmsMarkdown(): string {
 
   const colorLine = (c: typeof colorsBase[number]) => {
     const service = c.service ? ` · servicio asociado: ${c.service.es} / ${c.service.en}` : '';
-    return `- ${c.name}: ${c.hex} · RGB(${c.rgb}) · CMYK(${c.cmyk})${service}`;
+    const uiRole = c.uiRole ? ` · rol en interfaz: ${c.uiRole.es} / ${c.uiRole.en}` : '';
+    return `- ${c.name}: ${c.hex} · RGB(${c.rgb}) · CMYK(${c.cmyk})${service}${uiRole}`;
   };
 
   const sectionsLine = sections

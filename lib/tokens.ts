@@ -6,6 +6,10 @@ export type ColorToken = {
   /* Servicio asociado. Solo en colores de acento — cada acento identifica
      uno de los tres servicios canónicos de Interactius. */
   service?: { es: string; en: string; ca: string };
+  /* Rol funcional de interfaz, además del servicio. Hasta ahora solo Burdeos
+     lo tiene: es el color de alerta del sistema. No abre la puerta a usar los
+     acentos como decoración — un rol se declara aquí o no existe. */
+  uiRole?: { es: string; en: string; ca: string };
 };
 
 export const colorsBase: ColorToken[] = [
@@ -20,7 +24,8 @@ export const colorsBase: ColorToken[] = [
 
 export const colorsAccent: ColorToken[] = [
   { name: 'Opal',     hex: '#B0B5B0', rgb: '176,181,176', cmyk: '3,0,3,29',   service: { es: 'Pensamiento estratégico',  en: 'Strategic thinking',       ca: 'Pensament estratègic' } },
-  { name: 'Bordeaux', hex: '#99335F', rgb: '153,51,95',   cmyk: '0,67,38,40', service: { es: 'Diseño de experiencias',   en: 'Experience design',        ca: 'Disseny d\'experiències' } },
+  { name: 'Bordeaux', hex: '#99335F', rgb: '153,51,95',   cmyk: '0,67,38,40', service: { es: 'Diseño de experiencias',   en: 'Experience design',        ca: 'Disseny d\'experiències' },
+    uiRole: { es: 'Alerta y estados críticos en interfaz', en: 'Alerts and critical states in UI', ca: 'Alerta i estats crítics en interfície' } },
   { name: 'Emerald',  hex: '#5999A6', rgb: '89,153,166',  cmyk: '46,8,0,35',  service: { es: 'Transformación cultural',  en: 'Cultural transformation',  ca: 'Transformació cultural' } },
 ];
 

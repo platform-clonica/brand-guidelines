@@ -114,6 +114,23 @@ export function Sidebar() {
               <span aria-hidden className="text-[10px] text-dark/35 group-hover:text-dark/70 transition-colors duration-300 ease-expo">↗</span>
             </a>
           </li>
+          <li>
+            {/* Same group as Presentaciones: standalone tools, new tab, no locale prefix.
+                "Timer" reads the same in es/en/ca, so it needs no dictionary. */}
+            <a
+              href="/timer"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group w-full flex items-baseline gap-3 py-[7px]
+                         text-left font-mono text-[12px] leading-snug
+                         transition-colors duration-300 ease-expo
+                         text-dark/55 hover:text-dark"
+            >
+              <span className="text-[10px] text-dark/35" aria-hidden>→</span>
+              <span className="flex-1">Timer</span>
+              <span aria-hidden className="text-[10px] text-dark/35 group-hover:text-dark/70 transition-colors duration-300 ease-expo">↗</span>
+            </a>
+          </li>
         </ul>
       </nav>
 

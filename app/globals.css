@@ -9,6 +9,8 @@
   --c-grey: #E8E6E3;
   --c-warm-light: #F5F2ED;
   --c-warm-dark: #E0DAD2;
+  --c-ash: #75706B;
+  --c-ash-dark: #46433F;
   --c-opal: #B0B5B0;
   --c-bordeaux: #99335F;
   --c-emerald: #5999A6;
@@ -79,6 +81,38 @@ section[id] {
 @keyframes link-wipe-in {
   0%   { transform: scaleX(0); transform-origin: left; }
   100% { transform: scaleX(1); transform-origin: left; }
+}
+
+/* Hover wipe relay — variant of the canonical wipe for large, standalone actions
+   (the timer's Iniciar/Pausar, and anything else at title-sm or above).
+   The underline leaves to the right, then a second one enters from the left.
+   Sibling class, not a modifier: the canonical fixes opacity 0.6, which would
+   mute a primary action. Shares its easing; --wipe-offset tunes the baseline gap. */
+.hover-wipe-relay {
+  position: relative;
+  display: inline-block;
+  text-decoration: none;
+  --wipe-offset: -4px;
+}
+.hover-wipe-relay::before,
+.hover-wipe-relay::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  bottom: var(--wipe-offset);
+  height: 1px;
+  background: currentColor;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(.45, 0, .15, 1);
+}
+.hover-wipe-relay::before { transform-origin: right center; transform: scaleX(1); }
+.hover-wipe-relay::after  { transform-origin: left center;  transform: scaleX(0); }
+.hover-wipe-relay:hover::before,
+.hover-wipe-relay:focus-visible::before { transform: scaleX(0); }
+.hover-wipe-relay:hover::after,
+.hover-wipe-relay:focus-visible::after {
+  transform: scaleX(1);
+  transition-delay: 0.35s;
 }
 
 /* Toast */

@@ -32,6 +32,15 @@ export default async function middleware(request: NextRequest) {
     return response;
   }
 
+  // 0b) Timer: standalone public tool. Skips next-intl (the URL is /timer, with no locale
+  //     prefix) and deliberately skips updateSession() too — it stores nothing, so it must
+  //     not inherit the deck's hard dependency on the Supabase credentials.
+  if (pathname === '/timer' || pathname.startsWith('/timer/')) {
+    const response = NextResponse.next();
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return response;
+  }
+
   // 1) API routes: gate the editor ones, pass the public ones straight through.
   if (pathname.startsWith('/api')) {
     if (!isEditorApi(pathname)) return NextResponse.next();
