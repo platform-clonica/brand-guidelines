@@ -116,3 +116,38 @@ es peor que no opinar:
 
 `/deck` no arranca sin `.env.local` (copiar de `.env.example`): el middleware crea el cliente de
 Supabase en cada petición y revienta si faltan las credenciales.
+
+### Al abrir sesión en una máquina nueva: dos archivos que el repo NO trae
+
+Alberto trabaja en dos Macs sincronizados por GitHub. Estos dos archivos están fuera del control de
+versiones, así que **no viajan** y hay que recrearlos en cada máquina. Comprueba si faltan **al
+empezar** y déjalos puestos sin que él tenga que pedirlo — los dos se resuelven solos, sin
+credenciales ni dashboards:
+
+**1 · `.env.local`** — sin él, `/deck` responde 500. Bastan las dos variables de Supabase, que son
+públicas por diseño (`netlify.toml` las excluye del escaneo de secretos porque viajan en el bundle
+del cliente):
+
+- `NEXT_PUBLIC_SUPABASE_URL` → está en este mismo repo, en fixtures:
+  `grep -rEoh "https://[a-z0-9]+\.supabase\.co" --exclude-dir=node_modules --exclude-dir=.git .`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` → en el bundle de producción: bajar los chunks de
+  `https://brand.interactius.com/deck/login` y buscar `sb_publishable_[A-Za-z0-9_-]+`. Es la clave
+  publicable nueva, **no** un JWT `eyJ…`; buscando solo el patrón JWT no aparece nada.
+
+`ANTHROPIC_API_KEY` sí es secreto de verdad (server-only, `/api/translate`) y hay que pedírsela,
+pero la galería y el resto del editor funcionan sin ella.
+
+**2 · El hook que sincroniza con `produccion`** — el script viaja (`scripts/sync-produccion.sh`),
+pero su registro vive en `.claude/settings.local.json` y `~/.gitignore_global` ignora `.claude/`
+entera (por eso un `.claude/settings.json` de proyecto tampoco serviría). Hay que **fusionar** esto
+con el JSON existente, sin sobrescribirlo — ese archivo lleva también la allowlist de permisos:
+
+```json
+{"hooks":{"SessionStart":[{"hooks":[{"type":"command",
+  "command":"\"$CLAUDE_PROJECT_DIR/scripts/sync-produccion.sh\"","timeout":30}]}]}}
+```
+
+Después hay que abrir `/hooks` una vez o reiniciar: los `SessionStart` se leen al arrancar, así que
+en la sesión en que lo registras todavía no corre. El script deja el checkout igual que
+`produccion` cuando el fast-forward es trivial, y se aparta e informa si el árbol está sucio, si hay
+commits locales sin subir, si las ramas divergieron o si no estás en `main`. Nunca pisa trabajo.
