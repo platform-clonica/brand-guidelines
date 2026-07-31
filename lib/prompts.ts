@@ -53,51 +53,88 @@ export function getTonePrompt(locale: Locale): string {
   return TONE_PROMPT_ES;
 }
 
-/* ─── Image prompt (sección Universo visual, botón "Copiar prompt técnico") ─── */
+/* ─── Image prompt (sección Universo visual, botones "Copiar prompt técnico") ───
 
-const IMAGE_PROMPT_ES = `[DIRECTIVA DE IMAGEN CORPORATIVA INTERACTIUS]
-Modo operativo: Generar fotografía editorial premium de estilo analógico que proyecte una "actitud liminal" (espacios de transición, el "entre" las cosas). El tono visual debe ser sobrio, crítico y sugerente, huyendo por completo de la estética alegre y complaciente de los bancos de imágenes tradicionales.
+   Se sirve en DOS variantes porque los generadores de imagen meten personas por defecto: pidiendo
+   un espacio o un objeto salían igualmente figuras humanas, y el cliente las borraba a mano pieza
+   a pieza (reportado 2026-07-31).
+
+   - 'people'   → el prompt que el cliente ya usa a diario, palabra por palabra. Está contento con
+                  cómo responde, así que NO se toca: cualquier retoque aquí le cambia las imágenes.
+   - 'standard' → mismo cuerpo, distinto bloque de sujeto: nombra un sujeto no humano y excluye
+                  personas de forma expresa y exhaustiva. Callarse no basta — sin negativa explícita
+                  el modelo las mete igual, y una negativa vaga ("sin personas") deja pasar manos,
+                  siluetas y figuras de fondo.
+
+   El cuerpo (modo operativo + estilo de cámara) es IDÉNTICO en las dos, que es lo que sostiene el
+   tono: película, óptica, luz y obturación no cambian. Solo cambia qué se retrata.
+
+   OJO al tocar esto: el texto de la sección (messages/*.json → universoVisual.body) habla de
+   espacio negativo y del "entre", y el prompt que el cliente usa ya no los menciona. Ver la nota
+   de divergencia en el README de la sección / CLAUDE.md antes de "arreglarlo". */
+
+const IMAGE_BODY_ES = `[DIRECTIVA DE IMAGEN CORPORATIVA INTERACTIUS]
+Modo operativo: Generar fotografía editorial premium de estilo analógico. El tono visual debe ser sobrio, crítico y sugerente, huyendo por completo de la estética de los bancos de imágenes tradicionales.
 
 ESTILO TÉCNICO DE CÁMARA:
-- Tipo de película: Fotografía analógica de 35mm (grano fino perceptible, estilo cromático sutil de Kodak Portra 400H). Cero renders 3D o texturas digitales pulidas.
+- Tipo de película: Fotografía analógica de 35mm (grano fino perceptible, estilo cromático sutil de Kodak Portra 400). Cero renders 3D o texturas digitales pulidas.
 - Óptica: Lente prime (35mm o 50mm). Profundidad de campo muy baja (fondo suavemente desenfocado).
-- Iluminación: Luz natural, lateral o difusa. El juego de luces y sombras debe generar tensión intelectual, evitando una iluminación de estudio homogénea o artificial.
-- Obturación: Velocidad de obturación lenta deliberada (1/15s - 1/60s). Se busca capturar un movimiento sutil, un barrido o una ligera estela de luz (ghosting) que materialice el concepto de cambio, transición y dinamismo vertical.
+- Iluminación: Luz natural, lateral o difusa. Evitar una iluminación de estudio homogénea o artificial.
+- Obturación: Velocidad de obturación lenta deliberada (1/15s - 1/60s). Se busca capturar un movimiento sutil, un barrido o una ligera estela de luz (ghosting).
 
-COMPOSICIÓN EN EL MARGEN (CONCEPTO VISUAL):
-- Regla de Composición: Espacio negativo extremo. Fiel a operar en los márgenes, el sujeto u objeto principal debe estar desplazado hacia los bordes de la composición (regla de tercios llevada al límite), dejando el centro vacío o en suspenso.
-- Sujetos: Personas reales en entornos profesionales capturadas en momentos de profunda reflexión, análisis crítico u observación deliberada. Nunca posando, nunca mirando a cámara, nunca sonriendo de forma corporativa.`;
+SUJETO:`;
 
-const IMAGE_PROMPT_EN = `[INTERACTIUS CORPORATE IMAGE DIRECTIVE]
-Operating mode: Generate premium editorial photography in an analogue style that projects a "liminal attitude" (transition spaces, the "in-between" of things). The visual tone must be sober, critical and suggestive, completely avoiding the cheerful, complacent aesthetic of traditional stock-image libraries.
+const IMAGE_SUBJECTS_PEOPLE_ES = `
+- Sujetos: Personas reales en entornos profesionales nunca posando, nunca mirando a cámara, nunca sonriendo de forma corporativa.`;
+
+const IMAGE_SUBJECTS_STANDARD_ES = `
+- Sujetos: Espacios y objetos sin presencia humana. Arquitectura y umbrales (pasillos, escaleras, puertas, ventanas), espacios de trabajo vacíos, materiales, texturas y superficies. El sujeto es el espacio y la luz que lo atraviesa.
+- Exclusión (crítica): Ninguna figura humana en el encuadre. Ni completa ni parcial: sin manos, sin siluetas, sin reflejos de personas, sin sombras humanas proyectadas, sin figuras desenfocadas al fondo, sin maniquíes ni estatuas.`;
+
+const IMAGE_BODY_EN = `[INTERACTIUS CORPORATE IMAGE DIRECTIVE]
+Operating mode: Generate premium editorial photography in an analogue style. The visual tone must be sober, critical and suggestive, completely avoiding the aesthetic of traditional stock-image libraries.
 
 CAMERA TECHNICAL STYLE:
-- Film type: 35mm analogue photography (perceptible fine grain, subtle chromatic style of Kodak Portra 400H). Zero 3D renders or polished digital textures.
+- Film type: 35mm analogue photography (perceptible fine grain, subtle chromatic style of Kodak Portra 400). Zero 3D renders or polished digital textures.
 - Optics: Prime lens (35mm or 50mm). Very shallow depth of field (background softly out of focus).
-- Lighting: Natural, side or diffused light. The interplay of light and shadow must generate intellectual tension, avoiding homogeneous or artificial studio lighting.
-- Shutter: Deliberately slow shutter speed (1/15s – 1/60s). The aim is to capture subtle movement, a sweep or a slight light trail (ghosting) that materialises the concept of change, transition and vertical dynamism.
+- Lighting: Natural, side or diffused light. Avoid homogeneous or artificial studio lighting.
+- Shutter: Deliberately slow shutter speed (1/15s – 1/60s). The aim is to capture subtle movement, a sweep or a slight light trail (ghosting).
 
-COMPOSITION AT THE MARGIN (VISUAL CONCEPT):
-- Composition rule: Extreme negative space. Faithful to operating at the margins, the main subject or object must be displaced toward the edges of the composition (rule of thirds pushed to the limit), leaving the centre empty or in suspense.
-- Subjects: Real people in professional environments captured in moments of deep reflection, critical analysis or deliberate observation. Never posing, never looking at the camera, never smiling in a corporate manner.`;
+SUBJECT:`;
 
-const IMAGE_PROMPT_CA = `[DIRECTIVA D'IMATGE CORPORATIVA INTERACTIUS]
-Mode operatiu: Generar fotografia editorial premium d'estil analògic que projecti una "actitud liminal" (espais de transició, l'"entre" les coses). El to visual ha de ser sobri, crític i suggerent, fugint per complet de l'estètica alegre i complaent dels bancs d'imatges tradicionals.
+const IMAGE_SUBJECTS_PEOPLE_EN = `
+- Subjects: Real people in professional environments, never posing, never looking at the camera, never smiling in a corporate manner.`;
+
+const IMAGE_SUBJECTS_STANDARD_EN = `
+- Subjects: Spaces and objects with no human presence. Architecture and thresholds (corridors, staircases, doors, windows), empty workspaces, materials, textures and surfaces. The subject is the space and the light crossing it.
+- Exclusion (critical): No human figure in frame. Neither whole nor partial: no hands, no silhouettes, no reflections of people, no cast human shadows, no blurred figures in the background, no mannequins or statues.`;
+
+const IMAGE_BODY_CA = `[DIRECTIVA D'IMATGE CORPORATIVA INTERACTIUS]
+Mode operatiu: Generar fotografia editorial premium d'estil analògic. El to visual ha de ser sobri, crític i suggerent, fugint per complet de l'estètica dels bancs d'imatges tradicionals.
 
 ESTIL TÈCNIC DE CÀMERA:
-- Tipus de pel·lícula: Fotografia analògica de 35mm (gra fi perceptible, estil cromàtic subtil de Kodak Portra 400H). Zero renders 3D o textures digitals polides.
+- Tipus de pel·lícula: Fotografia analògica de 35mm (gra fi perceptible, estil cromàtic subtil de Kodak Portra 400). Zero renders 3D o textures digitals polides.
 - Òptica: Lent prime (35mm o 50mm). Profunditat de camp molt baixa (fons suaument desenfocat).
-- Il·luminació: Llum natural, lateral o difusa. El joc de llums i ombres ha de generar tensió intel·lectual, evitant una il·luminació d'estudi homogènia o artificial.
-- Obturació: Velocitat d'obturació lenta deliberada (1/15s - 1/60s). Es busca capturar un moviment subtil, un escombrat o una lleugera estela de llum (ghosting) que materialitzi el concepte de canvi, transició i dinamisme vertical.
+- Il·luminació: Llum natural, lateral o difusa. Evitar una il·luminació d'estudi homogènia o artificial.
+- Obturació: Velocitat d'obturació lenta deliberada (1/15s - 1/60s). Es busca capturar un moviment subtil, un escombrat o una lleugera estela de llum (ghosting).
 
-COMPOSICIÓ AL MARGE (CONCEPTE VISUAL):
-- Regla de Composició: Espai negatiu extrem. Fidel a operar als marges, el subjecte o objecte principal ha d'estar desplaçat cap a les vores de la composició (regla de terços portada al límit), deixant el centre buit o en suspens.
-- Subjectes: Persones reals en entorns professionals capturades en moments de profunda reflexió, anàlisi crítica o observació deliberada. Mai posant, mai mirant a càmera, mai somrient de manera corporativa.`;
+SUBJECTE:`;
 
-export function getImagePrompt(locale: Locale): string {
-  if (locale === 'en') return IMAGE_PROMPT_EN;
-  if (locale === 'ca') return IMAGE_PROMPT_CA;
-  return IMAGE_PROMPT_ES;
+const IMAGE_SUBJECTS_PEOPLE_CA = `
+- Subjectes: Persones reals en entorns professionals mai posant, mai mirant a càmera, mai somrient de manera corporativa.`;
+
+const IMAGE_SUBJECTS_STANDARD_CA = `
+- Subjectes: Espais i objectes sense presència humana. Arquitectura i llindars (passadissos, escales, portes, finestres), espais de treball buits, materials, textures i superfícies. El subjecte és l'espai i la llum que el travessa.
+- Exclusió (crítica): Cap figura humana a l'enquadrament. Ni completa ni parcial: sense mans, sense siluetes, sense reflexos de persones, sense ombres humanes projectades, sense figures desenfocades al fons, sense maniquins ni estàtues.`;
+
+/** Qué se retrata. 'people' = el prompt que el cliente ya usa; 'standard' = sin figura humana. */
+export type ImagePromptVariant = 'standard' | 'people';
+
+export function getImagePrompt(locale: Locale, variant: ImagePromptVariant): string {
+  const people = variant === 'people';
+  if (locale === 'en') return IMAGE_BODY_EN + (people ? IMAGE_SUBJECTS_PEOPLE_EN : IMAGE_SUBJECTS_STANDARD_EN);
+  if (locale === 'ca') return IMAGE_BODY_CA + (people ? IMAGE_SUBJECTS_PEOPLE_CA : IMAGE_SUBJECTS_STANDARD_CA);
+  return IMAGE_BODY_ES + (people ? IMAGE_SUBJECTS_PEOPLE_ES : IMAGE_SUBJECTS_STANDARD_ES);
 }
 
 /* ─── Master prompt: capa dura completa para ingesta IA ───

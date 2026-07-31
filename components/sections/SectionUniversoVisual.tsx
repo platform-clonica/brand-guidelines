@@ -8,7 +8,8 @@ import type { Locale } from '@/lib/i18n/routing';
 export async function SectionUniversoVisual() {
   const t = await getTranslations('universoVisual');
   const locale = (await getLocale()) as Locale;
-  const promptText = getImagePrompt(locale);
+  const promptStandard = getImagePrompt(locale, 'standard');
+  const promptPeople = getImagePrompt(locale, 'people');
 
   return (
     <SectionShell id="universo-visual" title={t('title')} variant="dark">
@@ -20,15 +21,29 @@ export async function SectionUniversoVisual() {
           {t('body')}
         </p>
 
-        <CopyButton
-          value={promptText}
-          toastMessage={t('copyPromptToast')}
-          label={t('copyPromptLabel')}
-          className="group mt-2 inline-flex items-center gap-3 font-mono text-body-sm text-warm-light normal-case tracking-normal w-fit"
-        >
-          <span aria-hidden className="opacity-60 transition-opacity duration-500 ease-expo group-hover:opacity-100">⧉</span>
-          <span className="hover-wipe-underline">{t('copyPromptLabel')}</span>
-        </CopyButton>
+        {/* Dos variantes del mismo prompt: el cuerpo es idéntico, solo cambia qué se retrata.
+            Existen porque los generadores meten personas por defecto y había que borrarlas a mano. */}
+        <div className="mt-2 flex flex-col gap-3 items-start">
+          <CopyButton
+            value={promptStandard}
+            toastMessage={t('copyPromptStandardToast')}
+            label={t('copyPromptStandardLabel')}
+            className="group inline-flex items-center gap-3 font-mono text-body-sm text-warm-light normal-case tracking-normal w-fit"
+          >
+            <span aria-hidden className="opacity-60 transition-opacity duration-500 ease-expo group-hover:opacity-100">⧉</span>
+            <span className="hover-wipe-underline">{t('copyPromptStandardLabel')}</span>
+          </CopyButton>
+
+          <CopyButton
+            value={promptPeople}
+            toastMessage={t('copyPromptPeopleToast')}
+            label={t('copyPromptPeopleLabel')}
+            className="group inline-flex items-center gap-3 font-mono text-body-sm text-warm-light normal-case tracking-normal w-fit"
+          >
+            <span aria-hidden className="opacity-60 transition-opacity duration-500 ease-expo group-hover:opacity-100">⧉</span>
+            <span className="hover-wipe-underline">{t('copyPromptPeopleLabel')}</span>
+          </CopyButton>
+        </div>
       </div>
 
       <div className="grid grid-cols-12 gap-3 sm:gap-4">

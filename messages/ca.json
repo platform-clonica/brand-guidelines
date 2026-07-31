@@ -143,8 +143,10 @@
     "title": "Univers visual",
     "lead": "El tractament de la imatge es basa en la representació d'allò liminal, és a dir, en l'espai de transició. Treballem el concepte de l'Entre com un buit que carrega significat en lloc d'eliminar-lo.",
     "body": "Prioritzem l'ús de fotografia conceptual que capturi el moviment, l'ambigüitat i la pausa. No busquem la literalitat, sinó generar una atmosfera que parli de precisió tècnica convivint amb la sensibilitat artística. Les imatges han d'actuar com a extensions de l'espai negatiu, permetent que la marca respiri i treballi 'en l'entre'.",
-    "copyPromptLabel": "Copiar prompt tècnic d'imatge per a IA",
-    "copyPromptToast": "Prompt tècnic d'imatge copiat"
+    "copyPromptStandardLabel": "Copiar prompt tècnic d'imatge per a IA (estàndard)",
+    "copyPromptStandardToast": "Prompt estàndard copiat",
+    "copyPromptPeopleLabel": "Copiar prompt tècnic d'imatge per a IA (persones)",
+    "copyPromptPeopleToast": "Prompt amb persones copiat"
   },
   "sistemaGrafico": {
     "title": "Sistema gràfic",
