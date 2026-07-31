@@ -148,6 +148,12 @@ con el JSON existente, sin sobrescribirlo — ese archivo lleva también la allo
 ```
 
 Después hay que abrir `/hooks` una vez o reiniciar: los `SessionStart` se leen al arrancar, así que
-en la sesión en que lo registras todavía no corre. El script deja el checkout igual que
-`produccion` cuando el fast-forward es trivial, y se aparta e informa si el árbol está sucio, si hay
-commits locales sin subir, si las ramas divergieron o si no estás en `main`. Nunca pisa trabajo.
+en la sesión en que lo registras todavía no corre.
+
+**Qué aporta exactamente, porque no es el que hace el pull.** El `vibe-sync-pull.sh` del settings
+global (compartido entre los dos Macs) ya hace `git pull --ff-only` del repo del proyecto en cada
+arranque, y como `main` tiene de upstream `produccion/main`, eso **ya trae el trabajo del equipo**.
+Lo que ese hook no hace es contártelo: cuando no puede sincronizar escribe `SKIP` en
+`~/.claude/vibe-sync.log` y sigue en silencio. `sync-produccion.sh` es la capa de aviso: si todo fue
+bien se calla, y si no, dice en pantalla **cuál** de los cuatro casos ha pasado — árbol sucio,
+commits locales sin subir, ramas divergidas o no estar en `main`. Ninguno de los dos pisa trabajo.
