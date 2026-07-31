@@ -4,8 +4,9 @@ import { useRouter } from 'next/navigation';
 import { compileDeck } from '@/lib/deck';
 import { TEMPLATES } from '@/lib/deck/templates';
 import type { ClientRecord, DeckListItem } from '@/lib/decks/types';
-import { createDeck, listClients, listDecks } from '@/lib/decks/api';
+import { createDeck, deleteDeck, listClients, listDecks } from '@/lib/decks/api';
 import { DeckMetaModal, type MetaValues } from '../studio/DeckMetaModal';
+import { ConfirmModal } from '../studio/ConfirmModal';
 import { SlideThumb } from '../studio/SlideThumb';
 import { DeckLogo } from '../studio/DeckLogo';
 import { colors } from '../studio/ui';
@@ -31,6 +32,8 @@ export function DeckGallery() {
   const [search, setSearch] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
+  const [toDelete, setToDelete] = useState<DeckListItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     listDecks().then(setItems).catch((e) => setError(e instanceof Error ? e.message : 'Error al cargar'));
@@ -60,6 +63,20 @@ export function DeckGallery() {
   const onCreate = async (values: MetaValues) => {
     const rec = await createDeck({ ...values, md: TEMPLATES[values.type] });
     router.push(`/deck/${rec.id}`);
+  };
+
+  const onDelete = async (deck: DeckListItem) => {
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteDeck(deck.id);
+      setItems((prev) => (prev ?? []).filter((d) => d.id !== deck.id));
+      setToDelete(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo eliminar la presentación');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -167,7 +184,14 @@ export function DeckGallery() {
           {items === null && (
             <div style={{ font: `400 12px/1.4 ${MONO}`, color: colors.ash, alignSelf: 'center' }}>Cargando…</div>
           )}
-          {items && filtered.map((it) => <DeckCard key={it.id} item={it} onOpen={(id) => router.push(`/deck/${id}`)} />)}
+          {items && filtered.map((it) => (
+            <DeckCard
+              key={it.id}
+              item={it}
+              onOpen={(id) => router.push(`/deck/${id}`)}
+              onDelete={() => setToDelete(it)}
+            />
+          ))}
         </div>
 
         {items && items.length > 0 && filtered.length === 0 && (
@@ -186,13 +210,32 @@ export function DeckGallery() {
           onSubmit={onCreate}
         />
       )}
+
+      {toDelete && (
+        <ConfirmModal
+          title="Eliminar presentación"
+          message={`Vas a borrar «${toDelete.commercial_id}». Esta acción no se puede deshacer.`}
+          confirmLabel={deleting ? 'Eliminando…' : 'Eliminar'}
+          danger
+          onConfirm={() => !deleting && onDelete(toDelete)}
+          onClose={() => !deleting && setToDelete(null)}
+        />
+      )}
     </div>
   );
 }
 
 /* One deck card: a live cover-slide thumbnail (falls back to a neutral placeholder), name + date.
    The thumbnail width tracks the card's rendered width via ResizeObserver. */
-function DeckCard({ item, onOpen }: { item: DeckListItem; onOpen: (id: string) => void }) {
+function DeckCard({
+  item,
+  onOpen,
+  onDelete,
+}: {
+  item: DeckListItem;
+  onOpen: (id: string) => void;
+  onDelete: () => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(0);
 
@@ -215,14 +258,19 @@ function DeckCard({ item, onOpen }: { item: DeckListItem; onOpen: (id: string) =
   }, [item.md, item.type]);
 
   return (
-    <button
-      onClick={() => onOpen(item.id)}
+    /* Wrapper (no el botón) porque la papelera es otro botón: anidarlos sería HTML inválido.
+       El hover vive aquí para que pasar el puntero a la papelera no lo apague. */
+    <div
+      style={{ position: 'relative' }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
+    >
+    <button
+      onClick={() => onOpen(item.id)}
       title="Abrir presentación"
       style={{
         appearance: 'none', cursor: 'pointer', textAlign: 'left', background: 'transparent',
-        border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 8,
+        border: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 8, width: '100%',
       }}
     >
       <div
@@ -244,5 +292,42 @@ function DeckCard({ item, onOpen }: { item: DeckListItem; onOpen: (id: string) =
         <div style={{ font: `400 10px/1.4 ${MONO}`, color: colors.ash, marginTop: 2 }}>Creado el {fmt(item.created_at)}</div>
       </div>
     </button>
+
+      {/* Papelera: esquina superior derecha de la miniatura, solo al pasar el puntero.
+          Mismo tratamiento que la de la galería de imágenes (icono blanco sobre tinta al 72%). */}
+      <button
+        type="button"
+        aria-label="Eliminar presentación"
+        title="Eliminar presentación"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+        style={{
+          position: 'absolute',
+          top: 8,
+          right: 8,
+          display: 'grid',
+          placeItems: 'center',
+          width: 26,
+          height: 26,
+          padding: 0,
+          cursor: 'pointer',
+          color: '#fff',
+          background: 'rgba(28, 26, 23, 0.72)',
+          border: 'none',
+          borderRadius: 4,
+          opacity: hover ? 1 : 0,
+          transform: hover ? 'scale(1)' : 'scale(0.85)',
+          transition: 'opacity 120ms ease, transform 120ms ease',
+          pointerEvents: hover ? 'auto' : 'none',
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" />
+          <path d="M10 11v6M14 11v6" />
+        </svg>
+      </button>
+    </div>
   );
 }
