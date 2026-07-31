@@ -213,8 +213,10 @@ export const brand = {
   name: 'Interactius',
   wordmark: 'interactīus',
   tagline: { es: 'Actitud liminal', en: 'Liminal attitude', ca: 'Actitud liminal' },
-  version: 'v1',
-  versionDate: '2026-05',
+  /* Registro de versión del manual. OJO: está duplicado a mano en la clave `chrome.version` de
+     messages/{es,en,ca}.json — si cambias aquí, cámbialo allí (hoy: "v2_07.26"). */
+  version: 'v2',
+  versionDate: '2026-07',
   concept: {
     es: 'El Macrón ortográfico sobre la ī indica la vocal larga y la pronunciación correcta del logotipo. La marca utiliza este recurso como juego gráfico y dinámico.',
     en: 'The orthographic Macron over the ī marks the long vowel and the correct pronunciation of the logotype. The brand uses it as a graphic and dynamic device.',
