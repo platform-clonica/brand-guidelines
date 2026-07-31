@@ -18,10 +18,11 @@
                            with the image left and one with it right never jump between each other */
   --img-gap:96px;       /* gap between that image and the text column — one value, so split and reto
                            (and both split variants) never sit at different distances */
-  --img-inset:64px;     /* how far that image sits from ITS slide edge — same on both sides, so two
-                           slides seguidas con la foto a lados distintos no saltan. 64 lo fija el
-                           lado izquierdo: es donde está el filete, y la foto no puede pisarlo.
-                           El derecho lo iguala en vez de sangrar a borde (ver .split .photo). */
+  --img-inset:64px;     /* cuánto se mete la foto lateral cuando va a la IZQUIERDA: lo fija el filete,
+                           que vive en left:64 y la foto no puede pisar. A la derecha la foto sangra
+                           al borde (sin margen). El texto, en cambio, se ancla a este valor por los
+                           dos lados, de modo que su columna mide 582 en ambas variantes y no salta
+                           entre slides. Ver .split .photo. */
   --hairline:rgba(28,26,23,.14);  /* structural line for enumerated/table separators (objetivos,
                            budget). Stays translucent: those never cross another line and sit on both
                            warm-light and white, so they adapt to the background. */
@@ -210,15 +211,15 @@ body.ix-viewer main{padding:0 !important; margin:0 !important;}
    negative. The filter also normalises whatever the client sends (colour, positive, negative). */
 .ix-deck .cover .clientlogo{width:150px; height:auto; filter:brightness(0) invert(1);}
 
-/* 2 · Image + text split — la foto va metida --img-inset por su lado en las DOS variantes.
-   Por qué no sangra a borde: a la izquierda no puede (ahí viven el filete y la pestaña), así que si
-   a la derecha sangrase, dos slides seguidas saltarían — la foto tocando borde en una y flotando a
-   64 en la otra. Además esos 64px tienen que salir de algún sitio: o del hueco imagen↔texto o de la
-   columna de texto. Con el mismo inset a ambos lados no salen de ninguno y las tres medidas
-   (inset 64 · hueco 96 · columna 582) coinciden. */
-.ix-deck .split .photo{position:absolute; right:var(--img-inset); top:0; bottom:0; width:var(--img-w);}
-/* Text ends one --img-gap before the photo's inner edge (inset + img-w).
-   top:64 es solo el valor previo al pintado: FitText centra el bloque en la banda 64–656, la misma
+/* 2 · Image + text split — la foto de la derecha SANGRA al borde (sin margen blanco); la de la
+   izquierda no puede, va metida --img-inset porque ahí viven el filete y la pestaña.
+   La columna de texto, en cambio, mide lo mismo en las dos variantes (582): se ancla siempre a
+   donde estaría la foto metida, así el bloque de texto no salta entre dos slides seguidas aunque
+   la foto sí cambie de tratamiento. El precio de que la derecha sangre es que el hueco texto↔foto
+   queda en 160 por ese lado y 96 por el izquierdo — decisión de Alberto (2026-07-31): antes que un
+   margen blanco pegado al borde derecho, prefiere el aire entre texto e imagen. */
+.ix-deck .split .photo{position:absolute; right:0; top:0; bottom:0; width:var(--img-w);}
+/* top:64 es solo el valor previo al pintado: FitText centra el bloque en la banda 64–656, la misma
    que paragraph/contexto — mismo rol (antetítulo + cuerpo), misma caja vertical. */
 .ix-deck .split .txt{position:absolute; left:var(--ml); right:calc(var(--img-inset) + var(--img-w) + var(--img-gap)); top:64px;}
 /* split-izq: mirror of the default (image on the left, text on the right). */
@@ -396,8 +397,8 @@ body.ix-viewer main{padding:0 !important; margin:0 !important;}
 .ix-deck .objetivos .list li:last-child{border-bottom:none;}
 .ix-deck .objetivos .list .n{font:400 11px/1.6 var(--mono); color:var(--ash);}
 .ix-deck .objetivos .list .body{font:400 13px/1.55 var(--mono); color:var(--ash-dark);}
-/* Metida como la del split, no sangrando: una objetivos seguida de un split saltaría si no. */
-.ix-deck .objetivos .photo{position:absolute; right:var(--img-inset); top:0; bottom:0; width:var(--img-w);}
+/* Sangra al borde como la del split-der — mismo tratamiento para toda foto lateral a la derecha. */
+.ix-deck .objetivos .photo{position:absolute; right:0; top:0; bottom:0; width:var(--img-w);}
 
 /* Roadmap fases (ref p.35) — phase columns */
 .ix-deck .roadmapphases .title{position:absolute; left:var(--ml); top:56px; font-family:var(--serif); font-weight:300; font-size:var(--title-section);}
