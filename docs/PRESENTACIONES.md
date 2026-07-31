@@ -54,7 +54,7 @@ DeckStudio  →  PDF (window.print) · URL compartible (base64url)
 8. **Split** — heading + imagen + párrafo.
 9. **Paragraph** — fallback.
 
-**Override de tema:** añade `{dark}`/`{oscuro}` o `{light}`/`{claro}` al final de un encabezado para forzar el tema de esa diapositiva.
+**Override de tema:** añade `{dark}` o `{warm-light}` al final de un encabezado para forzar el tema de esa diapositiva.
 
 ## 4. Layouts (17)
 

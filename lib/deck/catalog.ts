@@ -189,13 +189,19 @@ export const LAYOUT_MAP: Record<string, Slide['kind']> = Object.fromEntries(
 
 /* The appearance token the snippet ships with. The background picker has no UI — the markdown IS
    the interface — so a pasted block states its own fill to make the knob discoverable: the author
-   sees `{warm-light}` and swaps it for `{blanco}` or `{warm-dark}` without opening the guide.
+   sees `{warm-light}` and swaps it for `{white}` or `{warm-dark}` without opening the guide.
+
+   Los cuatro nombres canónicos son los de los tokens de marca, en inglés y en una sola familia:
+   `warm-light` · `warm-dark` · `white` · `dark`. Los alias en castellano (`crema`, `arena`,
+   `blanco`, `oscuro`) siguen funcionando en resolveAppearance() para no romper los decks ya
+   escritos, pero no se emiten: mezclarlos era lo que hacía que la guía enseñara dos idiomas a la
+   vez (`warm-light` junto a `blanco`).
 
    It is deliberately a NO-OP: it spells out the default this layout already has, derived from
    themeFor() so the two can't drift. The canonical dark heroes (portada/enunciado/cierre) get
-   `{oscuro}` for the same reason — writing `{warm-light}` there would flip them light. */
+   `{dark}` for the same reason — writing `{warm-light}` there would flip them light. */
 function defaultAppearance(kind: Slide['kind']): string {
-  return themeFor(kind, undefined) === 'dark' ? '{oscuro}' : '{warm-light}';
+  return themeFor(kind, undefined) === 'dark' ? '{dark}' : '{warm-light}';
 }
 
 /* The exact text the gallery copies to the clipboard. The `---` goes AFTER the block: authors

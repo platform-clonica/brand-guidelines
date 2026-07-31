@@ -37,13 +37,17 @@ export type BlockModel = {
 const find = <T extends Token['t']>(tokens: Token[], t: T) =>
   tokens.find((x) => x.t === t) as Extract<Token, { t: T }> | undefined;
 
-/* Resolve an appearance modifier ({blanco}, {warm-dark}, {oscuro}…) to a theme and/or background.
-   The three light fills keep dark text (theme light); only dark flips the theme. Unknown token → {}. */
+/* Resolve an appearance modifier to a theme and/or background.
+   CANÓNICOS (los que se emiten y se documentan), una sola familia, la de los tokens de marca:
+     {warm-light} · {warm-dark} · {white} · {dark}
+   El resto son ALIAS que se siguen aceptando para no romper decks ya escritos — no los emitas.
+   Los tres rellenos claros conservan la tinta oscura; solo `dark` cambia de tema (y con él la
+   tinta, ver deck.css → --ink*). Token desconocido → {}. */
 export function resolveAppearance(tok?: string): { theme?: Theme; bg?: Background } {
   switch (tok?.trim().toLowerCase()) {
-    case 'oscuro': case 'dark': return { theme: 'dark' };
-    case 'claro': case 'light': case 'warm-light': case 'crema': return { theme: 'light', bg: 'warm-light' };
-    case 'blanco': case 'white': return { theme: 'light', bg: 'white' };
+    case 'dark': case 'oscuro': return { theme: 'dark' };
+    case 'warm-light': case 'light': case 'claro': case 'crema': return { theme: 'light', bg: 'warm-light' };
+    case 'white': case 'blanco': return { theme: 'light', bg: 'white' };
     case 'warm-dark': case 'arena': return { theme: 'light', bg: 'warm-dark' };
     default: return {};
   }
