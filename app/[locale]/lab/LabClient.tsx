@@ -21,7 +21,29 @@ const DARK_MD = LAYOUT_CATALOG
   .map((e) => layoutSnippet(e).replace(/\{[a-z-]+\}/i, '{dark}'))
   .join('\n');
 
-const LAB_MD = `${CATALOG_MD}\n${DARK_MD}`;
+/* Y una con el salto de línea explícito del titular (`\` al final de la línea), en portada y en
+   una interior. Es la única forma de partir un titular —un Enter a secas NO vale, ver
+   lib/deck/parse.ts— así que conviene tenerlo a la vista y no solo en la guía. */
+const BREAK_MD = [
+  '[ly: portada] {dark}',
+  '',
+  '# Convertimos la estrategia \\',
+  'en decisiones con criterio',
+  '',
+  '## Salto de línea en portada',
+  '',
+  '---',
+  '',
+  '[ly: enunciado] {dark}',
+  '',
+  'ANTETÍTULO EN MAYÚSCULAS',
+  '',
+  '## Primera línea del titular \\',
+  'segunda línea forzada',
+  '',
+].join('\n');
+
+const LAB_MD = `${CATALOG_MD}\n${DARK_MD}\n${BREAK_MD}`;
 
 export function LabClient() {
   // Escape the localized site chrome (sidebar + main padding) so the editor is full-screen, exactly
