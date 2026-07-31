@@ -39,7 +39,8 @@ export default async function DeckViewPage({ params, searchParams }: Props) {
   const { print } = await searchParams;
 
   const sb = supabaseServer();
-  const { data, error } = await sb.from('decks').select('md, type, logo_path').eq('id', id).single();
+  const { data, error } = await sb
+    .from('decks').select('md, type, logo_path, commercial_id').eq('id', id).single();
   if (error || !data) notFound();
 
   // If the deck was already signed, render the immutable signed state on the Acceptance page.
@@ -47,7 +48,7 @@ export default async function DeckViewPage({ params, searchParams }: Props) {
     .from('signatures').select('*').eq('deck_id', id)
     .order('signed_at', { ascending: false }).limit(1).maybeSingle();
 
-  const deck = data as Pick<DeckRecord, 'md' | 'type' | 'logo_path'>;
+  const deck = data as Pick<DeckRecord, 'md' | 'type' | 'logo_path' | 'commercial_id'>;
   return (
     <DeckViewerClient
       deckId={id}
@@ -55,6 +56,7 @@ export default async function DeckViewPage({ params, searchParams }: Props) {
       type={deck.type}
       logoPath={deck.logo_path}
       print={print === '1'}
+      pdfName={deck.commercial_id}
       signature={(sig as DeckSignature | null) ?? null}
     />
   );
