@@ -18,6 +18,9 @@
                            with the image left and one with it right never jump between each other */
   --img-gap:96px;       /* gap between that image and the text column — one value, so split and reto
                            (and both split variants) never sit at different distances */
+  /* La retícula entera (lienzo, márgenes, banda de texto, foto lateral) está explicada en
+     docs/PRESENTACIONES.md §9, incl. por qué la foto derecha sangra y la izquierda no.
+     Si cambias un valor aquí, actualiza esa tabla. */
   --img-inset:64px;     /* cuánto se mete la foto lateral cuando va a la IZQUIERDA: lo fija el filete,
                            que vive en left:64 y la foto no puede pisar. A la derecha la foto sangra
                            al borde (sin margen). El texto, en cambio, se ancla a este valor por los
