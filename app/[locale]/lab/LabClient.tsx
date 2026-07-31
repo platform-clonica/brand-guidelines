@@ -9,7 +9,19 @@ import { DeckStudio } from '@/components/deck/DeckStudio';
 import { LAYOUT_CATALOG, layoutSnippet } from '@/lib/deck/catalog';
 
 // A deck made of every layout, in catalog order.
-const LAB_MD = LAYOUT_CATALOG.map(layoutSnippet).join('\n');
+const CATALOG_MD = LAYOUT_CATALOG.map(layoutSnippet).join('\n');
+
+/* Además, cada layout otra vez en `{dark}`. El selector de fondo se añadió pensando solo en los
+   tres tonos claros y nadie recorrió los layouts: en oscuro había textos que seguían en tinta
+   oscura y desaparecían (reportado por el cliente el 2026-07-31). Tenerlos aquí abajo hace que el
+   fallo se vea de un vistazo en vez de descubrirlo un cliente en su deck.
+   Se saltan presupuesto y aceptación: van siempre en claro a propósito (lib/deck/classify.ts). */
+const DARK_MD = LAYOUT_CATALOG
+  .filter((e) => !['presupuesto', 'aceptacion'].includes(e.marker))
+  .map((e) => layoutSnippet(e).replace(/\{[a-z-]+\}/i, '{dark}'))
+  .join('\n');
+
+const LAB_MD = `${CATALOG_MD}\n${DARK_MD}`;
 
 export function LabClient() {
   // Escape the localized site chrome (sidebar + main padding) so the editor is full-screen, exactly

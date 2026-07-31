@@ -81,26 +81,53 @@ roadmap y condiciones del presupuesto (el formato significa lo mismo en todas pa
 barras con espacios — `/ palabra /` — para el realce de marca (p. ej. `/ transformación /`).
 Se conservan las barras y, al traducir, solo cambia la palabra de dentro.
 
+**Salto de línea en un titular**: termina la línea con una **barra invertida** `\` y sigue
+escribiendo debajo. Vale en cualquier titular, de cualquier layout.
+
+```
+## Convertimos la estrategia \
+en decisiones con criterio
+```
+
+⚠️ **Pulsar Enter a secas no parte el titular**, y es a propósito: en las plantillas un titular va
+pegado a su párrafo sin línea en blanco, así que un salto normal tiene que seguir significando
+«aquí acaba el titular y empieza el cuerpo». La barra lo hace explícito.
+
+El salto es solo visual: en el título del PDF y en la vista previa al compartir el enlace, las
+líneas se vuelven a unir con un espacio.
+
 ---
 
 ## 3. Fondo de la diapositiva
 
 Por defecto: **oscuro** en portada, *statement* y cierre; **claro** (crema) en el resto.
 
-En las diapositivas claras puedes elegir entre **tres fondos** (el texto siempre queda oscuro):
+Hay **cuatro fondos**, con el nombre del token de marca correspondiente:
 
-| Escribes | Fondo |
-|---|---|
-| _(nada)_ o `{warm-light}` | Crema `#F5F2ED` (por defecto) |
-| `{blanco}` / `{white}` | Blanco puro `#FFFFFF` |
-| `{warm-dark}` / `{arena}` | Arena `#E0DAD2` |
+| Escribes | Fondo | Tinta |
+|---|---|---|
+| _(nada)_ o `{warm-light}` | Crema `#F5F2ED` (por defecto) | Oscura |
+| `{white}` | Blanco puro `#FFFFFF` | Oscura |
+| `{warm-dark}` | Arena `#E0DAD2` | Oscura |
+| `{dark}` | Oscuro `#1C1A17` | **Clara** (se invierte sola) |
 
-El fondo **oscuro** se reserva para las pantallas canónicas (portada, statement, cierre). Se puede
-forzar con `{oscuro}` / `{dark}` por compatibilidad, pero no es un fondo "de autor".
+> Se siguen aceptando los alias en castellano —`crema`, `blanco`, `arena`, `oscuro`— para no romper
+> los decks ya escritos, pero **usa los cuatro de arriba**: son los nombres de los tokens de marca y
+> van todos en la misma familia.
+
+El fondo **oscuro** se reserva para las pantallas canónicas (portada, statement, cierre), pero se
+puede forzar en cualquier otra con `{dark}`. Al hacerlo **el texto se invierte solo**:
+títulos, cuerpo, listas, números, filetes y cabeceras de tabla pasan a claro. Las tarjetas blancas
+(columnas, fases del roadmap) y la media página blanca de presupuesto y aceptación siguen siendo
+blancas, así que su texto sigue siendo oscuro — es correcto, van sobre blanco.
+
+> Hasta el 31/07/2026 esto **no** funcionaba: con `{dark}` el fondo se oscurecía pero buena parte
+> del texto seguía en tinta oscura y desaparecía. El selector de fondo se había añadido pensando
+> solo en los tres tonos claros.
 
 **Ya viene puesto.** Cuando copias un layout de la galería, el bloque llega con su fondo actual ya
-escrito (`{warm-light}`, o `{oscuro}` en portada/statement/cierre). No cambia nada por sí solo: está
-ahí para que veas el mando y lo sustituyas por `{blanco}` o `{warm-dark}` sin volver a esta guía.
+escrito (`{warm-light}`, o `{dark}` en portada/statement/cierre). No cambia nada por sí solo: está
+ahí para que veas el mando y lo sustituyas por `{white}` o `{warm-dark}` sin volver a esta guía.
 
 **Dónde ponerlo** — dos sitios, el que te venga:
 - Junto al marcador de layout (funciona también en las páginas de solo-marcador como manifiesto):
@@ -113,8 +140,8 @@ ahí para que veas el mando y lo sustituyas por `{blanco}` o `{warm-dark}` sin v
   ```
 
 **Dos excepciones, a propósito:** `[ly: presupuesto]` y `[ly: aceptacion]` van **siempre en claro**.
-Son las dos páginas contractuales del deck y su legibilidad no se negocia, así que `{oscuro}` no
-tiene efecto en ellas. El **fondo** sí se les puede cambiar (`{blanco}`, `{warm-dark}`); lo que no
+Son las dos páginas contractuales del deck y su legibilidad no se negocia, así que `{dark}` no
+tiene efecto en ellas. El **fondo** sí se les puede cambiar (`{white}`, `{warm-dark}`); lo que no
 se puede es volverlas oscuras. No es un fallo: está fijado en el código (`lib/deck/classify.ts`).
 
 ---
