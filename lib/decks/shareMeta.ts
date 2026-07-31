@@ -45,9 +45,11 @@ export async function getDeckShareMeta(id: string): Promise<DeckShareMeta | null
   };
 }
 
-/* The social/PDF title: the presentation's own cover title, or the generic fallback. */
+/* The social/PDF title: the presentation's own cover title, or the generic fallback.
+   Los saltos explícitos del titular (`\` en el markdown) se aplanan a espacio: esto acaba en el
+   <title> del documento y en el nombre del PDF, donde un salto de línea no pinta nada. */
 export function shareTitle(meta: DeckShareMeta | null): string {
-  return meta?.title?.trim() || 'Presentación · Interactius';
+  return meta?.title?.replace(/\s*\n\s*/g, ' ').trim() || 'Presentación · Interactius';
 }
 
 /* The social subtitle. Today every saved deck is a commercial proposal, so the copy is fixed

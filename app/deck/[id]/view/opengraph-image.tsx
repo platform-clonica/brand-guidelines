@@ -36,7 +36,9 @@ export default async function Image({ params }: { params: Promise<{ id: string }
 
   try {
     const meta = await getDeckShareMeta(id).catch(() => null);
-    const title = meta?.title?.trim() || 'Presentación';
+    /* El titular puede traer saltos explícitos (`\` en el markdown). Aquí se aplanan: esta portada
+       la redibuja satori y hace su propio wrap, así que un <br> no aporta y complica la medida. */
+    const title = meta?.title?.replace(/\s*\n\s*/g, ' ').trim() || 'Presentación';
     const subtitle = meta?.subtitle?.trim() || null;
     const long = title.length > SHORT_TITLE;
 
