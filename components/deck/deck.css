@@ -18,6 +18,10 @@
                            with the image left and one with it right never jump between each other */
   --img-gap:96px;       /* gap between that image and the text column — one value, so split and reto
                            (and both split variants) never sit at different distances */
+  --img-inset:64px;     /* how far that image sits from ITS slide edge — same on both sides, so two
+                           slides seguidas con la foto a lados distintos no saltan. 64 lo fija el
+                           lado izquierdo: es donde está el filete, y la foto no puede pisarlo.
+                           El derecho lo iguala en vez de sangrar a borde (ver .split .photo). */
   --hairline:rgba(28,26,23,.14);  /* structural line for enumerated/table separators (objetivos,
                            budget). Stays translucent: those never cross another line and sit on both
                            warm-light and white, so they adapt to the background. */
@@ -206,17 +210,27 @@ body.ix-viewer main{padding:0 !important; margin:0 !important;}
    negative. The filter also normalises whatever the client sends (colour, positive, negative). */
 .ix-deck .cover .clientlogo{width:150px; height:auto; filter:brightness(0) invert(1);}
 
-/* 2 · Image + text split — image always on the RIGHT (left stays light for the tab) */
-.ix-deck .split .photo{position:absolute; right:0; top:0; bottom:0; width:var(--img-w);}
-/* Image bleeds to the right edge; text ends one --img-gap before it (image left edge = img-w wide). */
-.ix-deck .split .txt{position:absolute; left:var(--ml); right:calc(var(--img-w) + var(--img-gap)); top:150px;}
+/* 2 · Image + text split — la foto va metida --img-inset por su lado en las DOS variantes.
+   Por qué no sangra a borde: a la izquierda no puede (ahí viven el filete y la pestaña), así que si
+   a la derecha sangrase, dos slides seguidas saltarían — la foto tocando borde en una y flotando a
+   64 en la otra. Además esos 64px tienen que salir de algún sitio: o del hueco imagen↔texto o de la
+   columna de texto. Con el mismo inset a ambos lados no salen de ninguno y las tres medidas
+   (inset 64 · hueco 96 · columna 582) coinciden. */
+.ix-deck .split .photo{position:absolute; right:var(--img-inset); top:0; bottom:0; width:var(--img-w);}
+/* Text ends one --img-gap before the photo's inner edge (inset + img-w).
+   top:64 es solo el valor previo al pintado: FitText centra el bloque en la banda 64–656, la misma
+   que paragraph/contexto — mismo rol (antetítulo + cuerpo), misma caja vertical. */
+.ix-deck .split .txt{position:absolute; left:var(--ml); right:calc(var(--img-inset) + var(--img-w) + var(--img-gap)); top:64px;}
 /* split-izq: mirror of the default (image on the left, text on the right). */
-.ix-deck .split.img-left .photo{right:auto; left:64px;}
-/* Image inset at left:64; text starts one --img-gap past its right edge (64 + img-w). */
-.ix-deck .split.img-left .txt{left:calc(64px + var(--img-w) + var(--img-gap)); right:var(--mr);}
+.ix-deck .split.img-left .photo{right:auto; left:var(--img-inset);}
+.ix-deck .split.img-left .txt{left:calc(var(--img-inset) + var(--img-w) + var(--img-gap)); right:var(--mr);}
 .ix-deck .split .eyebrow{margin-bottom:26px;}
 .ix-deck .split h2{font-family:var(--serif); font-weight:300; font-size:var(--title-section); line-height:1.08; margin-bottom:26px;}
-.ix-deck .split .txt .body{max-width:520px;}
+/* Medida del cuerpo, una sola para las dos variantes. El techo lo pone la variante estrecha
+   (imagen izquierda: 582px de columna, porque la foto va metida a 64 para no tapar el filete y la
+   pestaña, y eso empuja el texto); 580 entra en esa y sobra en la de imagen derecha (646). Antes
+   estaba a 520 y dejaba sin usar 126px en una y 62px en la otra. */
+.ix-deck .split .txt .body{max-width:580px;}
 .ix-deck .split .txt .body p + p{margin-top:14px;}
 .ix-deck .split .flowlist li{font-size:13px;}
 
@@ -369,9 +383,9 @@ body.ix-viewer main{padding:0 !important; margin:0 !important;}
 .ix-deck .contexto .flowlist li{font-size:16px; line-height:1.5;}
 
 /* El reto (ref p.29) — image left, eyebrow + serif title right */
-.ix-deck .elreto .photo{position:absolute; left:64px; top:0; bottom:0; width:var(--img-w);}
-/* Image inset at left:64 like split-izq; text starts the same --img-gap past it. */
-.ix-deck .elreto .txt{position:absolute; left:calc(64px + var(--img-w) + var(--img-gap)); right:var(--mr); top:120px;}
+.ix-deck .elreto .photo{position:absolute; left:var(--img-inset); top:0; bottom:0; width:var(--img-w);}
+/* Same inset/gap as split-izq, so el reto y un split seguidos no saltan. */
+.ix-deck .elreto .txt{position:absolute; left:calc(var(--img-inset) + var(--img-w) + var(--img-gap)); right:var(--mr); top:120px;}
 .ix-deck .elreto .eyebrow{margin-bottom:24px;}
 .ix-deck .elreto h2{font-family:var(--serif); font-weight:300; font-size:var(--title-section); line-height:1.08; color:var(--dark);}
 
@@ -382,7 +396,8 @@ body.ix-viewer main{padding:0 !important; margin:0 !important;}
 .ix-deck .objetivos .list li:last-child{border-bottom:none;}
 .ix-deck .objetivos .list .n{font:400 11px/1.6 var(--mono); color:var(--ash);}
 .ix-deck .objetivos .list .body{font:400 13px/1.55 var(--mono); color:var(--ash-dark);}
-.ix-deck .objetivos .photo{position:absolute; right:0; top:0; bottom:0; width:var(--img-w);}
+/* Metida como la del split, no sangrando: una objetivos seguida de un split saltaría si no. */
+.ix-deck .objetivos .photo{position:absolute; right:var(--img-inset); top:0; bottom:0; width:var(--img-w);}
 
 /* Roadmap fases (ref p.35) — phase columns */
 .ix-deck .roadmapphases .title{position:absolute; left:var(--ml); top:56px; font-family:var(--serif); font-weight:300; font-size:var(--title-section);}
