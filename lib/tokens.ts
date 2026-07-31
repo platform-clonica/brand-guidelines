@@ -213,8 +213,14 @@ export const brand = {
   name: 'Interactius',
   wordmark: 'interactīus',
   tagline: { es: 'Actitud liminal', en: 'Liminal attitude', ca: 'Actitud liminal' },
-  /* Registro de versión del manual. OJO: está duplicado a mano en la clave `chrome.version` de
-     messages/{es,en,ca}.json — si cambias aquí, cámbialo allí (hoy: "v2_07.26"). */
+  /* Registro de versión del manual — el `v2_07.26` de la esquina inferior izquierda.
+     ESTE es el único sitio donde se toca. Hasta 2026-07-31 estaba escrito a mano en seis
+     (aquí, los tres messages/*.json y a pelo en Sidebar.tsx y MenuOverlay.tsx), así que
+     actualizarlo no servía de nada: en pantalla seguía saliendo el valor viejo.
+
+     `version` es decisión editorial: se sube cuando el manual cambia de edición, no cuando se
+     commitea. `versionDate` es solo el respaldo — en un build con git, la fecha real la calcula
+     next.config.mjs a partir del último commit que tocó contenido de marca. */
   version: 'v2',
   versionDate: '2026-07',
   concept: {
@@ -228,6 +234,21 @@ export const brand = {
     ca: 'Fotografia conceptual que captura el moviment, l\'ambigüitat i la pausa. Representació d\'allò liminal: l\'espai de transició i el concepte de l\'Entre (el buit amb significat).',
   },
 };
+
+/* Etiqueta de versión tal y como se lee en pantalla: `v2_07.26` (vN_MM.AA).
+   Único origen para la esquina inferior izquierda (Sidebar y MenuOverlay). No la escribas a mano
+   en ningún componente: era justo lo que hacía que actualizar la versión no tuviera efecto.
+
+   La fecha sale del build cuando hay git (next.config.mjs → último commit que tocó contenido de
+   marca); si no, cae al `versionDate` de arriba. Cualquiera de las dos vías da el mismo formato. */
+function toMMYY(iso: string): string {
+  const [year, month] = iso.split('-');
+  return `${month}.${year.slice(2)}`;
+}
+
+export const versionLabel = `${brand.version}_${
+  process.env.NEXT_PUBLIC_BRAND_VERSION_DATE || toMMYY(brand.versionDate)
+}`;
 
 /* ─── Few-shot examples (capa pedagógica para LLMs y humanos) ───
    v0 redactado desde la matriz dura. Iterar conforme se aprueben piezas reales.

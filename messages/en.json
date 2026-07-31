@@ -6,8 +6,7 @@
   "chrome": {
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
-    "downloadPdf": "Download original PDF",
-    "version": "v2_07.26"
+    "downloadPdf": "Download original PDF"
   },
   "menu": {
     "index": "Index",

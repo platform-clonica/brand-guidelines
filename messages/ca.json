@@ -6,8 +6,7 @@
   "chrome": {
     "openMenu": "Obrir menú",
     "closeMenu": "Tancar menú",
-    "downloadPdf": "Descarregar PDF original",
-    "version": "v2_07.26"
+    "downloadPdf": "Descarregar PDF original"
   },
   "menu": {
     "index": "Índex",
