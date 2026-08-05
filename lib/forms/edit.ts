@@ -94,6 +94,41 @@ export function appendField(raw: string, snippet: string): Insertion {
   return withSelection(lines, eol, insertAt, snippetLines.length);
 }
 
+/* ── Borra una clave de primer nivel del frontmatter.
+   Se usa cuando se vacía un campo opcional (p. ej. el cliente): dejar `client: ""` colando
+   es más sucio que no tener la clave. */
+export function removeFrontmatterKey(raw: string, key: string): string {
+  const fm = frontmatterRange(raw);
+  if (!fm) return raw;
+
+  const { lines, start, end, eol } = fm;
+  const re = new RegExp(`^${escapeRe(key)}\\s*:`);
+  const at = lines.findIndex((l, i) => i >= start && i < end && re.test(l));
+  if (at === -1) return raw;
+
+  // Arrastra las líneas de continuación de un valor multilínea (`clave: |`).
+  let last = at;
+  while (last + 1 < end && /^\s+\S/.test(lines[last + 1])) last++;
+
+  lines.splice(at, last - at + 1);
+  return lines.join(eol);
+}
+
+/* ── Aplica los metadatos editados en el modal del editor.
+   Solo toca las claves que el modal gobierna; el resto del documento no se mueve.
+   Las etiquetas NO van aquí: viven en la columna `tags` de la tabla, no en el markdown. */
+export function applyMeta(
+  raw: string,
+  meta: { title: string; client?: string; accent?: string },
+): string {
+  let md = setFrontmatterValue(raw, 'title', yamlString(meta.title));
+  if (meta.accent) md = setFrontmatterValue(md, 'accent', meta.accent);
+  md = meta.client?.trim()
+    ? setFrontmatterValue(md, 'client', yamlString(meta.client.trim()))
+    : removeFrontmatterKey(md, 'client');
+  return md;
+}
+
 /* ── Markdown de una copia.
    Se parte del documento original y solo se reescriben las claves que DEBEN cambiar; el resto
    (campos, intro, imágenes, textos de éxito) se hereda tal cual, que es justo el sentido de duplicar.
@@ -113,8 +148,14 @@ export function duplicateMd(
   return md;
 }
 
-/* Comilla solo cuando hace falta (mismo criterio que lib/forms/templates.ts). */
-function yamlString(s: string): string {
+/* ── Comilla un valor escalar solo cuando el YAML lo necesita.
+   Única copia de la regla: la usan la plantilla, el duplicado, el modal de metadatos y el
+   selector de imagen. Tenerla en dos sitios era pedir que divergieran.
+
+   `https://…` se deja sin comillas a propósito: `://` es un escalar plano válido (el problema
+   sería `: ` con espacio) y así el frontmatter se lee como el que ya hay escrito a mano. */
+export function yamlString(s: string): string {
+  if (/^https?:\/\/\S+$/.test(s)) return s;
   return /[:#\-?[\]{}&*!|>'"%@`,]|^\s|\s$/.test(s) ? JSON.stringify(s) : s;
 }
 

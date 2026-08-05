@@ -1,13 +1,13 @@
-/* Home dispatcher — lanzador de aplicaciones. Scoped a .ix-home.
+/* Home dispatcher — lanzador de aplicaciones. Scoped a .ix-workspace.
 
    Hoja de estilos en vez de estilos inline con onMouseEnter (lo que hacen las galerías): el hover
    en CSS deja la página entera como server component, sin un solo byte de JavaScript de cliente.
-   Convención de nombres `.ixh-*`, en paralelo a `.ixf-*` de components/forms/forms.css.
+   Convención de nombres `.ixw-*`, en paralelo a `.ixf-*` de components/forms/forms.css.
 
    Los tokens son los --c-* de app/globals.css, que a su vez reflejan lib/tokens.ts.
    Solo paleta base: los tres acentos identifican SERVICIOS, no herramientas internas. */
 
-.ix-home {
+.ix-workspace {
   --mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
   --tile-w: 220px;
 
@@ -16,39 +16,49 @@
   color: var(--c-dark);
 }
 
-/* ── Cabecera: título centrado, cerrar sesión a la derecha ── */
-.ixh-header {
-  position: relative;
+/* ── Cabecera: imagotipo a la izquierda, cerrar sesión a la derecha.
+      Mismas medidas que la barra de las landings de cada herramienta (DeckGallery /
+      FormGallery), para que las tres se lean como la misma cabecera. ── */
+.ixw-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 28px 32px;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--c-warm-dark);
+  background: var(--c-warm-light);
 }
-.ixh-header__title {
-  font-family: var(--mono);
-  font-weight: 500;
-  font-size: 15px;
-  letter-spacing: 0.06em;
-  color: var(--c-dark);
+.ixw-header__title {
+  display: flex;
+  align-items: center;
   margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
 }
-.ixh-header__logout {
+.ixw-header__logout { margin-left: auto; }
+
+/* Solo para lectores de pantalla: el <h1> es el imagotipo, pero necesita texto. */
+.ixw-sr {
   position: absolute;
-  top: 50%;
-  right: 32px;
-  transform: translateY(-50%);
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ── Cuerpo ── */
-.ixh-main {
+.ixw-main {
   max-width: 1120px; /* el mismo contenedor que las dos galerías */
   margin: 0 auto;
   padding: 40px 32px 80px;
 }
 
-.ixh-section + .ixh-section { margin-top: 64px; }
+.ixw-section + .ixw-section { margin-top: 64px; }
 
-.ixh-section__title {
+.ixw-section__title {
   font-family: var(--mono);
   font-weight: 500;
   font-size: 13px;
@@ -59,14 +69,14 @@
 
 /* Ancho fijo y wrap, NO una rejilla que estira: con `auto-fill` las dos tarjetas de Links se
    repartirían todo el ancho y quedarían enormes. Así quedan alineadas a la izquierda. */
-.ixh-grid {
+.ixw-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
 }
 
 /* ── Tarjeta ── */
-.ixh-tile {
+.ixw-tile {
   width: var(--tile-w);
   max-width: 100%;
   box-sizing: border-box;
@@ -86,32 +96,32 @@
     border-color 150ms var(--ease, ease);
 }
 
-.ixh-tile--link { height: 92px; }
-.ixh-tile--tool { height: 192px; }
+.ixw-tile--link { height: 92px; }
+.ixw-tile--tool { height: 192px; }
 
-a.ixh-tile:hover {
+a.ixw-tile:hover {
   border-color: var(--c-dark);
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(28, 26, 23, 0.16);
 }
-a.ixh-tile:focus-visible {
+a.ixw-tile:focus-visible {
   outline: 2px solid var(--c-dark);
   outline-offset: 2px;
 }
 
 /* Herramienta que aún no existe: apagada, sin enlace y fuera del orden de tabulación. */
-.ixh-tile--off {
+.ixw-tile--off {
   background: var(--c-warm-light);
   color: var(--c-ash);
   cursor: default;
 }
 
-.ixh-tile__label {
+.ixw-tile__label {
   font-weight: 500;
   font-size: 12px;
   letter-spacing: 0.04em;
 }
-.ixh-tile__desc {
+.ixw-tile__desc {
   font-weight: 400;
   font-size: 11px;
   line-height: 1.4;
@@ -119,6 +129,6 @@ a.ixh-tile:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ixh-tile { transition: none; }
-  a.ixh-tile:hover { transform: none; }
+  .ixw-tile { transition: none; }
+  a.ixw-tile:hover { transform: none; }
 }

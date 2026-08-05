@@ -59,7 +59,7 @@ export function ResetForm() {
     }
     setDone(true);
     setBusy(false);
-    setTimeout(() => window.location.assign('/deck'), 1200);
+    setTimeout(() => window.location.assign('/workspace'), 1200);
   }
 
   if (done) {
@@ -79,7 +79,7 @@ export function ResetForm() {
           El enlace ha caducado o ya se ha usado. Solicita uno nuevo.
         </div>
         <div style={s.footer}>
-          <a href="/deck/forgot" style={s.link}>Solicitar enlace</a>
+          <a href="/workspace/forgot" style={s.link}>Solicitar enlace</a>
         </div>
       </div>
     );

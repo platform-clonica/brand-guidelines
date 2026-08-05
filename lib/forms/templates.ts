@@ -3,6 +3,7 @@
    Sin dependencias de Node: esto corre en el navegador. */
 
 import type { Accent } from './schema.ts';
+import { yamlString } from './edit.ts';
 
 /* ── Id público opaco, con la forma de los que ya existen (`fk_Hjd81rX`).
    Opaco a propósito: es lo que aparece en la URL pública y no debe ser enumerable (PRD §10). */
@@ -195,9 +196,3 @@ export const FIELD_SNIPPETS: FieldSnippet[] = [
     body: Un texto explicativo entre preguntas. Admite **Markdown**.`,
   },
 ];
-
-/* Comilla solo cuando hace falta: el YAML se lee mejor sin comillas por todas partes,
-   pero `title: Sí: y ahora?` sin comillas es YAML roto. */
-function yamlString(s: string): string {
-  return /[:#\-?[\]{}&*!|>'"%@`,]|^\s|\s$/.test(s) ? JSON.stringify(s) : s;
-}

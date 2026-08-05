@@ -7,8 +7,9 @@ import { duplicateMd } from '@/lib/forms/edit';
 import type { FormListItem } from '@/lib/forms/types';
 import { FormLogo } from '@/components/studio/Wordmark';
 import { ConfirmModal } from '@/components/deck/studio/ConfirmModal';
+import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
 import { LogoutButton } from '@/components/studio/LogoutButton';
-import { chromeLink, colors } from '@/components/deck/studio/ui';
+import { colors } from '@/components/deck/studio/ui';
 import { FormMetaModal, type FormMetaValues } from './FormMetaModal';
 import { FormCard } from './FormCard';
 
@@ -18,7 +19,7 @@ const SEARCH_MIN = 3; // filtro predictivo, desde el 3.er carácter (igual que l
 type Pending = { mode: 'new' } | { mode: 'duplicate'; source: FormListItem; md: string };
 
 /* Dispatcher de FormMaker: buscador predictivo + filtros por etiqueta + rejilla de formularios.
-   La primera celda es "Crear nuevo formulario". Las tarjetas llevan a /forms/maker/[id]. */
+   La primera celda es "Crear nuevo formulario". Las tarjetas llevan a /workspace/formmak_r/[id]. */
 export function FormGallery() {
   const router = useRouter();
   const [items, setItems] = useState<FormListItem[] | null>(null);
@@ -64,7 +65,7 @@ export function FormGallery() {
   const onCreate = async (values: FormMetaValues) => {
     const md = newFormMd({ title: values.title, client: values.client || undefined, accent: values.accent });
     const rec = await createForm({ md, tags: values.tags });
-    router.push(`/forms/maker/${rec.id}`);
+    router.push(`/workspace/formmak_r/${rec.id}`);
   };
 
   const onDuplicateSubmit = (source: string) => async (values: FormMetaValues) => {
@@ -75,7 +76,7 @@ export function FormGallery() {
       accent: values.accent,
     });
     const rec = await createForm({ md, tags: values.tags });
-    router.push(`/forms/maker/${rec.id}`);
+    router.push(`/workspace/formmak_r/${rec.id}`);
   };
 
   const startDuplicate = async (item: FormListItem) => {
@@ -103,10 +104,11 @@ export function FormGallery() {
           borderBottom: `1px solid ${colors.warmDark}`, background: colors.warmLight,
         }}
       >
-        <FormLogo height={26} />
-        <a href="/home" style={{ ...chromeLink, marginLeft: 'auto' }}>
-          ← Inicio
-        </a>
+        {/* Imagotipo → landing de apps; el wordmark de la herramienta es identidad, no enlace. */}
+        <BrandMark height={20} href="/workspace" label="Ir a la landing de aplicaciones" />
+        <MarkDivider />
+        <FormLogo height={22} />
+        <span style={{ marginLeft: 'auto' }} />
         <LogoutButton />
       </header>
 
@@ -195,7 +197,7 @@ export function FormGallery() {
               <FormCard
                 key={it.id}
                 item={it}
-                onOpen={(id) => router.push(`/forms/maker/${id}`)}
+                onOpen={(id) => router.push(`/workspace/formmak_r/${id}`)}
                 onDuplicate={startDuplicate}
                 onDelete={setToDelete}
               />

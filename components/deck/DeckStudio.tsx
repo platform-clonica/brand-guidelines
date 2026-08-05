@@ -355,10 +355,10 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
   }, [dirty, currentDeckId, saveState]);
 
   const onOpenDeck = (item: DeckListItem) =>
-    withGuard(() => router.push(`/deck/${item.id}`), item.commercial_id);
+    withGuard(() => router.push(`/workspace/deckmak_r/${item.id}`), item.commercial_id);
 
   // Back to the gallery (respecting unsaved changes).
-  const onHome = () => withGuard(() => router.push('/deck'));
+  const onHome = () => withGuard(() => router.push('/workspace/deckmak_r'));
 
   const onDuplicateDeck = async (item: DeckListItem) => {
     try {
@@ -463,7 +463,7 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
       // If the save was triggered by Compartir URL / Descargar PDF, run that action now.
       if (pendingShare) { await shareSaved(rec.id, pendingShare); setPendingShare(null); }
       // Sync the URL to the freshly created deck so refresh/back behave.
-      if (rec.id !== deckId) router.push(`/deck/${rec.id}`);
+      if (rec.id !== deckId) router.push(`/workspace/deckmak_r/${rec.id}`);
     }
     setModal(null);
     listClients().then(setClients).catch(() => {});

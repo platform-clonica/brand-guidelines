@@ -29,7 +29,8 @@ export function LoginForm({ next }: { next: string | null }) {
   return (
     <form onSubmit={onSubmit} style={s.card}>
       <div style={s.title}>Iniciar sesión</div>
-      <div style={s.subtitle}>Acceso al generador de presentaciones.</div>
+      {/* Este login ya no es solo del DeckMaker: da acceso a todas las herramientas internas. */}
+      <div style={s.subtitle}>Acceso a las herramientas de Interactius.</div>
 
       {error && <div style={s.errorBox}>{error}</div>}
 
@@ -53,7 +54,7 @@ export function LoginForm({ next }: { next: string | null }) {
       </button>
 
       <div style={s.footer}>
-        <a href="/deck/forgot" style={s.link}>¿Olvidaste tu contraseña?</a>
+        <a href="/workspace/forgot" style={s.link}>¿Olvidaste tu contraseña?</a>
       </div>
     </form>
   );

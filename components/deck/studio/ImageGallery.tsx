@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import type { ImageRecord } from '@/lib/decks/types';
-import { deleteImage, imageUsage, listImages, registerImage, uploadImage } from '@/lib/decks/api';
+import { deleteImage, imageUsage, listImages, registerImage, uploadImage, type ImageUse } from '@/lib/decks/api';
 import { optimizeImage } from '@/lib/deck/optimizeImage';
 import { Modal } from './Modal';
 import { ConfirmModal } from './ConfirmModal';
@@ -9,17 +9,24 @@ import { btn, btnGhost, colors } from './ui';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
-/* Confirmation copy, warning when the image is still referenced by one or more decks. */
-function deleteMessage(usage: { count: number; decks: string[] } | null): string {
+/* Confirmation copy, warning when the image is still referenced.
+   Cuenta presentaciones Y formularios: la galería la comparten las dos herramientas. */
+function deleteMessage(usage: { count: number; uses: ImageUse[] } | null): string {
   const permanent = 'Esta acción no se puede deshacer.';
-  if (!usage) return `Comprobando si la imagen se usa en algún deck… ${permanent}`;
+  if (!usage) return `Comprobando si la imagen se usa en algún sitio… ${permanent}`;
   if (usage.count === 0) {
     return `Esta imagen se eliminará de la galería de forma permanente. ${permanent}`;
   }
-  const names = Array.from(new Set(usage.decks));
-  const plural = usage.count === 1 ? 'un deck' : `${usage.count} decks`;
+
+  const decks = usage.uses.filter((u) => u.kind === 'deck').length;
+  const forms = usage.uses.filter((u) => u.kind === 'form').length;
+  const parts: string[] = [];
+  if (decks) parts.push(decks === 1 ? 'una presentación' : `${decks} presentaciones`);
+  if (forms) parts.push(forms === 1 ? 'un formulario' : `${forms} formularios`);
+
+  const names = Array.from(new Set(usage.uses.map((u) => u.name)));
   const listed = names.length ? ` (${names.join(', ')})` : '';
-  return `⚠ Esta imagen ya se usa en ${plural}${listed}. Si la eliminas, esas presentaciones mostrarán la imagen rota. ${permanent}`;
+  return `⚠ Esta imagen ya se usa en ${parts.join(' y ')}${listed}. Si la eliminas, mostrarán la imagen rota. ${permanent}`;
 }
 
 /* Reusable image gallery: pick an already-uploaded image or upload a new one.
@@ -40,7 +47,7 @@ export function ImageGallery({
   const [hovered, setHovered] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<ImageRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [usage, setUsage] = useState<{ count: number; decks: string[] } | null>(null);
+  const [usage, setUsage] = useState<{ count: number; uses: ImageUse[] } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {

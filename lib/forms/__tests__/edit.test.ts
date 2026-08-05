@@ -2,7 +2,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { appendField, duplicateMd, getFrontmatterValue, setFrontmatterValue } from '../edit.ts';
+import {
+  appendField,
+  applyMeta,
+  duplicateMd,
+  getFrontmatterValue,
+  removeFrontmatterKey,
+  setFrontmatterValue,
+  yamlString,
+} from '../edit.ts';
 import { compileForm } from '../compile.ts';
 import { FIELD_SNIPPETS, newFormMd, newPublicId } from '../templates.ts';
 
@@ -183,6 +191,103 @@ test('un título de copia con dos puntos no rompe el YAML', () => {
   assert.equal(res.ok, true, res.ok ? '' : JSON.stringify(res.issues));
   if (!res.ok) return;
   assert.equal(res.def.title, 'Prework: copia');
+});
+
+/* ── applyMeta: lo que edita el modal del título. */
+
+test('applyMeta cambia título, cliente y acento sin tocar los campos', () => {
+  const raw = real();
+  const out = applyMeta(raw, { title: 'Otro título', client: 'Otro cliente', accent: 'emerald' });
+
+  const a = compileForm(raw);
+  const b = compileForm(out);
+  assert.equal(a.ok && b.ok, true, b.ok ? '' : JSON.stringify(b));
+  if (!a.ok || !b.ok) return;
+
+  assert.equal(b.def.title, 'Otro título');
+  assert.equal(b.def.client, 'Otro cliente');
+  assert.equal(b.def.accent, 'emerald');
+  // Lo demás intacto.
+  assert.deepEqual(b.def.fields, a.def.fields);
+  assert.equal(b.def.intro, a.def.intro);
+  assert.equal(b.def.id, a.def.id);
+  assert.equal(b.def.status, a.def.status);
+  assert.equal(b.def.success_message, a.def.success_message);
+});
+
+test('applyMeta con el mismo contenido devuelve un texto idéntico', () => {
+  const raw = real();
+  const same = applyMeta(raw, {
+    title: 'Taller de Alineamiento estratégico',
+    client: 'Massimo Dutti',
+    accent: 'opal',
+  });
+  assert.equal(same, raw, 'guardar sin cambios no debe reformatear el documento');
+});
+
+test('vaciar el cliente borra la clave en vez de dejarla vacía', () => {
+  const raw = real();
+  const out = applyMeta(raw, { title: 'T', client: '' });
+  assert.ok(!/^client:/m.test(out));
+  const res = compileForm(out);
+  assert.equal(res.ok, true, res.ok ? '' : JSON.stringify(res.issues));
+  if (!res.ok) return;
+  assert.equal(res.def.client, undefined);
+});
+
+test('removeFrontmatterKey arrastra las líneas de un valor multilínea', () => {
+  const raw = real(); // success_message usa el bloque `|`
+  const out = removeFrontmatterKey(raw, 'success_message');
+  const res = compileForm(out);
+  assert.equal(res.ok, true, res.ok ? '' : JSON.stringify(res.issues));
+  if (!res.ok) return;
+  assert.equal(res.def.success_message, 'Hemos recibido tus respuestas.'); // el default del esquema
+  assert.equal(res.def.allow_multiple, true); // la clave siguiente sobrevivió
+  assert.equal(res.def.fields.length, 7);
+});
+
+test('un título con dos puntos al editar no rompe el YAML', () => {
+  const out = applyMeta(real(), { title: 'Prework: sesión de alineamiento' });
+  const res = compileForm(out);
+  assert.equal(res.ok, true, res.ok ? '' : JSON.stringify(res.issues));
+  if (!res.ok) return;
+  assert.equal(res.def.title, 'Prework: sesión de alineamiento');
+});
+
+/* ── La imagen de fondo que elige la galería. */
+
+test('poner una URL de fondo deja el documento compilando y sin comillas', () => {
+  const url = 'https://xyz.supabase.co/storage/v1/object/public/deck-images/images/1234-foto.jpg';
+  const out = setFrontmatterValue(DOC, 'background', yamlString(url));
+  const res = compileForm(out);
+  assert.equal(res.ok, true, res.ok ? '' : JSON.stringify(res.issues));
+  if (!res.ok) return;
+  assert.equal(res.def.background, url);
+  assert.match(out, /^background: https:\/\//m); // se lee igual que el frontmatter escrito a mano
+});
+
+test('cambiar el fondo del formulario real no toca nada más', () => {
+  const raw = real();
+  const url = 'https://ejemplo.test/otra.jpg';
+  const out = setFrontmatterValue(raw, 'background', yamlString(url));
+
+  const a = compileForm(raw);
+  const b = compileForm(out);
+  assert.equal(a.ok && b.ok, true);
+  if (!a.ok || !b.ok) return;
+  assert.equal(b.def.background, url);
+  assert.equal(b.def.logo, a.def.logo);
+  assert.deepEqual(b.def.fields, a.def.fields);
+  assert.equal(out.split('\n').length, raw.split('\n').length);
+});
+
+test('una URL con caracteres raros se comilla en vez de romper el YAML', () => {
+  const url = 'https://ejemplo.test/foto.jpg?a=1&b=2#x';
+  const out = setFrontmatterValue(DOC, 'background', yamlString(url));
+  const res = compileForm(out);
+  assert.equal(res.ok, true, res.ok ? '' : JSON.stringify(res.issues));
+  if (!res.ok) return;
+  assert.equal(res.def.background, url);
 });
 
 /* ── templates */

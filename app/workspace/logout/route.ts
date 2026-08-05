@@ -7,5 +7,5 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const sb = await supabaseAuthServer();
   await sb.auth.signOut();
-  return NextResponse.redirect(new URL('/deck/login', req.url), { status: 303 });
+  return NextResponse.redirect(new URL('/workspace/login', req.url), { status: 303 });
 }

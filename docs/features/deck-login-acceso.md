@@ -1,6 +1,11 @@
 # Acceso con login (email + contraseña) al Deck Maker
 
-> Implementado. Login de **equipo** que protege el generador de presentaciones (`/deck`).
+> ⚠ **Las rutas de este documento son las originales y ya no existen.** El login pasó a
+> `/workspace/login` y las herramientas a `/workspace/*` — el mapa vigente está en
+> [urls-workspace.md](urls-workspace.md). El mecanismo (sesión de Supabase, middleware,
+> `requireUser`) sigue siendo el que se describe aquí.
+
+> Implementado. Login de **equipo** que protege las herramientas internas.
 > Los usuarios se crean a mano en Supabase (sin panel de admin, sin registro público).
 
 ## Contexto

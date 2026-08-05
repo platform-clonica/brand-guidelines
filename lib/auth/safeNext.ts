@@ -2,14 +2,15 @@
 
    Lista blanca explícita, por dos motivos: evitar un open-redirect, y evitar que la regla derive.
    Antes vivía duplicada en LoginForm y en la página de login como `raw.startsWith('/deck')`, lo
-   que además dejaba pasar `/deckcualquiercosa`. Al añadir FormMaker hacían falta dos superficies,
-   así que la regla pasa a estar escrita una sola vez. */
+   que además dejaba pasar `/deckcualquiercosa`.
 
-const ALLOWED = ['/home', '/deck', '/forms/maker'];
+   Desde que todas las herramientas internas cuelgan de /workspace, la lista es una sola entrada.
+   Lo público (/deck/[id]/view, /forms/f/[id]) queda fuera a propósito: nadie inicia sesión para
+   acabar en una página que no la necesita. */
 
-/* El dispatcher, no la galería de presentaciones: dejó de ser cierto que el DeckMaker fuera la
-   única herramienta en cuanto llegó FormMaker. */
-export const DEFAULT_NEXT = '/home';
+const ALLOWED = ['/workspace'];
+
+export const DEFAULT_NEXT = '/workspace';
 
 export function safeNext(raw: string | null | undefined, fallback: string = DEFAULT_NEXT): string {
   if (!raw || raw.startsWith('//')) return fallback;

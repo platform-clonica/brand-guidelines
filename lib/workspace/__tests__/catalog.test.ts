@@ -70,8 +70,8 @@ test('appsIn respeta el orden de declaración', () => {
 
 test('las herramientas que ya existen apuntan a sus rutas reales', () => {
   const byId = new Map(APPS.map((a) => [a.id, a]));
-  assert.equal(byId.get('deckmakr')?.href, '/deck');
-  assert.equal(byId.get('formmakr')?.href, '/forms/maker');
+  assert.equal(byId.get('deckmakr')?.href, '/workspace/deckmak_r');
+  assert.equal(byId.get('formmakr')?.href, '/workspace/formmak_r');
   assert.equal(byId.get('timer')?.href, '/timer');
   assert.equal(byId.get('dsmakr')?.href, null);
 });

@@ -7,7 +7,7 @@
 
 Antes de esto el repo tenía **dos mitades desiguales**:
 
-- **DeckMaker** completo — galería en `/deck`, editor en `/deck/[id]`, tabla `decks`, autoguardado.
+- **DeckMaker** completo — galería en `/workspace/deckmak_r`, editor en `/workspace/deckmak_r/[id]`, tabla `decks`, autoguardado.
 - **Interactius Forms** solo la mitad de lectura (ver
   [forms-persistencia-supabase.md](forms-persistencia-supabase.md)): un `.md` a mano en
   `content/forms/`, el esquema Zod, el renderer y la página pública. Crear un formulario significaba
@@ -102,7 +102,7 @@ consola y su URL da 404; nunca tumba la página ni a los demás.
 
 ### Ruta y acceso
 
-`/forms/maker` y `/forms/maker/[id]`, con la **sesión de equipo del Deck Maker** — mismo login,
+`/workspace/formmak_r` y `/workspace/formmak_r/[id]`, con la **sesión de equipo del Deck Maker** — mismo login,
 mismos usuarios, cero infraestructura nueva. En [middleware.ts](../../middleware.ts) es un hueco
 dentro del bloque de `/forms` (que por defecto es público), siguiendo el patrón que ya existía para
 `/forms/api/export`. `/api/forms` entró en `EDITOR_API`.
@@ -141,8 +141,8 @@ mide con `ResizeObserver` sobre el **panel**, porque una media query miraría el
 | Campos espejo | [lib/forms/mirror.ts](../../lib/forms/mirror.ts) |
 | Cliente fetch de navegador | [lib/forms/api.ts](../../lib/forms/api.ts) |
 | API REST | [app/api/forms/route.ts](../../app/api/forms/route.ts) · [app/api/forms/[id]/route.ts](../../app/api/forms/[id]/route.ts) |
-| Dispatcher | [app/forms/maker/page.tsx](../../app/forms/maker/page.tsx) → [FormGallery](../../components/forms/maker/FormGallery.tsx) |
-| Editor | [app/forms/maker/[id]/page.tsx](../../app/forms/maker/[id]/page.tsx) → [FormStudio](../../components/forms/maker/FormStudio.tsx) |
+| Dispatcher | [app/workspace/formmak_r/page.tsx](../../app/workspace/formmak_r/page.tsx) → [FormGallery](../../components/forms/maker/FormGallery.tsx) |
+| Editor | [app/workspace/formmak_r/[id]/page.tsx](../../app/workspace/formmak_r/[id]/page.tsx) → [FormStudio](../../components/forms/maker/FormStudio.tsx) |
 | Marca compartida | [components/studio/Wordmark.tsx](../../components/studio/Wordmark.tsx) |
 | Input de etiquetas compartido | [components/studio/TagInput.tsx](../../components/studio/TagInput.tsx) |
 
@@ -188,7 +188,7 @@ espejo: el listado conserva el último título bueno en vez de mostrar uno a med
 
 | Acción | Dónde | Nota |
 |---|---|---|
-| Crear | galería | `FormMetaModal` → plantilla de `templates.ts` → `/forms/maker/[id]` |
+| Crear | galería | `FormMetaModal` → plantilla de `templates.ts` → `/workspace/formmak_r/[id]` |
 | Duplicar | galería | `duplicateMd`: hereda todo menos `id` (nuevo) y `status` (siempre borrador) |
 | Borrar | galería | avisa del nº de respuestas; **las respuestas no se borran** |
 | Publicar | editor | reescribe solo la línea `status:`, nunca reserializa el YAML |

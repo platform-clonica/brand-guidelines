@@ -2,15 +2,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { compileForm, type FormIssue } from '@/lib/forms/compile';
-import { appendField, getFrontmatterValue, setFrontmatterValue } from '@/lib/forms/edit';
-import { getForm, updateForm } from '@/lib/forms/api';
+import { appendField, applyMeta, getFrontmatterValue, setFrontmatterValue, yamlString } from '@/lib/forms/edit';
+import { getForm, translateForm, updateForm } from '@/lib/forms/api';
+import type { TranslateTarget } from '@/lib/forms/translate';
 import type { FormDraft } from '@/lib/forms/schema';
 import type { FormListItem } from '@/lib/forms/types';
 import { HeroPanel } from '@/components/forms/HeroPanel';
 import { FormRenderer } from '@/components/forms/FormRenderer';
 import { ConfirmModal } from '@/components/deck/studio/ConfirmModal';
+import { ImageGallery } from '@/components/deck/studio/ImageGallery';
+import { TranslatingOverlay } from '@/components/deck/studio/TranslatingOverlay';
 import { colors } from '@/components/deck/studio/ui';
 import { FormToolbar, type SaveState } from './FormToolbar';
+import { FormEditorBar } from './FormEditorBar';
+import { FormMetaModal, type FormMetaValues } from './FormMetaModal';
 import { IssuesPanel } from './IssuesPanel';
 import '@/components/forms/forms.css';
 
@@ -28,17 +33,20 @@ const maxAside = () => (typeof window === 'undefined' ? 720 : window.innerWidth 
    Se mide el PANEL, no el viewport: la media query de forms.css no sirve aquí. */
 const WIDE_STAGE = 900;
 
+const LANG_LABELS: Record<TranslateTarget, string> = {
+  es: 'castellano',
+  ca: 'català',
+  en: 'inglés',
+};
+
 const snap = (md: string, tags: string[]) => JSON.stringify({ md, tags });
 
 /* Editor de FormMaker.
 
-   Mismo mecanismo que DeckStudio: dos átomos de estado (`md` es la verdad, `def` es lo compilado),
-   recompilado con debounce que conserva la última versión buena, autoguardado por inactividad,
-   aviso al salir con cambios sin guardar y panel lateral redimensionable.
-
-   La orientación va al revés que en el deck (markdown a la DERECHA, visor a la izquierda), por
-   petición expresa: el formulario público es hero-izquierda / campos-derecha y así se conserva
-   la lectura. */
+   Mismo mecanismo y misma disposición que DeckStudio: markdown a la IZQUIERDA, visor a la derecha,
+   dos átomos de estado (`md` es la verdad, `def` es lo compilado), recompilado con debounce que
+   conserva la última versión buena, autoguardado por inactividad, aviso al salir con cambios sin
+   guardar y panel lateral redimensionable. */
 export function FormStudio({ formId }: { formId: string }) {
   const router = useRouter();
 
@@ -56,6 +64,12 @@ export function FormStudio({ formId }: { formId: string }) {
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [copied, setCopied] = useState(false);
   const [guard, setGuard] = useState<null | { run: () => void }>(null);
+  const [editingMeta, setEditingMeta] = useState(false);
+  const [pickingImage, setPickingImage] = useState(false);
+
+  const [translating, setTranslating] = useState(false);
+  const [translateError, setTranslateError] = useState<string | null>(null);
+  const [pendingTranslate, setPendingTranslate] = useState<TranslateTarget | null>(null);
 
   const [asideW, setAsideW] = useState(ASIDE_DEFAULT);
   const [stageW, setStageW] = useState(0);
@@ -103,6 +117,16 @@ export function FormStudio({ formId }: { formId: string }) {
     }, PREVIEW_DELAY);
     return () => clearTimeout(t);
   }, [md, record]);
+
+  /* Reemplaza el markdown entero y recompila ya, sin esperar al debounce.
+     Lo usan traducir y el modal de metadatos, que cambian el documento de golpe. */
+  const replaceMd = useCallback((next: string) => {
+    setMd(next);
+    const res = compileForm(next);
+    setCompiles(res.ok);
+    setIssues(res.issues);
+    if (res.ok) setDef(res.def);
+  }, []);
 
   /* ── Guardado ─────────────────────────────────────────────────────────────── */
   const saveNow = useCallback(
@@ -157,8 +181,7 @@ export function FormStudio({ formId }: { formId: string }) {
 
   const withGuard = (run: () => void) => (dirty ? setGuard({ run }) : run());
 
-  /* ── Panel redimensionable. El editor está a la DERECHA, así que el ancho se mide
-        desde el borde derecho de la fila. ──────────────────────────────────────── */
+  /* ── Panel redimensionable. El editor está a la IZQUIERDA, como en el deck. ─── */
   useEffect(() => {
     const saved = Number(localStorage.getItem(ASIDE_STORAGE_KEY));
     if (saved) setAsideW(Math.max(ASIDE_MIN, Math.min(saved, maxAside())));
@@ -170,8 +193,8 @@ export function FormStudio({ formId }: { formId: string }) {
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
       if (!draggingRef.current) return;
-      const right = rowRef.current?.getBoundingClientRect().right ?? 0;
-      setAsideW(Math.max(ASIDE_MIN, Math.min(right - e.clientX, maxAside())));
+      const left = rowRef.current?.getBoundingClientRect().left ?? 0;
+      setAsideW(Math.max(ASIDE_MIN, Math.min(e.clientX - left, maxAside())));
     };
     const onUp = () => {
       if (!draggingRef.current) return;
@@ -239,6 +262,21 @@ export function FormStudio({ formId }: { formId: string }) {
     ta.scrollTop = Math.max(0, ratio * ta.scrollHeight - ta.clientHeight / 3);
   }, [md]);
 
+  /* Traducir. El verificador de lib/forms/translate.ts corre dentro de translateForm: si la
+     traducción tocó un `name`, un `type` o el `id`, lanza y el documento no se modifica. */
+  const onTranslate = async (target: TranslateTarget) => {
+    setTranslating(true);
+    setTranslateError(null);
+    try {
+      const { md: out } = await translateForm(md, target);
+      replaceMd(out);
+    } catch (e) {
+      setTranslateError(e instanceof Error ? e.message : 'No se pudo traducir');
+    } finally {
+      setTranslating(false);
+    }
+  };
+
   const publicId = def?.id ?? getFrontmatterValue(md, 'id') ?? record?.public_id ?? null;
   const status: 'draft' | 'published' =
     (def?.status ?? getFrontmatterValue(md, 'status')) === 'published' ? 'published' : 'draft';
@@ -248,6 +286,21 @@ export function FormStudio({ formId }: { formId: string }) {
     setMd(next);
     // Publicar es un acto deliberado: se persiste ya, sin esperar al autoguardado.
     void saveNow(next);
+  };
+
+  const onSubmitMeta = async (values: FormMetaValues) => {
+    const next = applyMeta(md, { title: values.title, client: values.client, accent: values.accent });
+    replaceMd(next);
+    setTags(values.tags);
+    setEditingMeta(false);
+    await saveNow(next, values.tags);
+  };
+
+  /* Imagen de fondo del hero. Misma galería que el DeckMaker (Supabase Storage + tabla `images`),
+     y una sola línea del frontmatter reescrita — sin reserializar el YAML. */
+  const onPickBackground = (url: string) => {
+    setPickingImage(false);
+    replaceMd(setFrontmatterValue(md, 'background', yamlString(url)));
   };
 
   const onCopyUrl = async () => {
@@ -280,7 +333,7 @@ export function FormStudio({ formId }: { formId: string }) {
     return (
       <div style={{ padding: 40, font: `400 13px/1.6 ${MONO}`, color: '#99335F' }}>
         {loadError}{' '}
-        <button onClick={() => router.push('/forms/maker')} style={{ ...linkish, color: colors.dark }}>
+        <button onClick={() => router.push('/workspace/formmak_r')} style={{ ...linkish, color: colors.dark }}>
           Volver a la galería
         </button>
       </div>
@@ -302,32 +355,39 @@ export function FormStudio({ formId }: { formId: string }) {
         responses={record.responses ?? 0}
         canPublish={compiles}
         copied={copied}
-        onBack={() => withGuard(() => router.push('/forms/maker'))}
-        onAddField={onAddField}
+        onHome={() => withGuard(() => router.push('/workspace/formmak_r'))}
+        onEditTitle={() => setEditingMeta(true)}
         onTogglePublish={onTogglePublish}
         onCopyUrl={onCopyUrl}
         onSaveNow={() => void saveNow()}
       />
 
       <div ref={rowRef} style={{ flex: 1, display: 'flex', minHeight: 0 }}>
-        {/* Visor (izquierda) */}
-        <div
-          ref={stageRef}
-          className={`ixf-stage${stageW >= WIDE_STAGE ? ' ixf-stage--wide' : ''}`}
-          style={{ flex: 1, minWidth: 0, overflowY: 'auto', background: colors.warmLight }}
+        {/* Editor (izquierda) — misma disposición que DeckStudio */}
+        <aside
+          style={{
+            width: asideW, flexShrink: 0, display: 'flex', flexDirection: 'column',
+            minHeight: 0, background: colors.warmLight, padding: 20, paddingBottom: 0, gap: 12,
+          }}
         >
-          {def ? (
-            <main className="ix-forms">
-              <HeroPanel def={def} />
-              <FormRenderer key={shapeKey} def={def} preview />
-            </main>
-          ) : (
-            <div style={{ padding: 40, font: `400 12px/1.6 ${MONO}`, color: colors.ash }}>
-              El formulario todavía no compila. Corrige los errores del panel de la derecha para ver
-              la vista previa.
-            </div>
-          )}
-        </div>
+          <FormEditorBar onAddField={onAddField} onTranslate={setPendingTranslate} />
+
+          <textarea
+            ref={textareaRef}
+            value={md}
+            onChange={(e) => setMd(e.target.value)}
+            aria-label="Contenido markdown del formulario"
+            spellCheck={false}
+            style={{
+              flex: 1, minHeight: 0, resize: 'none', padding: 12,
+              border: `1px solid ${colors.warmDark}`, background: colors.white,
+              font: `400 12px/1.55 ${MONO}`, color: colors.dark,
+            }}
+          />
+          <div style={{ margin: '0 -20px' }}>
+            <IssuesPanel issues={issues} stale={!compiles} onJump={jumpToLine} />
+          </div>
+        </aside>
 
         {/* Tirador de redimensionado */}
         <div
@@ -337,34 +397,67 @@ export function FormStudio({ formId }: { formId: string }) {
           onPointerDown={startResize}
           style={{
             width: 7, flexShrink: 0, cursor: 'col-resize',
-            borderLeft: `1px solid ${colors.warmDark}`, background: 'transparent', touchAction: 'none',
+            borderRight: `1px solid ${colors.warmDark}`, background: 'transparent', touchAction: 'none',
           }}
           onMouseEnter={(e) => (e.currentTarget.style.background = colors.warmDark)}
           onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
         />
 
-        {/* Editor (derecha) */}
-        <aside
-          style={{
-            width: asideW, flexShrink: 0, display: 'flex', flexDirection: 'column',
-            minHeight: 0, background: colors.warmLight,
-          }}
+        {/* Visor (derecha) */}
+        <div
+          ref={stageRef}
+          className={`ixf-stage${stageW >= WIDE_STAGE ? ' ixf-stage--wide' : ''}`}
+          style={{ flex: 1, minWidth: 0, overflowY: 'auto', background: colors.warmLight }}
         >
-          <textarea
-            ref={textareaRef}
-            value={md}
-            onChange={(e) => setMd(e.target.value)}
-            aria-label="Contenido markdown del formulario"
-            spellCheck={false}
-            style={{
-              flex: 1, minHeight: 0, resize: 'none', padding: 12, margin: 20, marginBottom: 12,
-              border: `1px solid ${colors.warmDark}`, background: colors.white,
-              font: `400 12px/1.55 ${MONO}`, color: colors.dark,
-            }}
-          />
-          <IssuesPanel issues={issues} stale={!compiles} onJump={jumpToLine} />
-        </aside>
+          {def ? (
+            <main className="ix-forms">
+              <HeroPanel def={def} onPickImage={() => setPickingImage(true)} />
+              <FormRenderer key={shapeKey} def={def} preview />
+            </main>
+          ) : (
+            <div style={{ padding: 40, font: `400 12px/1.6 ${MONO}`, color: colors.ash }}>
+              El formulario todavía no compila. Corrige los errores del panel de la izquierda para
+              ver la vista previa.
+            </div>
+          )}
+        </div>
       </div>
+
+      {editingMeta && def && (
+        <FormMetaModal
+          mode="edit"
+          initial={{
+            title: def.title,
+            client: def.client ?? '',
+            accent: def.accent,
+            tags,
+          }}
+          onClose={() => setEditingMeta(false)}
+          onSubmit={onSubmitMeta}
+        />
+      )}
+
+      {pickingImage && (
+        <ImageGallery onSelect={onPickBackground} onClose={() => setPickingImage(false)} />
+      )}
+
+      {pendingTranslate && (
+        <ConfirmModal
+          title="Traducir formulario"
+          message={`¿Traducir el formulario al ${LANG_LABELS[pendingTranslate]}? Se traducen los textos visibles; los identificadores de cada campo se conservan para no perder las respuestas ya recogidas. Esta acción conlleva un coste por el uso de la API de Anthropic.`}
+          confirmLabel="Traducir"
+          onConfirm={() => {
+            const t = pendingTranslate;
+            setPendingTranslate(null);
+            void onTranslate(t);
+          }}
+          onClose={() => setPendingTranslate(null)}
+        />
+      )}
+
+      {(translating || translateError) && (
+        <TranslatingOverlay error={translateError} onClose={() => setTranslateError(null)} />
+      )}
 
       {guard && (
         <ConfirmModal

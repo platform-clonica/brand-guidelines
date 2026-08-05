@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import type { SaveState } from '../DeckStudio';
+import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
 import { btn, colors, toolbarBtn } from './ui';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
@@ -45,7 +46,21 @@ export function DeckToolbar({
         borderBottom: `1px solid ${colors.warmDark}`, background: colors.warmLight, flexShrink: 0,
       }}
     >
-      <button style={toolbarBtn} onClick={onHome} title="Volver a la galería" aria-label="Volver a la galería">← Galería</button>
+      {/* El imagotipo es la vuelta a la galería: hace lo mismo que hacía el botón "← Galería",
+          y así todas las cabeceras abren igual. onHome respeta el aviso de cambios sin guardar,
+          por eso es un botón y no un <a>. */}
+      <button
+        onClick={onHome}
+        title="Volver a la galería"
+        aria-label="Volver a la galería"
+        style={{
+          appearance: 'none', border: 'none', background: 'transparent', cursor: 'pointer',
+          padding: 0, display: 'inline-flex', alignItems: 'center', flexShrink: 0,
+        }}
+      >
+        <BrandMark height={20} />
+      </button>
+      <MarkDivider />
 
       {/* Editable title (commercial_id). Hover shows a box + "Editar" tooltip; click edits metadata. */}
       <span
@@ -63,6 +78,7 @@ export function DeckToolbar({
             background: showTip ? colors.white : 'transparent',
             cursor: title ? 'pointer' : 'default', padding: '7px 10px',
             font: `500 15px/1 ${MONO}`, letterSpacing: '.02em', color: title ? colors.dark : colors.ash,
+            textTransform: 'uppercase',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             transition: 'background .15s, border-color .15s',
           }}

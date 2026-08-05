@@ -2,9 +2,14 @@
    plus the subordinate "by Interactius" signature next to it (per product decision).
    The client logo does NOT replace the Interactius signature. */
 
+'use client';
+
 import type { FormDraft } from '@/lib/forms/schema';
 
-export function HeroPanel({ def }: { def: FormDraft }) {
+/* `onPickImage` solo lo pasa el editor de FormMaker: añade el botón para abrir la galería de
+   imágenes sobre el hero, igual que el DeckMaker deja pulsar el hueco de imagen de una slide.
+   La página pública no lo pasa, así que no cambia en nada. */
+export function HeroPanel({ def, onPickImage }: { def: FormDraft; onPickImage?: () => void }) {
   const hasBg = Boolean(def.background);
   return (
     <div
@@ -21,6 +26,12 @@ export function HeroPanel({ def }: { def: FormDraft }) {
           by <strong>interactīus</strong>
         </span>
       </div>
+
+      {onPickImage && (
+        <button type="button" className="ixf-hero__pick" onClick={onPickImage}>
+          {hasBg ? 'Cambiar imagen de fondo' : 'Elegir imagen de fondo'}
+        </button>
+      )}
     </div>
   );
 }

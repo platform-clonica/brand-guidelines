@@ -102,7 +102,7 @@ export function Sidebar() {
           <li className="mt-3 pt-3 border-t border-dark/10">
             {/* Deck Maker is a standalone tool: open it in a new tab, outside the brand chrome. */}
             <a
-              href="/deck"
+              href="/workspace/deckmak_r"
               target="_blank"
               rel="noopener noreferrer"
               className="group w-full flex items-baseline gap-3 py-[7px]

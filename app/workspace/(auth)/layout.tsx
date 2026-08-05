@@ -1,15 +1,16 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { DeckLogo } from '@/components/deck/studio/DeckLogo';
+import { BrandMark } from '@/components/studio/BrandMark';
 import { colors } from '@/components/deck/studio/ui';
 
 export const metadata: Metadata = {
-  title: 'Acceso · DeckMakr',
+  // Este login ya no es solo del DeckMaker: da acceso a todo /workspace.
+  title: 'Acceso · Interactius',
   robots: { index: false, follow: false },
 };
 
 /* Shared chrome for the auth screens (login / forgot / reset): centered card on the
-   warm-light brand background, DeckMakr wordmark on top. */
+   warm-light brand background, con el imagotipo de Interactius encima. */
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div
@@ -19,7 +20,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         padding: 24, gap: 28,
       }}
     >
-      <DeckLogo height={30} />
+      {/* Logotipo completo: el login es la portada de la marca, no una barra interna. */}
+      <BrandMark height={26} variant="lockup" />
       <div style={{ width: 'min(380px, 100%)' }}>{children}</div>
     </div>
   );

@@ -9,8 +9,9 @@ import { DeckMetaModal, type MetaValues } from '../studio/DeckMetaModal';
 import { ConfirmModal } from '../studio/ConfirmModal';
 import { SlideThumb } from '../studio/SlideThumb';
 import { DeckLogo } from '../studio/DeckLogo';
+import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
 import { LogoutButton } from '@/components/studio/LogoutButton';
-import { chromeLink, colors } from '../studio/ui';
+import { colors } from '../studio/ui';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 const SEARCH_MIN = 3; // predictive filter kicks in from the 3rd character
@@ -63,7 +64,7 @@ export function DeckGallery() {
 
   const onCreate = async (values: MetaValues) => {
     const rec = await createDeck({ ...values, md: TEMPLATES[values.type] });
-    router.push(`/deck/${rec.id}`);
+    router.push(`/workspace/deckmak_r/${rec.id}`);
   };
 
   const onDelete = async (deck: DeckListItem) => {
@@ -89,10 +90,11 @@ export function DeckGallery() {
           borderBottom: `1px solid ${colors.warmDark}`, background: colors.warmLight,
         }}
       >
-        <DeckLogo height={26} />
-        <a href="/home" style={{ ...chromeLink, marginLeft: 'auto' }}>
-          ← Inicio
-        </a>
+        {/* Imagotipo → landing de apps; el wordmark de la herramienta es identidad, no enlace. */}
+        <BrandMark height={20} href="/workspace" label="Ir a la landing de aplicaciones" />
+        <MarkDivider />
+        <DeckLogo height={22} />
+        <span style={{ marginLeft: 'auto' }} />
         <LogoutButton />
       </header>
 
@@ -180,7 +182,7 @@ export function DeckGallery() {
             <DeckCard
               key={it.id}
               item={it}
-              onOpen={(id) => router.push(`/deck/${id}`)}
+              onOpen={(id) => router.push(`/workspace/deckmak_r/${id}`)}
               onDelete={() => setToDelete(it)}
             />
           ))}

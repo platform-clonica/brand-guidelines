@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { formSystemPrompt } from '@/lib/forms/translate';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // seconds (Netlify function budget for the translation call)
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Falta ANTHROPIC_API_KEY en el servidor' }, { status: 500 });
   }
 
-  let body: { md?: string; target?: string };
+  let body: { md?: string; target?: string; kind?: string };
   try {
     body = await req.json();
   } catch {
@@ -45,6 +46,13 @@ export async function POST(req: Request) {
   const lang = LANGS[body.target ?? ''];
   if (!md.trim()) return NextResponse.json({ error: 'md vacío' }, { status: 400 });
   if (!lang) return NextResponse.json({ error: 'target inválido (es|ca|en)' }, { status: 400 });
+
+  /* Dos documentos muy distintos comparten esta ruta porque lo caro y lo delicado es el
+     streaming (mantiene viva la función de Netlify y evita el 504), no el prompt.
+     Un formulario NO puede traducirse con el prompt de un deck: tiene identificadores
+     (`name`, `type`, `id`) que son claves de datos. Ver lib/forms/translate.ts. */
+  const kind = body.kind === 'form' ? 'form' : 'deck';
+  const system = kind === 'form' ? formSystemPrompt(lang) : systemPrompt(lang);
 
   const client = new Anthropic({ apiKey });
 
@@ -59,7 +67,7 @@ export async function POST(req: Request) {
       // translation. Opus was too slow for large decks and triggered 504s.
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 16000,
-      system: systemPrompt(lang),
+      system,
       messages: [{ role: 'user', content: md }],
       stream: true,
     });

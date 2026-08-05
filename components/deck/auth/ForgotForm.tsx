@@ -14,7 +14,7 @@ export function ForgotForm() {
     setError(null);
     setBusy(true);
     const { error } = await supabaseBrowser().auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/deck/reset`,
+      redirectTo: `${window.location.origin}/workspace/reset`,
     });
     setBusy(false);
     // Neutral confirmation regardless of whether the email exists (no account enumeration).
@@ -30,7 +30,7 @@ export function ForgotForm() {
           Si existe una cuenta con ese email, te hemos enviado un enlace para restablecer la contraseña.
         </div>
         <div style={s.footer}>
-          <a href="/deck/login" style={s.link}>Volver a iniciar sesión</a>
+          <a href="/workspace/login" style={s.link}>Volver a iniciar sesión</a>
         </div>
       </div>
     );
@@ -56,7 +56,7 @@ export function ForgotForm() {
       </button>
 
       <div style={s.footer}>
-        <a href="/deck/login" style={s.link}>Volver a iniciar sesión</a>
+        <a href="/workspace/login" style={s.link}>Volver a iniciar sesión</a>
       </div>
     </form>
   );

@@ -22,7 +22,7 @@ export function LogoutButton({
   const isAvatar = variant === 'avatar';
 
   return (
-    <form action="/deck/logout" method="post" className={className}>
+    <form action="/workspace/logout" method="post" className={className}>
       <button type="submit" title="Cerrar sesión" aria-label="Cerrar sesión" style={isAvatar ? avatar : bar}>
         {isAvatar ? <PowerIcon /> : 'Cerrar sesión'}
       </button>

@@ -103,7 +103,7 @@ export function MenuOverlay() {
               <li className="mt-3 pt-3 border-t border-dark/10">
                 {/* Deck Maker opens in a new tab, outside the brand chrome. */}
                 <a
-                  href="/deck"
+                  href="/workspace/deckmak_r"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => close()}

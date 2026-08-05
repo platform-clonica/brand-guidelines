@@ -166,9 +166,12 @@ export function deleteImage(id: string): Promise<{ ok: boolean }> {
   return fetch(`/api/images/${id}`, { method: 'DELETE' }).then((r) => json<{ ok: boolean }>(r));
 }
 
-/* Which decks reference this image (by URL in their markdown), so we can warn before deleting. */
-export function imageUsage(id: string): Promise<{ count: number; decks: string[] }> {
+/* Qué documentos referencian esta imagen (por su URL en el markdown), para avisar antes de borrar.
+   Incluye decks Y formularios: la galería es compartida por las dos herramientas. */
+export type ImageUse = { kind: 'deck' | 'form'; name: string };
+
+export function imageUsage(id: string): Promise<{ count: number; uses: ImageUse[] }> {
   return fetch(`/api/images/${id}/usage`, { cache: 'no-store' }).then((r) =>
-    json<{ count: number; decks: string[] }>(r),
+    json<{ count: number; uses: ImageUse[] }>(r),
   );
 }

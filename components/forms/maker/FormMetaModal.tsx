@@ -14,13 +14,15 @@ export type FormMetaValues = {
   tags: string[];
 };
 
-type Mode = 'new' | 'duplicate';
+type Mode = 'new' | 'duplicate' | 'edit';
 
 const TITLES: Record<Mode, string> = {
   new: 'Crear nuevo formulario',
   duplicate: 'Duplicar formulario',
+  edit: 'Editar formulario',
 };
-const SUBMIT: Record<Mode, string> = { new: 'Crear', duplicate: 'Duplicar' };
+const SUBMIT: Record<Mode, string> = { new: 'Crear', duplicate: 'Duplicar', edit: 'Guardar' };
+const BUSY: Record<Mode, string> = { new: 'Creando…', duplicate: 'Duplicando…', edit: 'Guardando…' };
 
 /* Los acentos identifican servicios (lib/tokens.ts): no son decoración.
    Se etiquetan con su servicio para que elegir uno sea una decisión consciente. */
@@ -135,7 +137,7 @@ export function FormMetaModal({
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button type="button" style={btnGhost} onClick={onClose}>Cancelar</button>
           <button type="submit" style={btn} disabled={busy}>
-            {busy ? 'Creando…' : SUBMIT[mode]}
+            {busy ? BUSY[mode] : SUBMIT[mode]}
           </button>
         </div>
       </form>

@@ -2,6 +2,7 @@ import createMiddleware from 'next-intl/middleware';
 import { NextResponse, type NextRequest } from 'next/server';
 import { routing } from './lib/i18n/routing';
 import { updateSession } from './lib/supabase/middleware';
+import { legacyRedirect } from './lib/auth/legacyRoutes';
 
 const intl = createMiddleware(routing);
 
@@ -10,32 +11,47 @@ const intl = createMiddleware(routing);
 const EDITOR_API = ['/api/decks', '/api/clients', '/api/images', '/api/translate', '/api/eval', '/api/forms'];
 const isEditorApi = (p: string) => EDITOR_API.some((base) => p === base || p.startsWith(base + '/'));
 
-/* Public /deck routes reachable without a session. */
+/* Páginas de /workspace alcanzables sin sesión: son la propia puerta de entrada. */
 const isAuthPage = (p: string) =>
-  p === '/deck/login' || p === '/deck/forgot' || p === '/deck/reset';
+  p === '/workspace/login' || p === '/workspace/forgot' || p === '/workspace/reset';
+
+/* El visor de presentaciones es PÚBLICO y NO se ha movido a /workspace: su URL se manda a
+   clientes, se firma desde ahí y ya hay enlaces circulando. Ver docs/features/urls-workspace.md. */
 const isPublicViewer = (p: string) => /^\/deck\/[^/]+\/view(\/|$)/.test(p);
 
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 0) Interactius Forms: public pages under /forms must skip both next-intl (no locale prefix)
-  //    and the deck's Supabase auth. Two carve-outs need the team session:
-  //    - /forms/api/export (CSV): refresh only; the 401 comes from requireUser() in the handler.
-  //    - /forms/maker (FormMaker): team-only editor, gated exactly like /deck/*.
+  // 0) Rutas antiguas → nuevas, antes que cualquier otra cosa. 308 conserva el método,
+  //    así que el POST de cerrar sesión sigue funcionando desde una pestaña vieja.
+  const legacy = legacyRedirect(pathname);
+  if (legacy) {
+    const url = request.nextUrl.clone();
+    url.pathname = legacy;
+    return NextResponse.redirect(url, 308);
+  }
+
+  // 1) Workspace: todas las herramientas internas. Salta next-intl (sin prefijo de idioma)
+  //    y exige sesión de equipo salvo en las páginas de acceso.
+  if (pathname === '/workspace' || pathname.startsWith('/workspace/')) {
+    const { response, user } = await updateSession(request);
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    if (isAuthPage(pathname)) return response;
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/workspace/login';
+      url.search = `?next=${encodeURIComponent(pathname)}`;
+      return NextResponse.redirect(url);
+    }
+    return response;
+  }
+
+  // 2) Interactius Forms: el formulario público y sus APIs. Sin locale y sin auth.
+  //    El export en CSV es la excepción: refresca la sesión de equipo (el 401 lo impone
+  //    requireUser() dentro del handler).
   if (pathname.startsWith('/forms')) {
     if (pathname === '/forms/api/export') {
       const { response } = await updateSession(request);
-      return response;
-    }
-    if (pathname === '/forms/maker' || pathname.startsWith('/forms/maker/')) {
-      const { response, user } = await updateSession(request);
-      if (!user) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/deck/login';
-        url.search = `?next=${encodeURIComponent(pathname)}`;
-        return NextResponse.redirect(url);
-      }
-      response.headers.set('X-Robots-Tag', 'noindex, nofollow');
       return response;
     }
     const response = NextResponse.next();
@@ -44,22 +60,20 @@ export default async function middleware(request: NextRequest) {
     return response;
   }
 
-  // 0a) Home dispatcher: el lanzador de herramientas al que se llega tras el login. Salta
-  //     next-intl (la URL es /home, sin prefijo de idioma) y exige sesión de equipo, igual
-  //     que /deck/* y /forms/maker.
-  if (pathname === '/home' || pathname.startsWith('/home/')) {
-    const { response, user } = await updateSession(request);
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/deck/login';
-      url.search = `?next=${encodeURIComponent(pathname)}`;
-      return NextResponse.redirect(url);
+  // 3) Visor público de presentaciones. Lo que queda bajo /deck es solo esto.
+  if (pathname.startsWith('/deck')) {
+    if (isPublicViewer(pathname)) {
+      const { response } = await updateSession(request);
+      return response;
     }
-    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
-    return response;
+    // Cualquier otra cosa bajo /deck ya no existe: al workspace.
+    const url = request.nextUrl.clone();
+    url.pathname = '/workspace/deckmak_r';
+    url.search = '';
+    return NextResponse.redirect(url, 308);
   }
 
-  // 0b) Timer: standalone public tool. Skips next-intl (the URL is /timer, with no locale
+  // 3b) Timer: standalone public tool. Skips next-intl (the URL is /timer, with no locale
   //     prefix) and deliberately skips updateSession() too — it stores nothing, so it must
   //     not inherit the deck's hard dependency on the Supabase credentials.
   if (pathname === '/timer' || pathname.startsWith('/timer/')) {
@@ -68,7 +82,7 @@ export default async function middleware(request: NextRequest) {
     return response;
   }
 
-  // 1) API routes: gate the editor ones, pass the public ones straight through.
+  // 4) API routes: gate the editor ones, pass the public ones straight through.
   if (pathname.startsWith('/api')) {
     if (!isEditorApi(pathname)) return NextResponse.next();
     const { response, user } = await updateSession(request);
@@ -76,20 +90,7 @@ export default async function middleware(request: NextRequest) {
     return response;
   }
 
-  // 2) Deck Maker: require a team session, except the auth pages and the public viewer.
-  if (pathname.startsWith('/deck')) {
-    const { response, user } = await updateSession(request);
-    if (isAuthPage(pathname) || isPublicViewer(pathname)) return response;
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/deck/login';
-      url.search = `?next=${encodeURIComponent(pathname)}`;
-      return NextResponse.redirect(url);
-    }
-    return response;
-  }
-
-  // 3) Everything else (localized brand-guidelines site): next-intl, as before.
+  // 5) Everything else (localized brand-guidelines site): next-intl, as before.
   return intl(request);
 }
 

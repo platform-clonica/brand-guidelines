@@ -114,7 +114,7 @@ es peor que no opinar:
 - `produccion` → `platform-clonica/brand-guidelines`, **el repo del equipo**, el que despliega
   Netlify. El trabajo de los demás llega por aquí: un `git pull` a secas **no lo trae**.
 
-`/deck` no arranca sin `.env.local` (copiar de `.env.example`): el middleware crea el cliente de
+`/workspace` no arranca sin `.env.local` (copiar de `.env.example`): el middleware crea el cliente de
 Supabase en cada petición y revienta si faltan las credenciales.
 
 ### Al abrir sesión en una máquina nueva: dos archivos que el repo NO trae
@@ -124,7 +124,7 @@ versiones, así que **no viajan** y hay que recrearlos en cada máquina. Comprue
 empezar** y déjalos puestos sin que él tenga que pedirlo — los dos se resuelven solos, sin
 credenciales ni dashboards:
 
-**1 · `.env.local`** — sin él, `/deck` responde 500. Bastan las dos variables de Supabase, que son
+**1 · `.env.local`** — sin él, `/workspace` responde 500. Bastan las dos variables de Supabase, que son
 públicas por diseño (`netlify.toml` las excluye del escaneo de secretos porque viajan en el bundle
 del cliente):
 

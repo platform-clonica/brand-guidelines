@@ -7,7 +7,7 @@ Estado: **especificación**, pendiente de implementar.
 
 ## Contexto
 
-Las herramientas internas han ido creciendo sueltas: `/deck`, `/forms/maker` y `/timer` existen cada
+Las herramientas internas han ido creciendo sueltas: `/workspace/deckmak_r`, `/workspace/formmak_r` y `/timer` existen cada
 una por su lado y no hay ningún sitio desde el que verlas juntas. Al iniciar sesión aterrizas
 directamente en la galería de presentaciones (`DEFAULT_NEXT = '/deck'`), como si el DeckMaker fuera
 la única herramienta — algo que dejó de ser cierto al llegar FormMaker.
@@ -27,8 +27,8 @@ herramienta, personalización por usuario, buscador. Nada de eso hace falta con 
 
 | Decisión | Valor | Por qué |
 |---|---|---|
-| Ruta | `/home` | Fuera de `/deck` y de `/forms`: el lanzador no pertenece a ninguna herramienta |
-| Aterrizaje tras login | `/home` | Deja de asumirse que el DeckMaker es la única herramienta |
+| Ruta | `/workspace` | Fuera de `/workspace/deckmak_r` y de `/forms`: el lanzador no pertenece a ninguna herramienta |
+| Aterrizaje tras login | `/workspace` | Deja de asumirse que el DeckMaker es la única herramienta |
 | DSMak_r | tarjeta deshabilitada, "Próximamente" | Reserva el sitio sin llevar a un 404 |
 | StarMeApp! | `https://star-me.app/`, pestaña nueva | Vive fuera de este dominio |
 | Círculo superior derecho | botón directo de cerrar sesión | Decisión de Carlos, avisado del riesgo de clic accidental |
@@ -40,7 +40,7 @@ herramienta, personalización por usuario, buscador. Nada de eso hace falta con 
 
 ### Catálogo declarativo
 
-Una sola tabla, `lib/home/catalog.ts`. Añadir una app en el futuro es **una entrada**, no tocar
+Una sola tabla, `lib/workspace/catalog.ts`. Añadir una app en el futuro es **una entrada**, no tocar
 maquetación. Es el patrón que el repo ya usa en `lib/deck/catalog.ts`, donde la tabla de layouts
 alimenta a la vez el mapa de marcadores, la galería y los docs.
 
@@ -62,8 +62,8 @@ export type AppEntry = {
 |---|---|---|---|---|---|
 | `starmeapp` | links | `https://star-me.app/` | sí | — | — |
 | `timer` | links | `/timer` | — | — | — |
-| `deckmakr` | tools | `/deck` | — | `DeckMak` + `r` | Presentaciones |
-| `formmakr` | tools | `/forms/maker` | — | `FormMak` + `r` | Formularios |
+| `deckmakr` | tools | `/workspace/deckmak_r` | — | `DeckMak` + `r` | Presentaciones |
+| `formmakr` | tools | `/workspace/formmak_r` | — | `FormMak` + `r` | Formularios |
 | `dsmakr` | tools | `null` | — | `DSMak` + `r` | Próximamente |
 
 Invariantes (verificadas por test): ids únicos; `href` interno empieza por `/`; `external` implica
@@ -74,10 +74,10 @@ Invariantes (verificadas por test): ids únicos; `href` interno empieza por `/`;
 
 ```
 NUEVO
-  lib/home/catalog.ts                     la tabla de arriba
-  lib/home/__tests__/catalog.test.ts      invariantes del catálogo
-  app/home/page.tsx                       server component: cabecera + dos rejillas
-  components/home/AppTile.tsx             una tarjeta (enlace o deshabilitada)
+  lib/workspace/catalog.ts                     la tabla de arriba
+  lib/workspace/__tests__/catalog.test.ts      invariantes del catálogo
+  app/workspace/page.tsx                       server component: cabecera + dos rejillas
+  components/workspace/AppTile.tsx             una tarjeta (enlace o deshabilitada)
   components/studio/LogoutButton.tsx      variantes 'bar' y 'avatar'
 
 MODIFICADO
@@ -91,7 +91,7 @@ MODIFICADO
 
 ### Middleware
 
-`/home` no cae hoy en ninguna rama: acaba en el fallback de next-intl. Con `localePrefix:
+`/workspace` no cae hoy en ninguna rama: acaba en el fallback de next-intl. Con `localePrefix:
 'as-needed'` eso da 404, no una redirección, pero igualmente hay que interceptarlo **antes** del
 fallback, junto a la rama de `/timer`:
 
@@ -104,10 +104,10 @@ if (pathname === '/home' || pathname.startsWith('/home/')) {
 }
 ```
 
-Mismo patrón exacto que la rama de `/forms/maker`.
+Mismo patrón exacto que la rama de `/workspace/formmak_r`.
 
-Además, `app/home/page.tsx` declara `robots: { index: false, follow: false }` en su `metadata`,
-igual que `/deck` y `/forms/maker`: el `X-Robots-Tag` del middleware es el cinturón, no el tirante.
+Además, `app/workspace/page.tsx` declara `robots: { index: false, follow: false }` en su `metadata`,
+igual que `/workspace/deckmak_r` y `/workspace/formmak_r`: el `X-Robots-Tag` del middleware es el cinturón, no el tirante.
 
 ### Cambio en `Wordmark`
 
@@ -170,20 +170,20 @@ Fiel al wireframe:
 
 **Automática**
 
-- `lib/home/__tests__/catalog.test.ts` — las invariantes del catálogo listadas arriba.
-- `lib/auth/__tests__/safeNext.test.ts` — `/home` y `/home/loquesea` pasan; `/homefoo` no; el
-  destino por defecto pasa a ser `/home`.
+- `lib/workspace/__tests__/catalog.test.ts` — las invariantes del catálogo listadas arriba.
+- `lib/auth/__tests__/safeNext.test.ts` — `/workspace` y `/home/loquesea` pasan; `/homefoo` no; el
+  destino por defecto pasa a ser `/workspace`.
 - `npm run type-check` y `npm run build` limpios.
 
 **Manual**
 
-1. Sin sesión, `/home` → 307 a `/deck/login?next=%2Fhome`.
-2. Iniciar sesión sin `next` → aterrizas en `/home`, no en `/deck`.
+1. Sin sesión, `/workspace` → 307 a `/deck/login?next=%2Fhome`.
+2. Iniciar sesión sin `next` → aterrizas en `/workspace`, no en `/workspace/deckmak_r`.
 3. Iniciar sesión con `next=/forms/maker` → sigue respetándose.
-4. Las cinco tarjetas: DeckMak_r → `/deck`, FormMak_r → `/forms/maker`, Timer → `/timer`,
+4. Las cinco tarjetas: DeckMak_r → `/workspace/deckmak_r`, FormMak_r → `/workspace/formmak_r`, Timer → `/timer`,
    StarMeApp! → `star-me.app` en pestaña nueva, DSMak_r no responde al clic ni al tabulador.
 5. El círculo cierra sesión y deja en `/deck/login`.
-6. "← Inicio" desde las dos galerías vuelve a `/home`.
+6. "← Inicio" desde las dos galerías vuelve a `/workspace`.
 7. Con el teclado: el orden de tabulación recorre las cuatro tarjetas activas y el logout, saltándose
    DSMak_r.
 
