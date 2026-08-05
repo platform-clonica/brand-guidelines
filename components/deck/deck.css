@@ -280,13 +280,24 @@ body.ix-viewer main{padding:0 !important; margin:0 !important;}
 .ix-deck .bullets .dia{font-size:11px; line-height:1.7; color:var(--ink);}
 .ix-deck .bullets .item .body{max-width:430px;}
 
-/* 5 · Three columns */
+/* 5 · Columns (ref: three, but any number fits) */
 .ix-deck .cols .title{position:absolute; left:var(--ml); top:88px; font-family:var(--serif); font-weight:300; font-size:var(--title-section);}
-.ix-deck .cols .grid{position:absolute; left:var(--ml); right:var(--mr); top:216px; display:grid; grid-template-columns:repeat(3,1fr); gap:48px;}
-/* Each text group sits on a white card. The grid stretches all three columns to the tallest one's
+/* auto-flow column + auto-columns:1fr → todas las columnas caben SIEMPRE en una fila y se reparten
+   el ancho, sean 2, 3, 4 o 5. Con grid-template-columns:repeat(3,1fr) la cuarta se caía abajo. */
+.ix-deck .cols .grid{position:absolute; left:var(--ml); right:var(--mr); top:216px; display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:48px;}
+/* A partir de 4 columnas el gutter completo se come el ancho útil: se baja al medio gutter (y al
+   cuarto desde 5) y encoge el padding y el titular serif de cada tarjeta. */
+.ix-deck .cols .grid:has(> .col:nth-child(4)){gap:24px;}
+.ix-deck .cols .grid:has(> .col:nth-child(5)){gap:16px;}
+/* Each text group sits on a white card. The grid stretches all columns to the tallest one's
    height, so the cards match without measuring — no staircase, whatever the copy. Padding is the
    24px half-gutter. */
 .ix-deck .cols .col{background:var(--white); padding:24px;}
+.ix-deck .cols .grid:has(> .col:nth-child(4)) .col{padding:20px;}
+.ix-deck .cols .grid:has(> .col:nth-child(4)) .colhd{font-size:22px; margin:16px 0 12px;}
+.ix-deck .cols .grid:has(> .col:nth-child(5)) .col{padding:16px;}
+.ix-deck .cols .grid:has(> .col:nth-child(5)) .colhd{font-size:19px;}
+.ix-deck .cols .grid:has(> .col:nth-child(5)) .colbody{font-size:12px;}
 .ix-deck .cols .num{font:500 11px/1 var(--mono); letter-spacing:var(--track-caps); color:var(--ink-mute);}
 .ix-deck .cols .colhd{margin:18px 0 14px; font-family:var(--serif); font-weight:300; font-size:26px; line-height:1.1;}
 .ix-deck .cols .colbody{font:400 13px/1.65 var(--mono); color:var(--ink-body);}
