@@ -54,7 +54,7 @@ DeckStudio  →  PDF (window.print) · URL compartible (base64url)
 8. **Split** — heading + imagen + párrafo.
 9. **Paragraph** — fallback.
 
-**Override de tema:** añade `{dark}`/`{oscuro}` o `{light}`/`{claro}` al final de un encabezado para forzar el tema de esa diapositiva.
+**Override de tema:** añade `{dark}` o `{warm-light}` al final de un encabezado para forzar el tema de esa diapositiva.
 
 ## 4. Layouts (17)
 
@@ -157,3 +157,41 @@ Fixture de referencia: [fixtures/sample.md](../lib/deck/__tests__/fixtures/sampl
 - **Tipado**: la unión discriminada `Slide` evita estados imposibles.
 - **Print-first**: PDF 16:9 una diapositiva por página.
 - **Compartible sin backend**: el deck viaja entero en la URL (base64url).
+
+## 9. Retícula
+
+Sistema espacial del deck. Vive aquí y no en `lib/tokens.ts`: es la implementación de **este**
+producto, no doctrina de marca — las brand guidelines valen para cualquier pieza, esto solo para
+las presentaciones. Los valores están declarados como custom properties al principio de
+`components/deck/deck.css`; esta tabla es la referencia humana. **Si cambias uno, cámbialo aquí.**
+
+Todos los px son absolutos sobre el lienzo fijo; el deck se escala entero con `--s`.
+
+| Concepto | Valor | Dónde |
+|---|---|---|
+| Lienzo | 1280 × 720 | fijo, no responsive |
+| Márgenes de página | 108 izq · 108 der · 64 arriba · **56 abajo** | `--ml --mr --mt --mb` |
+| Gutter | 48 (mitad 24 como padding interior de tarjeta) | — |
+| Banda vertical de texto | 64 → 656 (592 de alto) | `FitText centerTop` |
+| Foto lateral: ancho | 430 | `--img-w` |
+| Foto lateral: hueco al texto | 96 | `--img-gap` |
+| Foto lateral: inset izquierdo | 64 | `--img-inset` |
+| Columna de texto del split | 582 (cuerpo a 580) | derivada |
+
+Tres reglas que no se leen en los números y conviene no redescubrir a base de romperlas:
+
+1. **La banda 64–656 es de rol, no de layout.** Todo layout de tipo «antetítulo + cuerpo» —`split`,
+   `paragraph`, `contexto`— centra su bloque ahí dentro con `FitText`. Así el texto queda a media
+   altura sea cual sea su longitud, y dos slides seguidas no bailan. Un layout nuevo de ese rol se
+   suma a la banda; no se inventa la suya.
+
+2. **La foto derecha sangra al borde; la izquierda va metida 64.** No es un descuido: a la
+   izquierda están el filete vertical y la pestaña, y la foto no puede pisarlos. A la derecha, una
+   franja blanca pegada al borde no es aceptable (decisión de Alberto, 2026-07-31). No "arregles"
+   esta asimetría metiendo la foto derecha — ya se probó y se revirtió.
+
+3. **La columna de texto se ancla a `--img-inset` por los DOS lados**, aunque la foto derecha
+   sangre. Por eso mide 582 en las dos variantes y el bloque de texto no salta entre slides
+   seguidas. El precio, asumido: el hueco foto↔texto es 96 por la izquierda y 160 por la derecha.
+   Con la foto sangrando no se pueden tener las tres medidas iguales — algo tiene que absorber esos
+   64px, y se decidió que lo absorba el hueco y no la columna.

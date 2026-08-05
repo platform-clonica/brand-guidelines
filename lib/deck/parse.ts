@@ -32,8 +32,27 @@ function tokenize(chunk: string): Token[] {
       continue;
     }
 
+    /* Titular. Puede ocupar VARIAS líneas si cada una menos la última acaba en `\` — el salto duro
+       nativo de markdown. El texto se guarda con `\n` dentro y el render lo convierte en <br>.
+
+       Por qué hace falta el `\` y no basta con pulsar Enter: en las plantillas de este mismo repo
+       hay 19 titulares seguidos INMEDIATAMENTE de su cuerpo sin línea en blanco. Si un salto
+       normal continuara el titular, todos esos decks se tragarían el párrafo dentro del titular.
+       La barra lo hace explícito y no rompe nada de lo ya escrito. */
     const h = trimmed.match(/^(#{1,6})\s+(.*)$/);
-    if (h) { tokens.push({ t: 'h', level: h[1].length, text: h[2].trim() }); i++; continue; }
+    if (h) {
+      const parts = [h[2].trim()];
+      i++;
+      while (parts[parts.length - 1].endsWith('\\') && i < lines.length) {
+        parts[parts.length - 1] = parts[parts.length - 1].slice(0, -1).trimEnd();
+        parts.push(lines[i].trim());
+        i++;
+      }
+      // Una barra colgando al final del bloque dejaría una línea vacía → un <br> fantasma.
+      while (parts.length > 1 && parts[parts.length - 1] === '') parts.pop();
+      tokens.push({ t: 'h', level: h[1].length, text: parts.join('\n') });
+      continue;
+    }
 
     const img = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
     if (img) { tokens.push({ t: 'image', alt: img[1], src: img[2] }); i++; continue; }

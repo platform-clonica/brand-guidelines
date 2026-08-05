@@ -9,6 +9,7 @@ import { scrollToSection } from '@/lib/hooks/useScrollToSection';
 import { sections } from '@/lib/sections';
 import type { Locale } from '@/lib/i18n/routing';
 import { Link, usePathname } from '@/lib/i18n/routing';
+import { versionLabel } from '@/lib/tokens';
 import { LocaleSwitch } from './LocaleSwitch';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -147,7 +148,7 @@ export function MenuOverlay() {
 
           <div className="px-6 py-3.5 border-t border-dark/10">
             <div className="flex items-baseline gap-x-3 font-mono text-[11px] tracking-wide">
-              <span className="text-dark/40 mr-auto">v1_05.26</span>
+              <span className="text-dark/40 mr-auto">{versionLabel}</span>
               <a
                 href="/Brand-Kit.zip"
                 download

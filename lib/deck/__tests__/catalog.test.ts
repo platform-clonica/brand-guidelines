@@ -78,14 +78,30 @@ test('{oscuro} still flips the theme (back-compat), and works on a heading too',
 });
 
 /* The snippet ships the appearance token already written so the author SEES the knob exists and
-   can swap it for {blanco}/{warm-dark} — the picker has no UI, the markdown is the interface. */
+   can swap it for {white}/{warm-dark} — the picker has no UI, the markdown is the interface.
+
+   Los snippets emiten SOLO los cuatro nombres canónicos, todos de la familia de los tokens de
+   marca: warm-light · warm-dark · white · dark. Los alias en castellano (crema/arena/blanco/oscuro)
+   se siguen aceptando al leer, pero no se escriben — mezclarlos era lo que hacía que la guía
+   enseñara dos idiomas a la vez. */
+const CANONICAL_APPEARANCE = ['warm-light', 'warm-dark', 'white', 'dark'];
+
 test('every copied snippet carries an explicit appearance modifier', () => {
   for (const entry of LAYOUT_CATALOG) {
     assert.match(
       layoutSnippet(entry),
-      new RegExp(`^\\[ly: ${entry.marker}\\] \\{(warm-light|oscuro)\\}`),
+      new RegExp(`^\\[ly: ${entry.marker}\\] \\{(${CANONICAL_APPEARANCE.join('|')})\\}`),
       `snippet ${entry.marker} has no appearance token`,
     );
+  }
+});
+
+test('los snippets no emiten alias en castellano', () => {
+  for (const entry of LAYOUT_CATALOG) {
+    const snippet = layoutSnippet(entry);
+    for (const alias of ['crema', 'arena', 'blanco', 'oscuro', 'claro']) {
+      assert.ok(!snippet.includes(`{${alias}}`), `snippet ${entry.marker} emite el alias {${alias}}`);
+    }
   }
 });
 

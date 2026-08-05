@@ -6,8 +6,7 @@
   "chrome": {
     "openMenu": "Abrir menú",
     "closeMenu": "Cerrar menú",
-    "downloadPdf": "Descargar PDF original",
-    "version": "v1 · mayo 2026"
+    "downloadPdf": "Descargar PDF original"
   },
   "menu": {
     "index": "Índice",
@@ -143,8 +142,10 @@
     "title": "Universo visual",
     "lead": "El tratamiento de la imagen se basa en la representación de lo liminal, es decir, en el espacio de transición. Trabajamos el concepto del Entre como un vacío que carga significado en lugar de eliminarlo.",
     "body": "Priorizamos el uso de fotografía conceptual que capture el movimiento, la ambigüedad y la pausa. No buscamos la literalidad, sino generar una atmósfera que hable de precisión técnica conviviendo con la sensibilidad artística. Las imágenes deben actuar como extensiones del espacio negativo, permitiendo que la marca respire y trabaje 'en el entre'.",
-    "copyPromptLabel": "Copiar prompt técnico de imagen para IA",
-    "copyPromptToast": "Prompt técnico de imagen copiado"
+    "copyPromptStandardLabel": "Copiar prompt técnico de imagen para IA (estándar)",
+    "copyPromptStandardToast": "Prompt estándar copiado",
+    "copyPromptPeopleLabel": "Copiar prompt técnico de imagen para IA (personas)",
+    "copyPromptPeopleToast": "Prompt con personas copiado"
   },
   "sistemaGrafico": {
     "title": "Sistema gráfico",

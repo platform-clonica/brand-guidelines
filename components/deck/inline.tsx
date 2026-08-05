@@ -21,8 +21,7 @@ function emphasize(text: string, keyBase: string): React.ReactNode {
   );
 }
 
-export function inline(text: string): React.ReactNode {
-  if (!text) return text;
+function formatted(text: string): React.ReactNode {
   if (!text.includes('**') && !text.includes('/ ')) return text;
   const parts = text.split(/\*\*(.+?)\*\*/g);
   return parts.map((part, i) =>
@@ -30,4 +29,18 @@ export function inline(text: string): React.ReactNode {
       ? <strong key={i}>{part}</strong>
       : <Fragment key={i}>{emphasize(part, String(i))}</Fragment>
   );
+}
+
+export function inline(text: string): React.ReactNode {
+  if (!text) return text;
+  /* Salto de línea explícito. El parser guarda `\n` en el texto cuando el autor terminó la línea
+     con `\` (ver lib/deck/parse.ts). Se emite un <br> real, así que FitText lo mide igual que
+     cualquier otro salto y la slide sigue sin desbordar. */
+  if (!text.includes('\n')) return formatted(text);
+  return text.split('\n').map((line, i) => (
+    <Fragment key={`l${i}`}>
+      {i > 0 && <br />}
+      {formatted(line)}
+    </Fragment>
+  ));
 }

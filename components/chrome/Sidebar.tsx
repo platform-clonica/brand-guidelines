@@ -7,6 +7,7 @@ import { sections } from '@/lib/sections';
 import type { Locale } from '@/lib/i18n/routing';
 import { Link, usePathname } from '@/lib/i18n/routing';
 import { scrollToSection } from '@/lib/hooks/useScrollToSection';
+import { versionLabel } from '@/lib/tokens';
 import { LocaleSwitch } from './LocaleSwitch';
 
 const PRESENTACIONES = { es: 'Presentaciones', en: 'Presentations', ca: 'Presentacions' } as const;
@@ -139,7 +140,7 @@ export function Sidebar() {
           Brand<br />Guidelines<br />2026
         </div>
         <div className="mt-3 font-mono text-[11px] tracking-wide text-dark/40">
-          v1_05.26
+          {versionLabel}
         </div>
         <div className="mt-1.5 flex items-center gap-x-1.5 font-mono text-[11px] tracking-wide whitespace-nowrap">
           <a
