@@ -4,12 +4,13 @@ import { useRouter } from 'next/navigation';
 import { compileDeck } from '@/lib/deck';
 import { TEMPLATES } from '@/lib/deck/templates';
 import type { ClientRecord, DeckListItem } from '@/lib/decks/types';
-import { createDeck, deleteDeck, listClients, listDecks } from '@/lib/decks/api';
+import { createDeck, deleteDeck, getDeck, listClients, listDecks } from '@/lib/decks/api';
 import { DeckMetaModal, type MetaValues } from '../studio/DeckMetaModal';
 import { ConfirmModal } from '../studio/ConfirmModal';
 import { SlideThumb } from '../studio/SlideThumb';
 import { DeckLogo } from '../studio/DeckLogo';
 import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
+import { CardActions } from '@/components/studio/CardActions';
 import { LogoutButton } from '@/components/studio/LogoutButton';
 import { colors } from '../studio/ui';
 
@@ -24,6 +25,12 @@ const fmt = (iso: string) => {
   }
 };
 
+/* Crear y duplicar comparten modal: la única diferencia es el markdown de partida — la plantilla
+   del tipo elegido, o el del deck que se copia. Mismo trato que en FormMaker. */
+type Modal =
+  | { kind: 'new' }
+  | { kind: 'duplicate'; seedMd: string; initial: Partial<MetaValues> & { client_name?: string | null } };
+
 /* Landing / gallery: predictive search + tag filters + a 4-up grid of deck cover thumbnails.
    First cell is "Crear nueva presentación". Cards and the "new" flow route to /deck/[id]. */
 export function DeckGallery() {
@@ -33,7 +40,7 @@ export function DeckGallery() {
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [search, setSearch] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [creating, setCreating] = useState(false);
+  const [modal, setModal] = useState<Modal | null>(null);
   const [toDelete, setToDelete] = useState<DeckListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -62,8 +69,34 @@ export function DeckGallery() {
     });
   }, [items, search, selectedTags]);
 
-  const onCreate = async (values: MetaValues) => {
-    const rec = await createDeck({ ...values, md: TEMPLATES[values.type] });
+  /* Duplicar necesita el markdown completo, que el listado no trae entero; se pide la fila y se
+     abre el modal ya relleno, igual que hace el editor desde "Abrir ▾". */
+  const startDuplicate = async (deck: DeckListItem) => {
+    setError(null);
+    try {
+      const full = await getDeck(deck.id);
+      setModal({
+        kind: 'duplicate',
+        seedMd: full.md,
+        initial: {
+          commercial_id: `${full.commercial_id} (copia)`,
+          client_id: full.client_id,
+          client_name: clients.find((c) => c.id === full.client_id)?.name ?? null,
+          contact_emails: full.contact_emails,
+          logo_path: full.logo_path,
+          budget_url: full.budget_url,
+          type: full.type,
+          tags: full.tags,
+        },
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo leer la presentación para duplicarla');
+    }
+  };
+
+  const onSubmitMeta = async (values: MetaValues) => {
+    const seed = modal?.kind === 'duplicate' ? modal.seedMd : TEMPLATES[values.type];
+    const rec = await createDeck({ ...values, md: seed });
     router.push(`/workspace/deckmak_r/${rec.id}`);
   };
 
@@ -160,7 +193,7 @@ export function DeckGallery() {
         >
           {/* New presentation */}
           <button
-            onClick={() => setCreating(true)}
+            onClick={() => setModal({ kind: 'new' })}
             onMouseEnter={(e) => (e.currentTarget.style.background = colors.white)}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             style={{
@@ -183,6 +216,7 @@ export function DeckGallery() {
               key={it.id}
               item={it}
               onOpen={(id) => router.push(`/workspace/deckmak_r/${id}`)}
+              onDuplicate={() => startDuplicate(it)}
               onDelete={() => setToDelete(it)}
             />
           ))}
@@ -195,13 +229,15 @@ export function DeckGallery() {
         )}
       </div>
 
-      {creating && (
+      {modal && (
         <DeckMetaModal
-          mode="new"
+          mode={modal.kind}
           clients={clients}
-          initial={{ type: 'comercial' }}
-          onClose={() => setCreating(false)}
-          onSubmit={onCreate}
+          allTags={allTags}
+          initial={modal.kind === 'duplicate' ? modal.initial : { type: 'comercial' }}
+          hint={modal.kind === 'duplicate' ? 'La copia se crea vacía de firmas: solo hereda el contenido y los metadatos.' : undefined}
+          onClose={() => setModal(null)}
+          onSubmit={onSubmitMeta}
         />
       )}
 
@@ -224,10 +260,12 @@ export function DeckGallery() {
 function DeckCard({
   item,
   onOpen,
+  onDuplicate,
   onDelete,
 }: {
   item: DeckListItem;
   onOpen: (id: string) => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -252,8 +290,8 @@ function DeckCard({
   }, [item.md, item.type]);
 
   return (
-    /* Wrapper (no el botón) porque la papelera es otro botón: anidarlos sería HTML inválido.
-       El hover vive aquí para que pasar el puntero a la papelera no lo apague. */
+    /* Wrapper (no el botón) porque las acciones son otros botones: anidarlos sería HTML inválido.
+       El hover vive aquí para que pasar el puntero a los iconos no lo apague. */
     <div
       style={{ position: 'relative' }}
       onMouseEnter={() => setHover(true)}
@@ -287,41 +325,15 @@ function DeckCard({
       </div>
     </button>
 
-      {/* Papelera: esquina superior derecha de la miniatura, solo al pasar el puntero.
-          Mismo tratamiento que la de la galería de imágenes (icono blanco sobre tinta al 72%). */}
-      <button
-        type="button"
-        aria-label="Eliminar presentación"
-        title="Eliminar presentación"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        style={{
-          position: 'absolute',
-          top: 8,
-          right: 8,
-          display: 'grid',
-          placeItems: 'center',
-          width: 26,
-          height: 26,
-          padding: 0,
-          cursor: 'pointer',
-          color: '#fff',
-          background: 'rgba(28, 26, 23, 0.72)',
-          border: 'none',
-          borderRadius: 4,
-          opacity: hover ? 1 : 0,
-          transform: hover ? 'scale(1)' : 'scale(0.85)',
-          transition: 'opacity 120ms ease, transform 120ms ease',
-          pointerEvents: hover ? 'auto' : 'none',
-        }}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" />
-          <path d="M10 11v6M14 11v6" />
-        </svg>
-      </button>
+      {/* Duplicar y eliminar: esquina superior derecha de la miniatura, solo al pasar el puntero.
+          Mismo componente que en FormMaker — la interacción es una sola, no dos parecidas. */}
+      <CardActions
+        visible={hover}
+        actions={[
+          { icon: 'copy', label: `Duplicar «${item.commercial_id}»`, onClick: onDuplicate },
+          { icon: 'trash', label: `Eliminar «${item.commercial_id}»`, onClick: onDelete },
+        ]}
+      />
     </div>
   );
 }

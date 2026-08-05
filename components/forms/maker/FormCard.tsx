@@ -1,7 +1,8 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { compileForm } from '@/lib/forms/compile';
 import { isInputField } from '@/lib/forms/schema';
+import { CardActions } from '@/components/studio/CardActions';
 import { colors } from '@/components/deck/studio/ui';
 import type { FormListItem } from '@/lib/forms/types';
 
@@ -22,7 +23,10 @@ const fmt = (iso: string) => {
    se usa esa como fondo; sin ella, el fondo cálido de siempre.
 
    El markdown se compila aquí igual que la galería del deck compila la portada: es la única
-   forma de que la tarjeta cuente campos reales y no un espejo que podría estar desfasado. */
+   forma de que la tarjeta cuente campos reales y no un espejo que podría estar desfasado.
+
+   Duplicar y eliminar son los mismos iconos, en el mismo sitio y con el mismo gesto que en la
+   galería del deck: `CardActions`. */
 export function FormCard({
   item,
   onOpen,
@@ -34,6 +38,7 @@ export function FormCard({
   onDuplicate: (item: FormListItem) => void;
   onDelete: (item: FormListItem) => void;
 }) {
+  const [hover, setHover] = useState(false);
   const compiled = useMemo(() => compileForm(item.md ?? ''), [item.md]);
   const def = compiled.ok ? compiled.def : null;
 
@@ -42,7 +47,12 @@ export function FormCard({
   const published = item.status === 'published';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    /* El hover vive en el envoltorio, no en el botón: pasar el puntero a los iconos no lo apaga. */
+    <div
+      style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 8 }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
       <button
         onClick={() => onOpen(item.id)}
         title="Abrir formulario"
@@ -54,8 +64,12 @@ export function FormCard({
         <div
           style={{
             position: 'relative', width: '100%', aspectRatio: '16 / 9', overflow: 'hidden',
-            border: `1px solid ${colors.warmDark}`, background: background ? `#2A2724 center/cover no-repeat url(${JSON.stringify(background).slice(1, -1)})` : colors.warmDark,
+            border: `1px solid ${hover ? colors.dark : colors.warmDark}`,
+            background: background ? `#2A2724 center/cover no-repeat url(${JSON.stringify(background).slice(1, -1)})` : colors.warmDark,
             display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 14,
+            boxShadow: hover ? '0 6px 18px rgba(28,26,23,.16)' : 'none',
+            transform: hover ? 'translateY(-2px)' : 'none',
+            transition: 'transform .15s, box-shadow .15s, border-color .15s',
           }}
         >
           {/* Velo para que el texto se lea sobre cualquier foto. */}
@@ -102,40 +116,26 @@ export function FormCard({
         </div>
       </button>
 
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, paddingLeft: 2 }}>
-        <span style={{ font: `400 10px/1.4 ${MONO}`, color: colors.ash, flex: 1, minWidth: 0 }}>
+      <CardActions
+        visible={hover}
+        actions={[
+          { icon: 'copy', label: `Duplicar «${item.title || 'Sin título'}»`, onClick: () => onDuplicate(item) },
+          { icon: 'trash', label: `Eliminar «${item.title || 'Sin título'}»`, onClick: () => onDelete(item) },
+        ]}
+      />
+
+      <div style={{ paddingLeft: 2 }}>
+        <div style={{ font: `400 10px/1.4 ${MONO}`, color: colors.ash }}>
           {fieldCount === null ? (
             <span style={{ color: '#99335F' }}>No compila</span>
           ) : (
             `${fieldCount} ${fieldCount === 1 ? 'campo' : 'campos'} · ${item.responses} ${item.responses === 1 ? 'respuesta' : 'respuestas'}`
           )}
-        </span>
-        <button
-          onClick={() => onDuplicate(item)}
-          title="Duplicar"
-          aria-label={`Duplicar ${item.title}`}
-          style={iconBtn}
-        >
-          ⧉
-        </button>
-        <button
-          onClick={() => onDelete(item)}
-          title="Eliminar"
-          aria-label={`Eliminar ${item.title}`}
-          style={{ ...iconBtn, color: '#99335F' }}
-        >
-          ✕
-        </button>
-      </div>
-
-      <div style={{ font: `400 10px/1.4 ${MONO}`, color: colors.ash, paddingLeft: 2, marginTop: -6 }}>
-        Editado el {fmt(item.updated_at)}
+        </div>
+        <div style={{ font: `400 10px/1.4 ${MONO}`, color: colors.ash, marginTop: 2 }}>
+          Editado el {fmt(item.updated_at)}
+        </div>
       </div>
     </div>
   );
 }
-
-const iconBtn: React.CSSProperties = {
-  appearance: 'none', border: 'none', background: 'transparent', cursor: 'pointer',
-  color: colors.ash, font: `500 12px/1 ${MONO}`, padding: 2,
-};

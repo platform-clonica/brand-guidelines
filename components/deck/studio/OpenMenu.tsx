@@ -3,7 +3,12 @@ import { useEffect, useState } from 'react';
 import type { DeckListItem } from '@/lib/decks/types';
 import { deleteDeck, listDecks } from '@/lib/decks/api';
 import { ConfirmModal } from './ConfirmModal';
+import { ActionIcon } from '@/components/studio/CardActions';
 import { colors, iconBtn, menuMeta, menuPanel, menuRow, menuRowMain } from './ui';
+
+/* `iconBtn` está pensado para un glifo de texto; el SVG necesita que la caja se comporte
+   como caja, no como línea de texto. */
+const rowIcon = { ...iconBtn, display: 'grid', placeItems: 'center', lineHeight: 0 } as const;
 
 const fmt = (iso: string) => {
   try {
@@ -64,8 +69,14 @@ export function OpenMenu({
               <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.commercial_id}</div>
               <div style={menuMeta}>Creado el {fmt(it.created_at)}</div>
             </button>
-            <button style={iconBtn} title="Duplicar" aria-label="Duplicar" onClick={() => onDuplicate(it)}>⧉</button>
-            <button style={{ ...iconBtn, color: '#99335F' }} title="Eliminar" aria-label="Eliminar" onClick={() => setPendingDelete(it)}>✕</button>
+            {/* Aquí no hay miniatura sobre la que revelar nada, así que los iconos van siempre
+                visibles; lo que sí se comparte con las galerías es el dibujo. */}
+            <button style={rowIcon} title="Duplicar" aria-label={`Duplicar «${it.commercial_id}»`} onClick={() => onDuplicate(it)}>
+              <ActionIcon name="copy" />
+            </button>
+            <button style={{ ...rowIcon, color: '#99335F' }} title="Eliminar" aria-label={`Eliminar «${it.commercial_id}»`} onClick={() => setPendingDelete(it)}>
+              <ActionIcon name="trash" />
+            </button>
           </div>
         ))}
       </div>

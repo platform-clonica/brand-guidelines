@@ -367,7 +367,7 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
         kind: 'duplicate',
         seedMd: full.md,
         initial: {
-          commercial_id: `${full.commercial_id} Copy`,
+          commercial_id: `${full.commercial_id} (copia)`,
           client_id: full.client_id,
           client_name: clientNameFor(full.client_id),
           contact_emails: full.contact_emails,
