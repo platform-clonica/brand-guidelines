@@ -11,6 +11,7 @@ import { SlideThumb } from '../studio/SlideThumb';
 import { DeckLogo } from '../studio/DeckLogo';
 import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
 import { CardActions } from '@/components/studio/CardActions';
+import { FilterBar, SearchField } from '@/components/studio/GalleryFilters';
 import { LogoutButton } from '@/components/studio/LogoutButton';
 import { colors } from '../studio/ui';
 
@@ -40,6 +41,7 @@ export function DeckGallery() {
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [search, setSearch] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [clientFilter, setClientFilter] = useState<string | null>(null);
   const [modal, setModal] = useState<Modal | null>(null);
   const [toDelete, setToDelete] = useState<DeckListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -55,6 +57,14 @@ export function DeckGallery() {
     return [...set].sort();
   }, [items]);
 
+  /* Los clientes del desplegable salen de las presentaciones que hay, no de la tabla `clients`:
+     un filtro que ofrece opciones sin resultados no filtra, engaña. */
+  const clientNames = useMemo(() => {
+    const set = new Set<string>();
+    (items ?? []).forEach((it) => it.client_name && set.add(it.client_name));
+    return [...set].sort((a, b) => a.localeCompare(b, 'es'));
+  }, [items]);
+
   const toggleTag = (t: string) =>
     setSelectedTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
 
@@ -63,11 +73,12 @@ export function DeckGallery() {
     const applyQuery = q.length >= SEARCH_MIN;
     return (items ?? []).filter((it) => {
       if (applyQuery && !it.commercial_id.toLowerCase().includes(q)) return false;
+      if (clientFilter && it.client_name !== clientFilter) return false;
       // Multiple selected tags => AND.
       if (selectedTags.length && !selectedTags.every((t) => (it.tags ?? []).includes(t))) return false;
       return true;
     });
-  }, [items, search, selectedTags]);
+  }, [items, search, selectedTags, clientFilter]);
 
   /* Duplicar necesita el markdown completo, que el listado no trae entero; se pide la fila y se
      abre el modal ya relleno, igual que hace el editor desde "Abrir ▾". */
@@ -119,6 +130,7 @@ export function DeckGallery() {
       {/* Toolbar header — mirrors the editor's DeckToolbar bar. */}
       <header
         style={{
+          position: 'relative',
           display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px',
           borderBottom: `1px solid ${colors.warmDark}`, background: colors.warmLight,
         }}
@@ -129,57 +141,30 @@ export function DeckGallery() {
         <DeckLogo height={22} />
         <span style={{ marginLeft: 'auto' }} />
         <LogoutButton />
+
+        {/* Centrado respecto a la cabecera, no al hueco que queda: en flujo se desplazaría cada
+            vez que cambie el ancho del logo o del botón de salir. Ancho en % para que nunca
+            alcance a los extremos. */}
+        <div
+          style={{
+            position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
+            width: 'min(380px, 42%)',
+          }}
+        >
+          <SearchField value={search} onChange={setSearch} label="Buscar presentaciones por nombre" width={380} />
+        </div>
       </header>
 
       <div style={{ maxWidth: 1120, margin: '0 auto', padding: '40px 32px 64px' }}>
-        {/* Search */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-          <div
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10, width: 'min(520px, 100%)',
-              padding: '14px 18px', border: `1px solid ${colors.dark}`, background: colors.white,
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke={colors.ash} strokeWidth="1.4" aria-hidden style={{ flexShrink: 0 }}>
-              <circle cx="7" cy="7" r="4.5" />
-              <line x1="10.5" y1="10.5" x2="14" y2="14" strokeLinecap="round" />
-            </svg>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar"
-              aria-label="Buscar presentaciones por nombre"
-              style={{
-                flex: 1, minWidth: 0, appearance: 'none', border: 'none', outline: 'none',
-                background: 'transparent', font: `400 14px/1.2 ${MONO}`, color: colors.dark,
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Tag filters */}
-        {allTags.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 40 }}>
-            {allTags.map((t) => {
-              const on = selectedTags.includes(t);
-              return (
-                <button
-                  key={t}
-                  onClick={() => toggleTag(t)}
-                  aria-pressed={on}
-                  style={{
-                    appearance: 'none', cursor: 'pointer', padding: '8px 16px',
-                    border: `1px solid ${on ? colors.dark : colors.warmDark}`,
-                    background: on ? colors.dark : colors.white, color: on ? colors.warmLight : colors.ash,
-                    font: `500 11px/1 ${MONO}`, letterSpacing: '.04em',
-                  }}
-                >
-                  {t}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {/* Cliente + etiquetas. El buscador ya vive arriba, en la cabecera. */}
+        <FilterBar
+          clients={clientNames}
+          client={clientFilter}
+          onClient={setClientFilter}
+          allTags={allTags}
+          selectedTags={selectedTags}
+          onToggleTag={toggleTag}
+        />
 
         {error && <div style={{ font: `400 12px/1.4 ${MONO}`, color: '#99335F', marginBottom: 20 }}>{error}</div>}
 

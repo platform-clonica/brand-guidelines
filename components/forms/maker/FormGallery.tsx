@@ -8,6 +8,7 @@ import type { FormListItem } from '@/lib/forms/types';
 import { FormLogo } from '@/components/studio/Wordmark';
 import { ConfirmModal } from '@/components/deck/studio/ConfirmModal';
 import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
+import { FilterBar, SearchField } from '@/components/studio/GalleryFilters';
 import { LogoutButton } from '@/components/studio/LogoutButton';
 import { colors } from '@/components/deck/studio/ui';
 import { FormMetaModal, type FormMetaValues } from './FormMetaModal';
@@ -26,6 +27,7 @@ export function FormGallery() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [clientFilter, setClientFilter] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
   const [toDelete, setToDelete] = useState<FormListItem | null>(null);
 
@@ -44,6 +46,14 @@ export function FormGallery() {
     return [...set].sort();
   }, [items]);
 
+  /* Los clientes salen de los formularios que hay, no de una tabla: aquí el cliente es texto
+     libre del frontmatter, así que la lista es la de valores realmente en uso. */
+  const clientNames = useMemo(() => {
+    const set = new Set<string>();
+    (items ?? []).forEach((it) => it.client && set.add(it.client));
+    return [...set].sort((a, b) => a.localeCompare(b, 'es'));
+  }, [items]);
+
   const toggleTag = (t: string) =>
     setSelectedTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
 
@@ -57,10 +67,11 @@ export function FormGallery() {
         const haystack = `${it.title} ${it.client ?? ''}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
+      if (clientFilter && it.client !== clientFilter) return false;
       if (selectedTags.length && !selectedTags.every((t) => (it.tags ?? []).includes(t))) return false;
       return true;
     });
-  }, [items, search, selectedTags]);
+  }, [items, search, selectedTags, clientFilter]);
 
   const onCreate = async (values: FormMetaValues) => {
     const md = newFormMd({ title: values.title, client: values.client || undefined, accent: values.accent });
@@ -100,6 +111,7 @@ export function FormGallery() {
     <div style={{ minHeight: '100vh', background: colors.warmLight, color: colors.dark }}>
       <header
         style={{
+          position: 'relative',
           display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px',
           borderBottom: `1px solid ${colors.warmDark}`, background: colors.warmLight,
         }}
@@ -110,57 +122,28 @@ export function FormGallery() {
         <FormLogo height={22} />
         <span style={{ marginLeft: 'auto' }} />
         <LogoutButton />
+
+        {/* Centrado respecto a la cabecera, no al hueco que queda. Igual que en DeckMaker. */}
+        <div
+          style={{
+            position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
+            width: 'min(380px, 42%)',
+          }}
+        >
+          <SearchField value={search} onChange={setSearch} label="Buscar formularios por título o cliente" width={380} />
+        </div>
       </header>
 
       <div style={{ maxWidth: 1120, margin: '0 auto', padding: '40px 32px 64px' }}>
-        {/* Buscador */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-          <div
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10, width: 'min(520px, 100%)',
-              padding: '14px 18px', border: `1px solid ${colors.dark}`, background: colors.white,
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke={colors.ash} strokeWidth="1.4" aria-hidden style={{ flexShrink: 0 }}>
-              <circle cx="7" cy="7" r="4.5" />
-              <line x1="10.5" y1="10.5" x2="14" y2="14" strokeLinecap="round" />
-            </svg>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar"
-              aria-label="Buscar formularios por título o cliente"
-              style={{
-                flex: 1, minWidth: 0, appearance: 'none', border: 'none', outline: 'none',
-                background: 'transparent', font: `400 14px/1.2 ${MONO}`, color: colors.dark,
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Filtros por etiqueta */}
-        {allTags.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 40 }}>
-            {allTags.map((t) => {
-              const on = selectedTags.includes(t);
-              return (
-                <button
-                  key={t}
-                  onClick={() => toggleTag(t)}
-                  aria-pressed={on}
-                  style={{
-                    appearance: 'none', cursor: 'pointer', padding: '8px 16px',
-                    border: `1px solid ${on ? colors.dark : colors.warmDark}`,
-                    background: on ? colors.dark : colors.white, color: on ? colors.warmLight : colors.ash,
-                    font: `500 11px/1 ${MONO}`, letterSpacing: '.04em',
-                  }}
-                >
-                  {t}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {/* Cliente + etiquetas. El buscador ya vive arriba, en la cabecera. */}
+        <FilterBar
+          clients={clientNames}
+          client={clientFilter}
+          onClient={setClientFilter}
+          allTags={allTags}
+          selectedTags={selectedTags}
+          onToggleTag={toggleTag}
+        />
 
         {error && <div style={{ font: `400 12px/1.4 ${MONO}`, color: '#99335F', marginBottom: 20 }}>{error}</div>}
 
