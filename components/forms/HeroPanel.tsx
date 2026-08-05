@@ -2,9 +2,9 @@
    plus the subordinate "by Interactius" signature next to it (per product decision).
    The client logo does NOT replace the Interactius signature. */
 
-import type { FormDefinition } from '@/lib/forms/schema';
+import type { FormDraft } from '@/lib/forms/schema';
 
-export function HeroPanel({ def }: { def: FormDefinition }) {
+export function HeroPanel({ def }: { def: FormDraft }) {
   const hasBg = Boolean(def.background);
   return (
     <div

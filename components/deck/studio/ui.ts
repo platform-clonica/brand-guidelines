@@ -23,6 +23,14 @@ export const btn: CSSProperties = {
 export const btnGhost: CSSProperties = { ...btn, background: 'transparent', color: colors.dark };
 export const btnDanger: CSSProperties = { ...btn, border: '1px solid #99335F', background: 'transparent', color: '#99335F' };
 
+/* Enlace de la barra superior de las galerías ("← Inicio"). Mismo tratamiento que la variante
+   `bar` de LogoutButton, para que los dos controles de la cabecera se lean como hermanos. */
+export const chromeLink: CSSProperties = {
+  border: `1px solid ${colors.warmDark}`, background: colors.white, color: colors.ash,
+  padding: '7px 12px', font: `500 10px/1 ${MONO}`, letterSpacing: '.06em',
+  textTransform: 'uppercase', textDecoration: 'none',
+};
+
 export const toolbarBtn: CSSProperties = {
   appearance: 'none', border: `1px solid ${colors.warmDark}`, background: colors.white, color: colors.dark,
   font: `500 11px/1 ${MONO}`, letterSpacing: '.04em', padding: '9px 12px', cursor: 'pointer', whiteSpace: 'nowrap',

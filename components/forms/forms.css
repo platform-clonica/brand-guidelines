@@ -370,6 +370,56 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Aviso del visor de FormMaker: solo aparece con el prop `preview`, nunca en la página pública.
+   Burdeos porque es un estado del sistema, no decoración — el rol de alerta declarado en
+   lib/tokens.ts (uiRole). */
+.ixf-preview-note {
+  margin-top: 28px;
+  padding: 12px 14px;
+  border: 1px solid var(--c-bordeaux);
+  background: rgba(153, 51, 95, 0.05);
+  font-family: var(--mono);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+  color: var(--c-bordeaux);
+}
+.ixf-preview-note button {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ── Escenario del visor de FormMaker ──────────────────────────────────────────────
+   El formulario público se maqueta contra el viewport (100vh, media query a 1024px). Dentro del
+   editor vive en un panel, así que esas dos reglas hay que neutralizarlas o el hero se come la
+   pantalla. Nada de esto afecta a /forms/f/[id]: solo aplica bajo .ixf-stage.
+
+   Dos modos, según el ancho MEDIDO del panel (lo decide el JS, porque una media query miraría el
+   viewport y no el panel): apilado por defecto, dos columnas cuando hay sitio. */
+.ixf-stage .ix-forms {
+  min-height: 0;
+  display: block;
+}
+.ixf-stage .ixf-hero {
+  position: relative;
+  height: auto;
+  min-height: 200px;
+}
+.ixf-stage .ixf-hero__brandbar { padding: 32px; }
+.ixf-stage .ixf-panel { padding: 40px 32px 64px; }
+
+.ixf-stage--wide .ix-forms {
+  display: grid;
+  grid-template-columns: 55fr 45fr;
+  align-items: start;
+}
+.ixf-stage--wide .ixf-hero { min-height: 100%; }
+
 /* 404 */
 .ixf-notfound {
   min-height: 100vh;

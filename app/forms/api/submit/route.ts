@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   const id = body.id?.trim();
   if (!id) return NextResponse.json({ error: 'id requerido' }, { status: 400 });
 
-  const def = getPublishedForm(id);
+  const def = await getPublishedForm(id);
   if (!def) return NextResponse.json({ error: 'Formulario no encontrado' }, { status: 404 });
 
   const normalized = normalizeAnswers(def, body.answers ?? {});

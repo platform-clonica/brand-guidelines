@@ -8,7 +8,8 @@ import { createDeck, listClients, listDecks } from '@/lib/decks/api';
 import { DeckMetaModal, type MetaValues } from '../studio/DeckMetaModal';
 import { SlideThumb } from '../studio/SlideThumb';
 import { DeckLogo } from '../studio/DeckLogo';
-import { colors } from '../studio/ui';
+import { LogoutButton } from '@/components/studio/LogoutButton';
+import { chromeLink, colors } from '../studio/ui';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 const SEARCH_MIN = 3; // predictive filter kicks in from the 3rd character
@@ -72,19 +73,10 @@ export function DeckGallery() {
         }}
       >
         <DeckLogo height={26} />
-        <form action="/deck/logout" method="post" style={{ marginLeft: 'auto' }}>
-          <button
-            type="submit"
-            title="Cerrar sesión"
-            style={{
-              appearance: 'none', cursor: 'pointer', border: `1px solid ${colors.warmDark}`,
-              background: colors.white, color: colors.ash, padding: '7px 12px',
-              font: `500 10px/1 ${MONO}`, letterSpacing: '.06em', textTransform: 'uppercase',
-            }}
-          >
-            Cerrar sesión
-          </button>
-        </form>
+        <a href="/home" style={{ ...chromeLink, marginLeft: 'auto' }}>
+          ← Inicio
+        </a>
+        <LogoutButton />
       </header>
 
       <div style={{ maxWidth: 1120, margin: '0 auto', padding: '40px 32px 64px' }}>

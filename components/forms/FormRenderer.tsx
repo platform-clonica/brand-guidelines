@@ -5,7 +5,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import type { FormDefinition } from '@/lib/forms/schema';
+import type { FormDraft } from '@/lib/forms/schema';
 import { validateAnswers, normalizeAnswers, isInputField, optionValue } from '@/lib/forms/schema';
 import { Md } from './Md';
 import { FieldRow } from './fields/FieldControl';
@@ -13,7 +13,7 @@ import { SuccessPanel } from './SuccessPanel';
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
-function initialValues(def: FormDefinition): Record<string, unknown> {
+function initialValues(def: FormDraft): Record<string, unknown> {
   const v: Record<string, unknown> = {};
   for (const f of def.fields) {
     if (!isInputField(f)) continue;
@@ -30,7 +30,10 @@ function initialValues(def: FormDefinition): Record<string, unknown> {
   return v;
 }
 
-export function FormRenderer({ def }: { def: FormDefinition }) {
+/* `preview` = el visor en vivo de FormMaker: se rellena y se valida igual que el formulario real,
+   pero el envío se corta en seco — no se llama a /forms/api/submit y no se escribe nada en
+   `responses`. La ruta pública no pasa el prop, así que su comportamiento no cambia en absoluto. */
+export function FormRenderer({ def, preview = false }: { def: FormDraft; preview?: boolean }) {
   const [values, setValues] = useState<Record<string, unknown>>(() => initialValues(def));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>('idle');
@@ -62,6 +65,13 @@ export function FormRenderer({ def }: { def: FormDefinition }) {
       return;
     }
     setErrors({});
+
+    // Vista previa: la validación ya ha corrido; aquí se para. Nada de red, nada de persistencia.
+    if (preview) {
+      setStatus('success');
+      return;
+    }
+
     setStatus('submitting');
 
     try {
@@ -90,6 +100,14 @@ export function FormRenderer({ def }: { def: FormDefinition }) {
     return (
       <div className="ixf-panel" style={{ ['--accent' as string]: accentVar }}>
         <SuccessPanel title={def.success_title} message={def.success_message} />
+        {preview && (
+          <div className="ixf-preview-note" role="note">
+            Vista previa — no se ha enviado nada.{' '}
+            <button type="button" onClick={() => setStatus('idle')}>
+              Volver al formulario
+            </button>
+          </div>
+        )}
       </div>
     );
   }

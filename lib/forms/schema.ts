@@ -86,9 +86,15 @@ export const frontmatterSchema = z.object({
 
 export type Frontmatter = z.infer<typeof frontmatterSchema>;
 
-/* A fully-parsed form: frontmatter + the Markdown intro body + a content hash (form_version). */
-export type FormDefinition = Frontmatter & {
+/* A parsed form WITHOUT the content hash: todo lo que hace falta para renderizar.
+   Es lo que produce el compilador del navegador (lib/forms/compile.ts), donde no hay node:crypto
+   y donde la versión además no pinta nada: solo importa al enviar y al exportar. */
+export type FormDraft = Frontmatter & {
   intro: string;         // raw Markdown from the .md body (rendered as intro)
+};
+
+/* A fully-parsed form: lo anterior + el hash de contenido. Lo produce el servidor (parse.ts). */
+export type FormDefinition = FormDraft & {
   version: string;       // short content hash — stored as `form_version` with each response
 };
 
@@ -96,7 +102,7 @@ export type FormDefinition = Frontmatter & {
    Shared by the client (before validating/sending) and the server (before validating/inserting),
    so an empty optional field never trips a type check and required-emptiness is detected uniformly.
    Returns only the meaningful keys. */
-export function normalizeAnswers(def: FormDefinition, raw: Record<string, unknown>): Record<string, unknown> {
+export function normalizeAnswers(def: FormDraft, raw: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const f of def.fields) {
     if (!isInputField(f)) continue;
@@ -143,7 +149,7 @@ function normalizeValue(f: InputField, v: unknown): unknown {
 /* ── Zod object for TYPE/CONSTRAINT checks only (every field optional — presence is handled
    separately in validateAnswers). Unknown keys need no strict(): normalizeAnswers already drops
    anything not in the field list before this runs. */
-function buildTypeSchema(def: FormDefinition): z.ZodType<Record<string, unknown>> {
+function buildTypeSchema(def: FormDraft): z.ZodType<Record<string, unknown>> {
   const shape: Record<string, z.ZodTypeAny> = {};
   for (const f of def.fields) {
     if (!isInputField(f)) continue;
@@ -165,7 +171,7 @@ export type AnswersResult =
 /* ── Validate the SUBMIT payload (PRD §8.4). Presence (required) + type/constraint, in that order.
    Single source of truth: called by both the client (FormRenderer) and the server (submit route).
    Pass ALREADY-normalized answers (normalizeAnswers). */
-export function validateAnswers(def: FormDefinition, normalized: Record<string, unknown>): AnswersResult {
+export function validateAnswers(def: FormDraft, normalized: Record<string, unknown>): AnswersResult {
   const errors: Record<string, string> = {};
 
   // 1) Required presence.

@@ -4,6 +4,7 @@ import type { DeckType } from '@/lib/deck';
 import type { ClientRecord, DeckMeta } from '@/lib/decks/types';
 import { addClient, uploadLogo } from '@/lib/decks/api';
 import { Modal } from './Modal';
+import { TagInput } from '@/components/studio/TagInput';
 import { btn, btnGhost, colors, field, input, label, seg, segOn } from './ui';
 
 export type MetaValues = Pick<DeckMeta, 'commercial_id' | 'client_id' | 'contact_emails' | 'logo_path' | 'budget_url' | 'type' | 'tags'>;
@@ -48,25 +49,9 @@ export function DeckMetaModal({
   const [logoPath, setLogoPath] = useState<string | null>(initial?.logo_path ?? null);
   const [logoName, setLogoName] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
-  const [tagDraft, setTagDraft] = useState('');
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const addTag = (raw: string) => {
-    const t = raw.trim().toLowerCase();
-    if (t && !tags.includes(t)) setTags((prev) => [...prev, t]);
-    setTagDraft('');
-  };
-  const removeTag = (t: string) => setTags((prev) => prev.filter((x) => x !== t));
-  const onTagKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      addTag(tagDraft);
-    } else if (e.key === 'Backspace' && !tagDraft && tags.length) {
-      removeTag(tags[tags.length - 1]);
-    }
-  };
 
   // Prefill emails/logo from a client's defaults when its name is matched and fields are empty.
   const onClientChange = (value: string) => {
@@ -170,45 +155,13 @@ export function DeckMetaModal({
 
       {mode === 'edit' && (
         <div style={field}>
-          <label style={label}>Etiquetas</label>
-          {tags.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-              {tags.map((t) => (
-                <span
-                  key={t}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 8px',
-                    border: `1px solid ${colors.warmDark}`, background: colors.white,
-                    font: '400 11px/1 var(--font-ibm-plex-mono, monospace)', color: colors.dark,
-                  }}
-                >
-                  {t}
-                  <button
-                    type="button"
-                    onClick={() => removeTag(t)}
-                    aria-label={`Quitar ${t}`}
-                    style={{ appearance: 'none', border: 'none', background: 'transparent', cursor: 'pointer', color: colors.ash, font: '400 12px/1 var(--font-ibm-plex-mono, monospace)', padding: 0 }}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-          <input
-            style={input}
-            value={tagDraft}
-            list="deck-tags"
-            onChange={(e) => setTagDraft(e.target.value)}
-            onKeyDown={onTagKey}
-            onBlur={() => tagDraft.trim() && addTag(tagDraft)}
+          <TagInput
+            tags={tags}
+            onChange={setTags}
+            suggestions={allTags}
+            listId="deck-tags"
             placeholder="Escribe y pulsa Enter (recruitment, 2024…)"
           />
-          <datalist id="deck-tags">
-            {allTags.filter((t) => !tags.includes(t)).map((t) => (
-              <option key={t} value={t} />
-            ))}
-          </datalist>
         </div>
       )}
 

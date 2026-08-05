@@ -1,0 +1,124 @@
+/* Home dispatcher — lanzador de aplicaciones. Scoped a .ix-home.
+
+   Hoja de estilos en vez de estilos inline con onMouseEnter (lo que hacen las galerías): el hover
+   en CSS deja la página entera como server component, sin un solo byte de JavaScript de cliente.
+   Convención de nombres `.ixh-*`, en paralelo a `.ixf-*` de components/forms/forms.css.
+
+   Los tokens son los --c-* de app/globals.css, que a su vez reflejan lib/tokens.ts.
+   Solo paleta base: los tres acentos identifican SERVICIOS, no herramientas internas. */
+
+.ix-home {
+  --mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  --tile-w: 220px;
+
+  min-height: 100vh;
+  background: var(--c-warm-light);
+  color: var(--c-dark);
+}
+
+/* ── Cabecera: título centrado, cerrar sesión a la derecha ── */
+.ixh-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 32px;
+}
+.ixh-header__title {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  color: var(--c-dark);
+  margin: 0;
+}
+.ixh-header__logout {
+  position: absolute;
+  top: 50%;
+  right: 32px;
+  transform: translateY(-50%);
+}
+
+/* ── Cuerpo ── */
+.ixh-main {
+  max-width: 1120px; /* el mismo contenedor que las dos galerías */
+  margin: 0 auto;
+  padding: 40px 32px 80px;
+}
+
+.ixh-section + .ixh-section { margin-top: 64px; }
+
+.ixh-section__title {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--c-dark);
+  margin: 0 0 18px;
+}
+
+/* Ancho fijo y wrap, NO una rejilla que estira: con `auto-fill` las dos tarjetas de Links se
+   repartirían todo el ancho y quedarían enormes. Así quedan alineadas a la izquierda. */
+.ixh-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+/* ── Tarjeta ── */
+.ixh-tile {
+  width: var(--tile-w);
+  max-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid var(--c-warm-dark);
+  background: var(--c-white);
+  color: var(--c-dark);
+  font-family: var(--mono);
+  transition: transform 150ms var(--ease, ease), box-shadow 150ms var(--ease, ease),
+    border-color 150ms var(--ease, ease);
+}
+
+.ixh-tile--link { height: 92px; }
+.ixh-tile--tool { height: 192px; }
+
+a.ixh-tile:hover {
+  border-color: var(--c-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(28, 26, 23, 0.16);
+}
+a.ixh-tile:focus-visible {
+  outline: 2px solid var(--c-dark);
+  outline-offset: 2px;
+}
+
+/* Herramienta que aún no existe: apagada, sin enlace y fuera del orden de tabulación. */
+.ixh-tile--off {
+  background: var(--c-warm-light);
+  color: var(--c-ash);
+  cursor: default;
+}
+
+.ixh-tile__label {
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.ixh-tile__desc {
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--c-ash);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ixh-tile { transition: none; }
+  a.ixh-tile:hover { transform: none; }
+}

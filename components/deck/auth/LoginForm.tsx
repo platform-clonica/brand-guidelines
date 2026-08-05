@@ -1,13 +1,10 @@
 'use client';
 import { useState, type FormEvent } from 'react';
 import { supabaseBrowser } from '@/lib/supabase/client';
+import { safeNext } from '@/lib/auth/safeNext';
 import * as s from './authUi';
 
-/* Only allow same-app redirects into the Deck Maker (avoid open-redirect). */
-function safeNext(raw: string | null): string {
-  if (raw && raw.startsWith('/deck') && !raw.startsWith('//')) return raw;
-  return '/deck';
-}
+/* Only allow same-app redirects into the team tools (avoid open-redirect) — lib/auth/safeNext.ts. */
 
 export function LoginForm({ next }: { next: string | null }) {
   const [email, setEmail] = useState('');

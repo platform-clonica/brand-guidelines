@@ -14,7 +14,7 @@ const NOINDEX = { index: false, follow: false } as const;
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const def = getPublishedForm(id);
+  const def = await getPublishedForm(id);
   return {
     title: def ? def.title : 'Formulario',
     robots: NOINDEX,
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function FormPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const def = getPublishedForm(id);
+  const def = await getPublishedForm(id);
   if (!def) notFound();
 
   return (

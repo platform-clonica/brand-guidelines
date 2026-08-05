@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   const formId = new URL(req.url).searchParams.get('form_id')?.trim();
   if (!formId) return NextResponse.json({ error: 'form_id requerido' }, { status: 400 });
 
-  const def = getForm(formId);
+  const def = await getForm(formId);
   if (!def) return NextResponse.json({ error: 'Formulario no encontrado' }, { status: 404 });
 
   // Read as the authenticated team member (RLS on `responses` grants SELECT to `authenticated` only).
