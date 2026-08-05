@@ -10,8 +10,6 @@ import { scrollToSection } from '@/lib/hooks/useScrollToSection';
 import { versionLabel } from '@/lib/tokens';
 import { LocaleSwitch } from './LocaleSwitch';
 
-const PRESENTACIONES = { es: 'Presentaciones', en: 'Presentations', ca: 'Presentacions' } as const;
-
 export function Sidebar() {
   const t = useTranslations();
   const locale = useLocale() as Locale;
@@ -100,9 +98,12 @@ export function Sidebar() {
             );
           })}
           <li className="mt-3 pt-3 border-t border-dark/10">
-            {/* Deck Maker is a standalone tool: open it in a new tab, outside the brand chrome. */}
+            {/* El workspace es el lanzador de las herramientas internas: se abre en otra pestaña,
+                fuera del chrome de marca. Antes este enlace iba directo a DeckMak_r; ahora que hay
+                más de una herramienta, apunta al dispatcher. "Workspace" no necesita diccionario:
+                se lee igual en es/en/ca. */}
             <a
-              href="/workspace/deckmak_r"
+              href="/workspace"
               target="_blank"
               rel="noopener noreferrer"
               className="group w-full flex items-baseline gap-3 py-[7px]
@@ -111,12 +112,12 @@ export function Sidebar() {
                          text-dark/55 hover:text-dark"
             >
               <span className="text-[10px] text-dark/35" aria-hidden>→</span>
-              <span className="flex-1">{PRESENTACIONES[locale]}</span>
+              <span className="flex-1">Workspace</span>
               <span aria-hidden className="text-[10px] text-dark/35 group-hover:text-dark/70 transition-colors duration-300 ease-expo">↗</span>
             </a>
           </li>
           <li>
-            {/* Same group as Presentaciones: standalone tools, new tab, no locale prefix.
+            {/* Same group as Workspace: standalone tools, new tab, no locale prefix.
                 "Timer" reads the same in es/en/ca, so it needs no dictionary. */}
             <a
               href="/timer"

@@ -13,8 +13,6 @@ import { versionLabel } from '@/lib/tokens';
 import { LocaleSwitch } from './LocaleSwitch';
 
 const EASE = [0.16, 1, 0.3, 1] as const;
-const PRESENTACIONES = { es: 'Presentaciones', en: 'Presentations', ca: 'Presentacions' } as const;
-
 export function MenuOverlay() {
   const { isOpen, close } = useMenu();
   const t = useTranslations();
@@ -101,9 +99,10 @@ export function MenuOverlay() {
                 );
               })}
               <li className="mt-3 pt-3 border-t border-dark/10">
-                {/* Deck Maker opens in a new tab, outside the brand chrome. */}
+                {/* El lanzador de herramientas internas, en otra pestaña y fuera del chrome de
+                    marca. Antes iba directo a DeckMak_r; ahora hay más de una herramienta. */}
                 <a
-                  href="/workspace/deckmak_r"
+                  href="/workspace"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => close()}
@@ -113,12 +112,12 @@ export function MenuOverlay() {
                              transition-colors duration-300 ease-expo"
                 >
                   <span className="text-[10px] text-dark/35" aria-hidden>→</span>
-                  <span className="flex-1">{PRESENTACIONES[locale]}</span>
+                  <span className="flex-1">Workspace</span>
                   <span aria-hidden className="text-[10px] text-dark/35">↗</span>
                 </a>
               </li>
               <li>
-                {/* Same group as Presentaciones. "Timer" needs no dictionary: it reads
+                {/* Same group as Workspace. "Timer" needs no dictionary: it reads
                     the same in es/en/ca. */}
                 <a
                   href="/timer"
