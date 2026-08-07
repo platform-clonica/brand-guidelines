@@ -98,6 +98,8 @@ semanas: 8                       # nº de columnas (default 8)
 Diagnóstico: 1                   # barra en la semana 1
 Discovery: 2-3                   # rango
 Volumetría: 4-8
+Descubrimiento: 4, 6, 9          # tramos sueltos: una barra por trozo, sin continuidad
+Acompañamiento: 1-3, 6, 9-10.5   # se pueden mezclar rangos, sueltos y medias
 Kick Off: 0.5                    # medias semanas con .5 en cualquier extremo
 hitos cliente: 1, 3, 5, 8        # marcadores
 ```

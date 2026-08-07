@@ -2,7 +2,11 @@ export type Theme = 'dark' | 'light';
 export type Accent = 'opal' | 'bordeaux' | 'emerald';
 
 export type ImageRef = { src?: string; alt?: string; prompt?: string };
-export type GanttRow = { label: string; start: number; end: number; accent: Accent };
+// A row is a list of spans, not a single range: a phase can be discontinuous
+// (`Descubrimiento: 4, 6, 9` draws three separate bars). All spans of a row
+// share the row's accent — it is one phase, not three.
+export type GanttSpan = [start: number, end: number];
+export type GanttRow = { label: string; spans: GanttSpan[]; accent: Accent };
 export type Column = { label: string; heading: string; body: string };
 export type Phase = { name: string; body: string; itemsHeader?: string; items: string[] };
 export type BudgetItem = { label: string; amount: string };

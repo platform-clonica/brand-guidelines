@@ -61,7 +61,8 @@ Ajustar `systemPrompt()` (hoy dice "translate Label: value labels", lo que rompe
 - **Firmante = nombres propios**: no traducir valores de `nombre`/`empresa`/`nif`/`direccion`. Sí traducir
   `cargo`/`aviso`/`cta`.
 - **Gantt**: en `hitos <etiqueta>:` mantener `hitos`, traducir `<etiqueta>`; traducir las etiquetas de fila
-  (`Diagnóstico:`…) conservando los rangos numéricos; la unidad (`semanas:`) ya se traduce.
+  (`Diagnóstico:`…) conservando verbatim lo que va tras los dos puntos (un valor, un rango o una
+  lista de tramos separados por comas); la unidad (`semanas:`) ya se traduce.
 - **Énfasis manifiesto**: conservar las barras ` / … / `, traducir la palabra interior.
 - (Ya cubierto: `[ly:` verbatim, `> cliente:` verbatim, URLs/importes/números verbatim.)
 

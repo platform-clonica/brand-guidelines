@@ -29,21 +29,26 @@ export function Gantt({ slide, page }: { slide: Extract<Slide, { kind: 'gantt' }
         ))}
         <div className="sep" />
         {slide.rows.map((row, ri) => {
-          const { span, hostWeek, fracLeft } = barGeom(row.start, row.end);
+          // One geometry per span: a discontinuous phase (`4, 6, 9`) draws a
+          // bar in each of its host cells, all in the row's accent.
+          const bars = row.spans.map(([s, e]) => barGeom(s, e)).filter((b) => b.span > 0);
           return (
             <Fragment key={`r${ri}`}>
               <div className="rlabel">{inline(row.label)}</div>
               {weeks.map((n) => (
                 <div className="cell" key={`c${ri}-${n}`}>
-                  {n === hostWeek && span > 0 && (
-                    <div
-                      className="bar"
-                      style={{
-                        background: `var(--${row.accent})`,
-                        left: `calc(${fracLeft} * 100% + 6px)`,
-                        width: `calc(${span} * 100% - 12px)`,
-                      }}
-                    />
+                  {bars.map((b, bi) =>
+                    b.hostWeek === n ? (
+                      <div
+                        className="bar"
+                        key={`b${bi}`}
+                        style={{
+                          background: `var(--${row.accent})`,
+                          left: `calc(${b.fracLeft} * 100% + 6px)`,
+                          width: `calc(${b.span} * 100% - 12px)`,
+                        }}
+                      />
+                    ) : null,
                   )}
                 </div>
               ))}

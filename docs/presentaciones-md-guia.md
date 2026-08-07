@@ -190,6 +190,10 @@ hitos cliente: 1, 3, 5, 8
 - `semanas: N` → nº de columnas (por defecto 8). La **palabra** que uses es la
   etiqueta del eje: `meses: 6` muestra «Meses», `días: 30` muestra «Días».
 - `Etiqueta: N` → barra de una semana en la semana N. `Etiqueta: inicio-fin` → barra de rango.
+- **Tramos sueltos**: separa por comas para que una fase **no** tenga que ser continua.
+  Cada trozo dibuja su propia barra, todas del mismo color (es una fase, no varias).
+  - `Descubrimiento: 4, 6, 9` → tres barras sueltas, saltándose 5, 7 y 8.
+  - `Acompañamiento: 1-3, 6, 9-10.5` → se pueden mezclar rangos, sueltos y medias.
 - **Medias semanas**: usa `.5` en cualquier extremo del rango; la barra dibuja
   media celda.
   - `Discovery: 2-3.5` → semanas 2 y 3 + la primera mitad de la 4.

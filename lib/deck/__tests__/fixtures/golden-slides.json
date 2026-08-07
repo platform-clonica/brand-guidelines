@@ -136,20 +136,32 @@
         "rows": [
           {
             "label": "Diagnóstico",
-            "start": 1,
-            "end": 1.5,
+            "spans": [
+              [
+                1,
+                1.5
+              ]
+            ],
             "accent": "opal"
           },
           {
             "label": "Discovery",
-            "start": 2,
-            "end": 3,
+            "spans": [
+              [
+                2,
+                3
+              ]
+            ],
             "accent": "bordeaux"
           },
           {
             "label": "Volumetría",
-            "start": 4,
-            "end": 8,
+            "spans": [
+              [
+                4,
+                8
+              ]
+            ],
             "accent": "emerald"
           }
         ],
@@ -453,26 +465,42 @@
         "rows": [
           {
             "label": "Anàlisi Preliminar i Immersió",
-            "start": 1,
-            "end": 2,
+            "spans": [
+              [
+                1,
+                2
+              ]
+            ],
             "accent": "opal"
           },
           {
             "label": "Investigació Qualitativa",
-            "start": 2,
-            "end": 4,
+            "spans": [
+              [
+                2,
+                4
+              ]
+            ],
             "accent": "bordeaux"
           },
           {
             "label": "Test d'Usabilitat",
-            "start": 4,
-            "end": 6,
+            "spans": [
+              [
+                4,
+                6
+              ]
+            ],
             "accent": "emerald"
           },
           {
             "label": "Anàlisi de Resultats i Pla de Millora",
-            "start": 7,
-            "end": 8,
+            "spans": [
+              [
+                7,
+                8
+              ]
+            ],
             "accent": "opal"
           }
         ],
@@ -651,26 +679,42 @@
         "rows": [
           {
             "label": "Discovery & Immersió Inicial",
-            "start": 1,
-            "end": 1,
+            "spans": [
+              [
+                1,
+                1
+              ]
+            ],
             "accent": "opal"
           },
           {
             "label": "Estratègia de Marca - Branding",
-            "start": 1,
-            "end": 1,
+            "spans": [
+              [
+                1,
+                1
+              ]
+            ],
             "accent": "bordeaux"
           },
           {
             "label": "Identitat Visual i UI Kit",
-            "start": 2,
-            "end": 5,
+            "spans": [
+              [
+                2,
+                5
+              ]
+            ],
             "accent": "emerald"
           },
           {
             "label": "Landing Page i SEO",
-            "start": 6,
-            "end": 10,
+            "spans": [
+              [
+                6,
+                10
+              ]
+            ],
             "accent": "opal"
           }
         ],
@@ -838,20 +882,32 @@
         "rows": [
           {
             "label": "Diagnòstic",
-            "start": 1,
-            "end": 1.5,
+            "spans": [
+              [
+                1,
+                1.5
+              ]
+            ],
             "accent": "opal"
           },
           {
             "label": "Discovery",
-            "start": 2,
-            "end": 3,
+            "spans": [
+              [
+                2,
+                3
+              ]
+            ],
             "accent": "bordeaux"
           },
           {
             "label": "Volumetria",
-            "start": 4,
-            "end": 8,
+            "spans": [
+              [
+                4,
+                8
+              ]
+            ],
             "accent": "emerald"
           }
         ],

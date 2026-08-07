@@ -1,4 +1,4 @@
-import type { Accent, BudgetItem, GanttRow, Token } from './types.ts';
+import type { Accent, BudgetItem, GanttRow, GanttSpan, Token } from './types.ts';
 
 const ACCENTS: Accent[] = ['opal', 'bordeaux', 'emerald'];
 
@@ -108,8 +108,7 @@ export function parseGantt(body: string): { weeks: number; unit: string; rows: G
       if (label) milestoneLabel = capitalize(label);
       continue;
     }
-    const [start, end] = parseRange(val);
-    rows.push({ label: keyPart.trim(), start, end, accent: ACCENTS[rows.length % ACCENTS.length] });
+    rows.push({ label: keyPart.trim(), spans: parseSpans(val), accent: ACCENTS[rows.length % ACCENTS.length] });
   }
   return { weeks, unit, rows, milestones, milestoneLabel };
 }
@@ -119,7 +118,14 @@ function splitOnce(s: string, sep: string): [string, string | undefined] {
   return idx === -1 ? [s, undefined] : [s.slice(0, idx), s.slice(idx + 1)];
 }
 
-function parseRange(v: string): [number, number] {
+// A row value is a comma-separated list of spans, so a phase can skip units
+// (`4, 6, 9` → three one-unit bars). Each item goes through parseRange, so a
+// list may mix ranges, single units and halves: `1-3, 6, 9-10.5`.
+function parseSpans(v: string): GanttSpan[] {
+  return v.split(',').map((s) => s.trim()).filter(Boolean).map(parseRange);
+}
+
+function parseRange(v: string): GanttSpan {
   // Endpoints may be halves (e.g. 2-3.5, 4-4.5) to draw half-week bars.
   const m = v.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/);
   if (m) return [parseFloat(m[1]), parseFloat(m[2])];
