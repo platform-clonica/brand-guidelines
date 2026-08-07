@@ -59,6 +59,58 @@ test('budget: explicit Total row wins over auto-sum', () => {
   assert.equal(s.total, '3.500 €');
 });
 
+test('budget: `nototal` drops the total row (as a bullet or as a loose line)', () => {
+  const asItem = one('## Presupuesto\n- Fase 1: 1.000 €\n- nototal') as any;
+  assert.deepEqual(asItem.items, [{ label: 'Fase 1', amount: '1.000 €' }]);
+  assert.equal(asItem.total, undefined);
+  const asLine = one('## Presupuesto\n- Fase 1: 1.000 €\nnototal') as any;
+  assert.equal(asLine.total, undefined);
+  assert.equal(asLine.items.length, 1);
+});
+
+test('budget: the `nototal` marker is spelled several ways', () => {
+  for (const w of ['nototal', 'no total', 'sin total', 'sense total', 'NoTotal']) {
+    const s = one(`## Presupuesto\n- Fase 1: 1.000 €\n- ${w}`) as any;
+    assert.equal(s.total, undefined, `«${w}» debería quitar el total`);
+    assert.equal(s.items.length, 1, `«${w}» no debería quedarse como partida`);
+  }
+});
+
+test('budget: without the marker the total is still there', () => {
+  assert.equal((one('## Presupuesto\n- Fase 1: 1.000 €') as any).total, '1.000 €');
+});
+
+test('budget: an amount may be negative, carry markup or hold a second figure', () => {
+  const s = one(
+    '## Presupuesto\n- Entorno de test y diagnóstico: 5.173 €\n' +
+    '- Descuento cliente recurrente 5%: -259 € **4.915 €**\n' +
+    '- Mantenimiento mensual recurrente: 1.825 €\n- nototal',
+  ) as any;
+  assert.deepEqual(s.items, [
+    { label: 'Entorno de test y diagnóstico', amount: '5.173 €' },
+    { label: 'Descuento cliente recurrente 5%', amount: '-259 € **4.915 €**' },
+    { label: 'Mantenimiento mensual recurrente', amount: '1.825 €' },
+  ]);
+  assert.equal(s.total, undefined);
+});
+
+test('budget: a unit suffix after the amount no longer swallows the whole line', () => {
+  const s = one('## Presupuesto\n- Mantenimiento: 500 €/mes\n- nototal') as any;
+  assert.deepEqual(s.items, [{ label: 'Mantenimiento', amount: '500 €/mes' }]);
+});
+
+/* A colon inside the label must not split the item there: the clean-figure form wins,
+   and only when it fails does the first colon act as the separator. */
+test('budget: a label may contain a colon', () => {
+  const s = one('## Presupuesto\n- Fase 1: análisis: 3.000 €') as any;
+  assert.deepEqual(s.items, [{ label: 'Fase 1: análisis', amount: '3.000 €' }]);
+});
+
+test('budget: a negative amount subtracts from the auto-sum', () => {
+  const s = one('## Presupuesto\n- Fase 1: 5.173 €\n- Descuento: -259 €') as any;
+  assert.equal(s.total, '4.914 €');
+});
+
 test('budget: conditions overridable via "### Condiciones" list', () => {
   const s = one('## Presupuesto\n- Fase 1: 1.000 €\n### Condiciones\n- Pago a 30 días.\n- IVA aparte.') as any;
   assert.deepEqual(s.items, [{ label: 'Fase 1', amount: '1.000 €' }]);

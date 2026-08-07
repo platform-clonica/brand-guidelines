@@ -370,6 +370,8 @@ body.ix-viewer main{padding:0 !important; margin:0 !important;}
 .ix-deck .budget .table{position:absolute; left:var(--ml); bottom:92px; width:418px;}
 .ix-deck .budget .row{display:flex; justify-content:space-between; align-items:baseline; padding:15px 0; border-bottom:1px solid var(--hairline); font:400 13px/1 var(--mono); color:var(--ink-body);}
 .ix-deck .budget .row.total{font-weight:600; color:var(--ink); border-bottom:none; padding-top:18px;}
+/* `nototal`: sin fila de total, el filete de la última partida separaba de la nada. */
+.ix-deck .budget .table.nototal .row:last-child{border-bottom:none;}
 .ix-deck .budget .amt{font-variant-numeric:tabular-nums;}
 /* Bottom-anchored so the conditions end level with the Total and grow UP as they change,
    however many there are. 107 = the table's bottom:92 + the total row's 15px bottom padding, so the

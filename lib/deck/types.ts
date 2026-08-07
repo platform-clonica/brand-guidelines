@@ -42,7 +42,8 @@ type SlideVariant =
   // (the image no longer carries them), so they translate and stay in the system. Empty `labels`
   // (a marker-only block) falls back to the canonical categories in the component.
   | { kind: 'clients'; theme: Theme; labels: string[]; image?: ImageRef }
-  | { kind: 'budget'; theme: Theme; title?: string; items: BudgetItem[]; total: string; conditions: string[]; conditionsLabel?: string }
+  // `total` absent = the `nototal` marker: the slide prints no total row.
+  | { kind: 'budget'; theme: Theme; title?: string; items: BudgetItem[]; total?: string; conditions: string[]; conditionsLabel?: string }
   | { kind: 'acceptance'; theme: Theme; title?: string; signer?: Signer; note?: string; cta?: string; signatureImage?: ImageRef }
   // Keyword-mapped commercial sections (ref slides 22/29/31/32/35)
   | { kind: 'contexto'; theme: Theme; eyebrow?: string; body: RichNode[]; long: boolean }

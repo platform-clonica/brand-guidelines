@@ -167,7 +167,7 @@ const BASE: Omit<LayoutCatalogEntry, 'skeleton'>[] = [
   { marker: 'objetivos',   kind: 'objetivos',     name: 'Objetivos',       slots: 'título + lista numerada + imagen' },
   { marker: 'roadmap',     kind: 'roadmapPhases', name: 'Roadmap · fases', slots: 'título, subtítulo, fases (### + tareas)' },
   { marker: 'gantt',       kind: 'gantt',         name: 'Gantt',           slots: 'líneas «clave: valor» (semanas/meses/días…, tramos con comas, hitos <etiqueta>)' },
-  { marker: 'presupuesto', kind: 'budget',        name: 'Presupuesto',     slots: '## título, partidas (- Partida: importe), total, ### Condiciones' },
+  { marker: 'presupuesto', kind: 'budget',        name: 'Presupuesto',     slots: '## título, partidas (- Partida: importe), total (o «nototal»), ### Condiciones' },
   { marker: 'manifiesto',  kind: 'manifesto',     name: 'Manifiesto',      slots: 'título (con / énfasis /) + subtítulo (default de marca)' },
   { marker: 'equipo',      kind: 'team',          name: 'Equipo',          slots: 'texto libre (párrafos, listas, citas, subtítulos · **negrita**/énfasis) + imagen' },
   { marker: 'clientes',    kind: 'clients',       name: 'Clientes',        slots: 'etiquetas de categoría (- lista, traducibles) + imagen de logos (defaults de marca)' },

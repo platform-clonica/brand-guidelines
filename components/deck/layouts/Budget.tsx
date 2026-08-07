@@ -16,7 +16,7 @@ export function Budget({
   page: number;
   title?: string;
   items: BudgetItem[];
-  total: string;
+  total?: string;
   conditions: string[];
   conditionsLabel?: string;
 }) {
@@ -25,17 +25,21 @@ export function Budget({
       <div className="whitehalf" />
       <Chrome page={page} />
       <div className="title">{inline(title ?? 'Presupuesto')}</div>
-      <div className="table">
+      {/* Without a total the table has no closing row, so `nototal` drops the hairline
+          under the last line item — it only made sense as a separator from the total. */}
+      <div className={total ? 'table' : 'table nototal'}>
         {items.map((it, i) => (
           <div className="row" key={`${it.label}-${i}`}>
-            <span>{it.label}</span>
-            <span className="amt">{it.amount}</span>
+            <span>{inline(it.label)}</span>
+            <span className="amt">{inline(it.amount)}</span>
           </div>
         ))}
-        <div className="row total">
-          <span>Total</span>
-          <span className="amt">{total}</span>
-        </div>
+        {total && (
+          <div className="row total">
+            <span>Total</span>
+            <span className="amt">{inline(total)}</span>
+          </div>
+        )}
       </div>
       <div className="cond">
         <h3>{conditionsLabel ?? 'Condiciones'}</h3>

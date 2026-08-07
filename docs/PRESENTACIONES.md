@@ -111,13 +111,17 @@ Los colores de las barras rotan por la paleta de acento (opal → bordeaux → e
 ```
 ## Presupuesto
 - Análisis Heurístico: 3.315 €   # separadores válidos: : — – |
-- Benchmark: 3.770 €
+- Descuento 5%: -259 € **4.915 €**   # importe libre: negativo, 2ª cifra, **negrita**
+- Mantenimiento: 500 €/mes
+- nototal                        # sin fila de total (o `sin total`)
 ### Condiciones
 - Pago a 30 días.
 - IVA aparte.
 ```
 
-Autosuma de partidas en formato es-ES (miles `.`, decimales `,`). Si hay un total explícito, gana sobre la autosuma. Las condiciones son opcionales; si faltan, se usa el texto estándar de Interactius.
+Autosuma de partidas en formato es-ES (miles `.`, decimales `,`), leyendo **la primera cifra** de cada importe. Si hay un total explícito, gana sobre la autosuma; con `nototal` no se pinta ninguno.
+
+El importe se parte en dos pasos: primero la forma estricta (una cifra limpia cerrando la línea, que es la que permite separadores sueltos y etiquetas con `:` dentro); si falla, separa por el primer `:` y el resto es texto libre pasado por `inline()`. Las condiciones son opcionales; si faltan, se usa el texto estándar de Interactius.
 
 ## 6. Editor (DeckStudio) y render
 

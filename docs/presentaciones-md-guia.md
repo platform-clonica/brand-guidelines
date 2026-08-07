@@ -239,7 +239,19 @@ Texto introductorio de la fase.
 - Cada viñeta es `Partida: importe`. Separadores válidos: `:` `—` `–` `|`.
 - **Total**: se **suma solo** a partir de las partidas. Para fijarlo a mano,
   añade `- Total: 12.000 €` y ese valor manda.
+- **Sin total**: añade `- nototal` (o `sin total`) y la fila del total desaparece.
+  Para presupuestos que no suman a nada — un fijo más un mantenimiento mensual,
+  por ejemplo — donde un total sería un número que la propuesta no dice.
+- **El importe admite texto libre**: negativo (`-259 €`), con unidad (`500 €/mes`),
+  con una segunda cifra o con **negrita** para destacar la que importa:
+  `- Descuento cliente recurrente 5%: -259 € **4.915 €**`.
+  La negrita es `**doble asterisco**` — uno solo es cursiva en Markdown y la cursiva
+  está prohibida en la marca, así que `*así*` sale con los asteriscos a la vista.
+- Los importes en negrita compiten con la fila Total, que ya va en peso 600.
+  Combínalos sabiendo que la jerarquía se aplana; con `nototal` no hay choque.
 - Formato es-ES: miles con `.`, decimales con `,` (`1.200,50 €`).
+- El auto-suma lee **la primera cifra** de cada importe (y resta las negativas). Si un
+  importe lleva dos cifras o una unidad (`/mes`), el total deja de significar algo: usa `nototal`.
 - **Condiciones**: opcionales bajo `### Condiciones`. Si no las pones, salen las
   condiciones de pago estándar de Interactius.
 - Si dejas `## Presupuesto` vacío, se muestra el ejemplo de referencia (p.42).

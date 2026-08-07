@@ -16,17 +16,28 @@ const DEFAULT_CONDICIONES = [
   'Esta propuesta económica tiene una validez de tres meses a partir de la fecha de la misma.',
 ];
 
-// Peel a trailing currency amount off a list item; the rest (sans separators) is the label.
+/* Peel the amount off a list item; the rest (sans separators) is the label. Two rules,
+   in order — the strict one first because it is the one that disambiguates:
+   1. A clean figure closing the line (`Análisis — 3.315 €`). It works with any separator,
+      space included, and lets a label keep its own colon (`Fase 1: análisis: 3.000 €`),
+      because only the split that leaves a well-formed figure on the right can match.
+   2. Otherwise, the first colon separates. The amount is then free text rendered with
+      inline(): it may be negative, carry a unit (`500 €/mes`), hold a second figure or
+      use **negrita** (`-259 € **4.915 €**`). */
 function splitBudgetItem(raw: string): BudgetItem {
-  const m = raw.match(/^(.*?)[\s:—–|\t]+((?:€\s*)?\d[\d.\s]*(?:,\d+)?\s*€?)$/);
+  const clean = raw.match(/^(.*?)[\s:—–|\t]+((?:€\s*)?\d[\d.\s]*(?:,\d+)?\s*€?)$/);
+  const m = clean ?? raw.match(/^([^:]+):\s*(\S.*)$/);
   if (!m) return { label: raw.trim(), amount: '' };
   return { label: m[1].trim(), amount: m[2].replace(/\s+/g, ' ').trim() };
 }
 
 function amountToNumber(amount: string): number {
+  // Only the FIRST figure counts: a free-form amount may show a second one (the subtotal
+  // after a discount), and concatenating both digits would invent a number nobody wrote.
   // Spanish formatting: '.' groups thousands, ',' is the decimal separator.
-  const s = amount.replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.');
-  const n = parseFloat(s);
+  const m = amount.match(/-?\d[\d.]*(?:,\d+)?/);
+  if (!m) return 0;
+  const n = parseFloat(m[0].replace(/\./g, '').replace(',', '.'));
   return isNaN(n) ? 0 : n;
 }
 
@@ -42,7 +53,14 @@ function formatEUR(n: number, decimals: boolean): string {
   return `${body} €`;
 }
 
-export function parseBudget(tokens: Token[]): { items: BudgetItem[]; total: string; conditions: string[]; conditionsLabel?: string } {
+/* Marker that suppresses the total row. There are budgets whose figures do not add up to
+   anything meaningful — a one-off plus a monthly retainer — and printing a total there
+   would state a number the proposal does not make. Several spellings because decks are
+   written in es/ca/en; `nototal` is the canonical one. */
+const NO_TOTAL = /^(no\s*total|sin\s*total|sense\s*total)$/i;
+const isNoTotal = (s: string) => NO_TOTAL.test(s.trim().replace(/[.:]$/, ''));
+
+export function parseBudget(tokens: Token[]): { items: BudgetItem[]; total?: string; conditions: string[]; conditionsLabel?: string } {
   // Conditions: optional list under a "### Condiciones" sub-heading; the first
   // remaining list holds the line items.
   let condIdx = -1;
@@ -62,14 +80,19 @@ export function parseBudget(tokens: Token[]): { items: BudgetItem[]; total: stri
 
   const conditions = condList?.items ?? DEFAULT_CONDICIONES;
 
+  // The marker rides either as one more bullet (`- nototal`) or as a loose line in the block.
   const raw = (itemList?.items ?? []).map(splitBudgetItem);
+  const noTotal = raw.some((it) => !it.amount && isNoTotal(it.label))
+    || tokens.some((t) => t.t === 'p' && isNoTotal(t.text));
   // An explicit "Total" row wins; otherwise we auto-sum the line items.
   const explicitTotal = raw.find((it) => /^total(es)?$/i.test(it.label.replace(/[:.]$/, '').trim()));
-  const items = raw.filter((it) => it !== explicitTotal);
+  const items = raw.filter((it) => it !== explicitTotal && !(!it.amount && isNoTotal(it.label)));
 
   if (items.length === 0) {
-    return { items: DEFAULT_BUDGET_ITEMS, total: '11.076 €', conditions, conditionsLabel };
+    const fallback = { items: DEFAULT_BUDGET_ITEMS, conditions, conditionsLabel };
+    return noTotal ? fallback : { ...fallback, total: '11.076 €' };
   }
+  if (noTotal) return { items, conditions, conditionsLabel };
 
   const decimals = items.some((it) => /,/.test(it.amount));
   const sum = items.reduce((acc, it) => acc + amountToNumber(it.amount), 0);
