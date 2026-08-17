@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { supabaseBrowser } from '@/lib/supabase/client';
 import * as s from './authUi';
 
@@ -79,7 +80,7 @@ export function ResetForm() {
           El enlace ha caducado o ya se ha usado. Solicita uno nuevo.
         </div>
         <div style={s.footer}>
-          <a href="/workspace/forgot" style={s.link}>Solicitar enlace</a>
+          <Link href="/workspace/forgot" style={s.link}>Solicitar enlace</Link>
         </div>
       </div>
     );

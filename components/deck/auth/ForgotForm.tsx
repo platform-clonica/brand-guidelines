@@ -1,5 +1,6 @@
 'use client';
 import { useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { supabaseBrowser } from '@/lib/supabase/client';
 import * as s from './authUi';
 
@@ -30,7 +31,7 @@ export function ForgotForm() {
           Si existe una cuenta con ese email, te hemos enviado un enlace para restablecer la contraseña.
         </div>
         <div style={s.footer}>
-          <a href="/workspace/login" style={s.link}>Volver a iniciar sesión</a>
+          <Link href="/workspace/login" style={s.link}>Volver a iniciar sesión</Link>
         </div>
       </div>
     );
@@ -56,7 +57,7 @@ export function ForgotForm() {
       </button>
 
       <div style={s.footer}>
-        <a href="/workspace/login" style={s.link}>Volver a iniciar sesión</a>
+        <Link href="/workspace/login" style={s.link}>Volver a iniciar sesión</Link>
       </div>
     </form>
   );

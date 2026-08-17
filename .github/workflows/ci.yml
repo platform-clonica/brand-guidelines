@@ -1,0 +1,54 @@
+name: CI
+
+# El repo no tenía ningún CI. `next build` sí type-checkea en Netlify y un build fallido no se
+# despliega, así que los errores de tipos SÍ estaban cubiertos — pero los 235 tests no los
+# ejecutaba nadie automáticamente, y el linter no existía. Netlify despliega desde `main` en
+# cuanto llega un commit, así que hasta ahora el único filtro entre un commit y producción era la
+# disciplina de quien lo escribía.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Un push que sustituye a otro cancela el anterior: no tiene sentido gastar minutos verificando
+# un commit que ya no es la cabeza de la rama.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        # `next.config.mjs` saca la fecha del manual del último commit que tocó contenido de marca
+        # (`git log -1 --format=%cs -- lib/tokens.ts …`). Con el checkout superficial por defecto
+        # ese log viene vacío y la fecha degrada a null: el build no falla, pero el dato miente.
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Tests
+        run: npm test
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          # Públicas por diseño: viajan en el bundle del cliente y `netlify.toml` las excluye del
+          # escáner de secretos por eso mismo. Aquí solo hacen falta para que el build no reviente
+          # al construir el cliente de Supabase.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}

@@ -1,5 +1,6 @@
 'use client';
 import { useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { supabaseBrowser } from '@/lib/supabase/client';
 import { safeNext } from '@/lib/auth/safeNext';
 import * as s from './authUi';
@@ -54,7 +55,7 @@ export function LoginForm({ next }: { next: string | null }) {
       </button>
 
       <div style={s.footer}>
-        <a href="/workspace/forgot" style={s.link}>¿Olvidaste tu contraseña?</a>
+        <Link href="/workspace/forgot" style={s.link}>¿Olvidaste tu contraseña?</Link>
       </div>
     </form>
   );
