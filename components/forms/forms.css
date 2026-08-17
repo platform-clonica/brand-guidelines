@@ -95,13 +95,24 @@
   .ixf-panel { padding: 40px 24px 72px; }
 }
 
+/* Antetítulo. El color NO sale de --accent, y es una decisión de accesibilidad con números.
+   Los tres acentos sobre Warm Light, calculados con la fórmula WCAG desde lib/tokens.ts:
+     Burdeos  #99335F  6,28:1  AA
+     Esmeralda #5999A6  2,88:1  falla
+     Opal     #B0B5B0  1,87:1  falla — por debajo incluso del 3:1 que se exige a un gráfico
+   El acento por defecto es Burdeos y sí pasaba; el problema aparecía en cuanto un formulario
+   elegía otro en su frontmatter. `content/forms/massimo-dutti.md` declara `accent: opal`, así que
+   el antetítulo de un formulario publicado para un cliente real se pintaba a 1,87:1, a 12 px.
+   Ash Dark da 8,81:1 y mantiene la jerarquía. El acento conserva todos sus roles GRÁFICOS —filete,
+   asterisco, anillo de foco, accent-color de los radios, fondo del botón—, donde el umbral es 3:1
+   y donde de verdad identifica la pieza. */
 .ixf-eyebrow {
   font-family: var(--mono);
   font-size: var(--fs-caption);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--c-ash-dark, #46433F);
   margin-bottom: 12px;
 }
 .ixf-title {
@@ -253,6 +264,10 @@
   65% { background: color-mix(in srgb, var(--accent) 55%, var(--c-white)); border-color: var(--accent); }
   100% { background: var(--c-white); border-color: var(--c-warm-dark); }
 }
+/* Número de orden del ranking. Blanco sobre el acento daba 2,08:1 con Opal, y es la ÚNICA
+   indicación de la posición elegida: si no se lee, el campo no se puede usar. `color-mix` oscurece
+   el acento lo justo para que el blanco pase AA, sin renunciar a que el círculo sea del color de
+   la pieza — que es su razón de ser. Con Burdeos, que ya pasaba, el cambio es imperceptible. */
 .ixf-rank__num {
   flex: none;
   width: 22px; height: 22px;
@@ -260,7 +275,7 @@
   font-size: var(--fs-caption);
   font-weight: 600;
   color: var(--c-white);
-  background: var(--accent);
+  background: color-mix(in srgb, var(--accent) 78%, var(--c-dark));
   border-radius: 50%;
 }
 .ixf-rank__label { flex: 1 1 auto; }

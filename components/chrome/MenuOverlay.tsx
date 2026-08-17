@@ -83,7 +83,7 @@ export function MenuOverlay() {
                 const cls = `group w-full flex items-baseline gap-3 py-[8px] text-left font-mono text-[13px] leading-snug text-dark/70 hover:text-dark transition-colors duration-300 ease-expo`;
                 const inner = (
                   <>
-                    <span className="tabular-nums text-[10px] text-dark/35">{s.num}/</span>
+                    <span className="tabular-nums text-[10px] text-dark/65">{s.num}/</span>
                     <span className="flex-1">{s.label[locale]}</span>
                   </>
                 );
@@ -110,9 +110,9 @@ export function MenuOverlay() {
                              text-dark/70 hover:text-dark
                              transition-colors duration-300 ease-expo"
                 >
-                  <span className="text-[10px] text-dark/35" aria-hidden>→</span>
+                  <span className="text-[10px] text-dark/65" aria-hidden>→</span>
                   <span className="flex-1">Workspace</span>
-                  <span aria-hidden className="text-[10px] text-dark/35">↗</span>
+                  <span aria-hidden className="text-[10px] text-dark/65">↗</span>
                 </a>
               </li>
               <li>
@@ -128,9 +128,9 @@ export function MenuOverlay() {
                              text-dark/70 hover:text-dark
                              transition-colors duration-300 ease-expo"
                 >
-                  <span className="text-[10px] text-dark/35" aria-hidden>→</span>
+                  <span className="text-[10px] text-dark/65" aria-hidden>→</span>
                   <span className="flex-1">Timer</span>
-                  <span aria-hidden className="text-[10px] text-dark/35">↗</span>
+                  <span aria-hidden className="text-[10px] text-dark/65">↗</span>
                 </a>
               </li>
               </ul>

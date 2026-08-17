@@ -75,10 +75,10 @@ export function Sidebar() {
             const cls = `group w-full flex items-baseline gap-3 py-[7px]
                          text-left font-mono text-[12px] leading-snug
                          transition-colors duration-300 ease-expo
-                         ${isActive ? 'text-dark' : 'text-dark/55 hover:text-dark'}`;
+                         ${isActive ? 'text-dark' : 'text-dark/70 hover:text-dark'}`;
             const inner = (
               <>
-                <span className={`tabular-nums text-[10px] transition-colors duration-300 ease-expo ${isActive ? 'text-dark/70' : 'text-dark/35'}`}>
+                <span className={`tabular-nums text-[10px] transition-colors duration-300 ease-expo ${isActive ? 'text-dark/70' : 'text-dark/65'}`}>
                   {s.num}/
                 </span>
                 <span className="flex-1">{s.label[locale]}</span>
@@ -109,11 +109,11 @@ export function Sidebar() {
               className="group w-full flex items-baseline gap-3 py-[7px]
                          text-left font-mono text-[12px] leading-snug
                          transition-colors duration-300 ease-expo
-                         text-dark/55 hover:text-dark"
+                         text-dark/70 hover:text-dark"
             >
-              <span className="text-[10px] text-dark/35" aria-hidden>→</span>
+              <span className="text-[10px] text-dark/65" aria-hidden>→</span>
               <span className="flex-1">Workspace</span>
-              <span aria-hidden className="text-[10px] text-dark/35 group-hover:text-dark/70 transition-colors duration-300 ease-expo">↗</span>
+              <span aria-hidden className="text-[10px] text-dark/65 group-hover:text-dark/70 transition-colors duration-300 ease-expo">↗</span>
             </a>
           </li>
           <li>
@@ -126,11 +126,11 @@ export function Sidebar() {
               className="group w-full flex items-baseline gap-3 py-[7px]
                          text-left font-mono text-[12px] leading-snug
                          transition-colors duration-300 ease-expo
-                         text-dark/55 hover:text-dark"
+                         text-dark/70 hover:text-dark"
             >
-              <span className="text-[10px] text-dark/35" aria-hidden>→</span>
+              <span className="text-[10px] text-dark/65" aria-hidden>→</span>
               <span className="flex-1">Timer</span>
-              <span aria-hidden className="text-[10px] text-dark/35 group-hover:text-dark/70 transition-colors duration-300 ease-expo">↗</span>
+              <span aria-hidden className="text-[10px] text-dark/65 group-hover:text-dark/70 transition-colors duration-300 ease-expo">↗</span>
             </a>
           </li>
         </ul>
