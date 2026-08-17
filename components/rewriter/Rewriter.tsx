@@ -222,8 +222,6 @@ export function Rewriter() {
           {/* Los ajustes se quedan con el alto sobrante y scrollean por dentro: así el botón
               de abajo no se va nunca de la vista, entre en la ventana lo que entre. */}
           <section style={{ ...panel, flex: 1, minHeight: 0, overflowY: 'auto' }}>
-            <span style={labelStyle}>Ajustes</span>
-
             {/* Qué escribes precede a cómo lo dices, así que el tipo abre el panel. */}
             <div style={{ marginBottom: 20 }}>
               <span style={{ ...labelStyle, marginBottom: 8 }}>Tipo de texto</span>
