@@ -20,7 +20,7 @@ export function LogoStage({ src, fileName, bg, caption, downloadLabel, shape = '
         } ${isSquare ? 'aspect-square px-8' : 'aspect-[21/9] px-12'}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <img loading="lazy" decoding="async"
           src={src}
           alt={caption}
           className={`w-full h-auto ${isSquare ? 'max-w-[60%]' : 'max-w-[560px]'}`}

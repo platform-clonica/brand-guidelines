@@ -19,7 +19,7 @@ export async function SectionAplicaciones() {
         <figure className="col-span-12 lg:col-span-7 flex flex-col gap-3 m-0">
           <div className="aspect-[4/3] overflow-hidden bg-warm-light/5 flex-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <img loading="lazy" decoding="async"
               src="/aplicaciones/aplicaciones-movil.png"
               alt={t('captionMovil')}
               className="w-full h-full object-cover"
@@ -34,7 +34,7 @@ export async function SectionAplicaciones() {
           <figure className="flex flex-col gap-3 m-0 flex-1">
             <div className="aspect-[5/4] overflow-hidden bg-warm-light/5 flex-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <img loading="lazy" decoding="async"
                 src="/aplicaciones/aplicaciones-tarjetas.png"
                 alt={t('captionTarjetas')}
                 className="w-full h-full object-cover"
@@ -48,7 +48,7 @@ export async function SectionAplicaciones() {
           <figure className="flex flex-col gap-3 m-0 flex-1">
             <div className="aspect-[9/8] overflow-hidden bg-warm-light/5 flex-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <img loading="lazy" decoding="async"
                 src="/aplicaciones/aplicaciones-folder.png"
                 alt={t('captionFolder')}
                 className="w-full h-full object-cover"
@@ -89,7 +89,7 @@ export async function SectionAplicaciones() {
                 </a>
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={red.src} alt={red.alt} className="block w-full h-auto" />
+              <img loading="lazy" decoding="async" src={red.src} alt={red.alt} className="block w-full h-auto" />
             </figure>
           ))}
         </div>

@@ -44,6 +44,12 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # El manual de marca auditándose a sí mismo. lib/eval.ts llevaba tiempo citando este script
+      # como consumidor suyo sin que existiera, así que el copy nunca se validaba de forma
+      # automática — y las dos únicas infracciones duras reales del sitio estaban en content/forms.
+      - name: Voz de marca
+        run: npm run eval:content
+
       - name: Build
         run: npm run build
         env:

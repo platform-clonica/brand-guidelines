@@ -8,7 +8,7 @@ export async function SectionAreaReserva() {
     <SectionShell id="area-reserva" title={t('title')}>
       <div className="flex flex-col gap-12 sm:gap-16">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <img loading="lazy" decoding="async"
           src="/area-reserva/space-area.svg"
           alt="Diagrama del área de reserva del logotipo Interactius"
           className="block w-full sm:w-1/2 h-auto"

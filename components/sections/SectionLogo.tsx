@@ -40,7 +40,7 @@ export async function SectionLogo() {
             aria-label={t('verticalCaption')}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <img loading="lazy" decoding="async"
               src="/logo/interactius-positivo.svg"
               alt={t('verticalCaption')}
               className="block h-auto"

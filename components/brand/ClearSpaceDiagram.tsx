@@ -13,7 +13,7 @@ export function ClearSpaceDiagram() {
 
         {/* Logo */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <img loading="lazy" decoding="async"
           src="/logo/interactius-positivo.svg"
           alt="interactīus"
           className="block w-full max-w-[420px] h-auto"

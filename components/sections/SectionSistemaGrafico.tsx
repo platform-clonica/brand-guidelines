@@ -29,7 +29,7 @@ export async function SectionSistemaGrafico() {
             <figure key={s.id} className="flex flex-col gap-4 m-0">
               <div className="aspect-square flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <img loading="lazy" decoding="async"
                   src={s.assetPath}
                   alt={`Interactius shape — ${s.name}`}
                   className="block w-full h-full"

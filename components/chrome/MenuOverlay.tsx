@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusTrap } from '@/lib/hooks/useFocusTrap';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 
@@ -19,14 +20,11 @@ export function MenuOverlay() {
   const locale = useLocale() as Locale;
   const onHome = usePathname() === '/';
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [isOpen, close]);
+  /* Trampa de foco: el panel declara role="dialog" aria-modal, así que tiene que cumplirlo.
+     El hook gestiona Escape, el foco inicial, el ciclado del Tab, el `inert` sobre el resto del
+     documento y el bloqueo de scroll — y devuelve el foco al disparador al cerrar. */
+  const panelRef = useRef<HTMLElement>(null);
+  useFocusTrap(panelRef, isOpen, close);
 
   const handleClick = (id: string) => {
     close();
@@ -53,6 +51,7 @@ export function MenuOverlay() {
     <AnimatePresence>
       {isOpen && (
         <motion.aside
+          ref={panelRef}
           key="drawer"
           id="menu-overlay"
           role="dialog"

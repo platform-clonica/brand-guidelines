@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "node --test --experimental-strip-types lib/deck/__tests__/*.test.ts lib/__tests__/*.test.ts lib/forms/__tests__/*.test.ts lib/auth/__tests__/*.test.ts lib/workspace/__tests__/*.test.ts lib/rewriter/__tests__/*.test.ts",
+    "eval:content": "node --experimental-strip-types scripts/eval-content.ts",
     "build:ai-kit": "node scripts/build-ai-kit.mjs"
   },
   "dependencies": {

@@ -11,7 +11,7 @@ export async function SectionConcepto() {
       title={t('title')}
       bleed={
         /* eslint-disable-next-line @next/next/no-img-element */
-        <img
+        <img loading="lazy" decoding="async"
           src="/concepto/interactius-logo-tecnic.svg"
           alt="Construcción técnica del logotipo Interactius"
           className="block w-full h-auto"
@@ -32,7 +32,7 @@ export async function SectionConcepto() {
         {/* Visual del macrón "ius" + definición */}
         <div className="col-span-12 mt-4 sm:mt-6 flex flex-col gap-5 items-start">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <img loading="lazy" decoding="async"
             src="/concepto/ius.svg"
             alt="Representación gráfica del macrón sobre la ī"
             className="block w-full max-w-[180px] h-auto"

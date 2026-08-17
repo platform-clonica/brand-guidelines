@@ -18,7 +18,7 @@ export async function SectionTamanoMinimo() {
             </div>
             <div className="flex items-end gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <img loading="lazy" decoding="async"
                 src="/logo/interactius-positivo.svg"
                 alt=""
                 aria-hidden
@@ -35,7 +35,7 @@ export async function SectionTamanoMinimo() {
             </div>
             <div className="flex items-end gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <img loading="lazy" decoding="async"
                 src="/logo/interactius-positivo.svg"
                 alt=""
                 aria-hidden
