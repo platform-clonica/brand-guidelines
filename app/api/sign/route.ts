@@ -30,9 +30,11 @@ export async function POST(req: Request) {
   const user_agent = req.headers.get('user-agent');
 
   const sb = supabaseServer();
-  // Confirm the deck exists (also gives us context for the notification email).
+  /* Confirm the deck exists. Por RPC porque `decks` dejó de ser legible con la clave anónima, y
+     este endpoint es público a propósito. `deck_sign_target` devuelve solo `commercial_id`: antes
+     se pedía además `contact_emails`, que no se usaba para nada. */
   const { data: deck, error: deckErr } = await sb
-    .from('decks').select('id, commercial_id, contact_emails').eq('id', deck_id).single();
+    .rpc('deck_sign_target', { p_id: deck_id }).maybeSingle<{ commercial_id: string }>();
   if (deckErr || !deck) return NextResponse.json({ error: 'Deck not found' }, { status: 404 });
 
   const { data, error } = await sb
@@ -40,10 +42,17 @@ export async function POST(req: Request) {
     .insert({ deck_id, signer_name, signer_email, signature_png, ip, user_agent })
     .select()
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('[sign] insert failed', error.code, error.message);
+    return NextResponse.json({ error: 'No se pudo registrar la firma' }, { status: 500 });
+  }
 
-  // Best-effort notification to Interactius; never blocks or fails the signature.
-  await notify({ deckTitle: deck.commercial_id as string, signer_name, signer_email, signature_png, signed_at: data.signed_at }).catch(() => {});
+  /* Aviso a Interactius. `void` y no `await`: el comentario anterior prometía que esto "never
+     blocks", y el `await` lo desmentía — la respuesta al cliente que acaba de firmar no salía
+     hasta que contestaba Resend, sin timeout. El `.catch` sigue garantizando que un fallo de
+     correo no tumbe la firma, pero ahora deja rastro en vez de tragárselo en silencio. */
+  void notify({ deckTitle: deck.commercial_id, signer_name, signer_email, signature_png, signed_at: data.signed_at })
+    .catch((e) => console.error('[sign] notify failed', e));
 
   return NextResponse.json(data, { status: 201 });
 }
@@ -51,13 +60,22 @@ export async function POST(req: Request) {
 async function notify(p: { deckTitle: string; signer_name: string; signer_email: string; signature_png: string; signed_at: string }) {
   const key = process.env.RESEND_API_KEY;
   const to = process.env.INTERACTIUS_NOTIFY_EMAIL;
-  if (!key || !to) return; // not configured yet — signature is still persisted
+  if (!key || !to) {
+    // Antes era un `return` mudo: se desplegaba sin avisos y nadie se enteraba.
+    console.warn('[sign] Resend sin configurar — la firma se guarda pero no se notifica');
+    return;
+  }
   const from = process.env.RESEND_FROM ?? 'Interactius <onboarding@resend.dev>';
   const base64 = p.signature_png.split(',')[1] ?? '';
   const esc = (v: string) => v.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
-  await fetch('https://api.resend.com/emails', {
+  /* Con timeout: sin él, un Resend colgado retenía la función de Netlify —y su facturación por
+     milisegundo— indefinidamente. Y se comprueba la respuesta: `fetch` no lanza con un 422 por
+     remitente sin verificar ni con un 401 por clave revocada, así que sin este `if` el código se
+     comportaba exactamente igual cuando el correo salía y cuando no. */
+  const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
+    signal: AbortSignal.timeout(5000),
     headers: { Authorization: `Bearer ${key}`, 'content-type': 'application/json' },
     body: JSON.stringify({
       from,
@@ -71,4 +89,7 @@ async function notify(p: { deckTitle: string; signer_name: string; signer_email:
       attachments: base64 ? [{ filename: 'firma.png', content: base64 }] : undefined,
     }),
   });
+  if (!res.ok) {
+    console.error('[sign] resend rechazó el aviso', res.status, await res.text().catch(() => ''));
+  }
 }

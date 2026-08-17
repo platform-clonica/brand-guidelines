@@ -18,19 +18,19 @@ export type DeckShareMeta = {
 type CoverSlide = Extract<Slide, { kind: 'cover' }>;
 const isCover = (s: Slide): s is CoverSlide => s.kind === 'cover';
 
+/* Lee por RPC, no contra la tabla: `decks` dejó de ser legible por la clave anónima
+   (supabase/migrations/20260817121000_tighten_rls.sql) y esta función corre en superficies
+   públicas — el `generateMetadata` del visor y la imagen de previsualización social.
+   `deck_public` devuelve un subconjunto acotado a partir de un id que hay que conocer. */
 export async function getDeckShareMeta(id: string): Promise<DeckShareMeta | null> {
   const sb = supabaseServer();
-  const { data, error } = await sb
-    .from('decks')
-    .select('md, type, clients(name)')
-    .eq('id', id)
-    .single();
+  const { data, error } = await sb.rpc('deck_public', { p_id: id }).maybeSingle();
   if (error || !data) return null;
 
   const row = data as {
     md: string;
     type: 'comercial' | 'informe' | 'generica';
-    clients: { name?: string } | null;
+    client_name: string | null;
   };
   const deck = compileDeck(row.md, row.type);
   const cover = deck.slides.find(isCover) ?? null;
@@ -41,7 +41,7 @@ export async function getDeckShareMeta(id: string): Promise<DeckShareMeta | null
     imageSrc: cover?.image?.src ?? null,
     // Only for the OG description text ("Propuesta de colaboración para {Cliente}"); the client is
     // NOT drawn on the preview image itself.
-    clientName: row.clients?.name ?? cover?.client ?? null,
+    clientName: row.client_name ?? cover?.client ?? null,
   };
 }
 

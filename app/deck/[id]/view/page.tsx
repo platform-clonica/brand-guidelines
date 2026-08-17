@@ -38,17 +38,22 @@ export default async function DeckViewPage({ params, searchParams }: Props) {
   const { id } = await params;
   const { print } = await searchParams;
 
+  /* Las dos lecturas van por RPC y en PARALELO.
+     - Por RPC porque `decks` y `signatures` dejaron de ser legibles con la clave anónima
+       (supabase/migrations/20260817121000_tighten_rls.sql) y esta ruta es pública a propósito.
+       `deck_public_signature` además no devuelve `ip` ni `user_agent`: no se pintan en ninguna
+       parte y antes viajaban hasta el HTML que lee cualquiera con el enlace.
+     - En paralelo porque la firma no depende del deck. Encadenadas costaban dos idas y vueltas
+       de ~70 ms cada una en la superficie que ve el cliente. */
   const sb = supabaseServer();
-  const { data, error } = await sb
-    .from('decks').select('md, type, logo_path, commercial_id').eq('id', id).single();
-  if (error || !data) notFound();
+  const [deckRes, sigRes] = await Promise.all([
+    sb.rpc('deck_public', { p_id: id }).maybeSingle(),
+    sb.rpc('deck_public_signature', { p_id: id }).maybeSingle(),
+  ]);
+  if (deckRes.error || !deckRes.data) notFound();
+  const sig = sigRes.data;
 
-  // If the deck was already signed, render the immutable signed state on the Acceptance page.
-  const { data: sig } = await sb
-    .from('signatures').select('*').eq('deck_id', id)
-    .order('signed_at', { ascending: false }).limit(1).maybeSingle();
-
-  const deck = data as Pick<DeckRecord, 'md' | 'type' | 'logo_path' | 'commercial_id'>;
+  const deck = deckRes.data as Pick<DeckRecord, 'md' | 'type' | 'logo_path' | 'commercial_id'>;
   return (
     <DeckViewerClient
       deckId={id}

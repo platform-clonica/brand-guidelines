@@ -1,22 +1,32 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase/server';
+import { dbFail, requireUser, supabaseAuthServer } from '@/lib/supabase/server';
 import type { ClientCreateInput } from '@/lib/decks/types';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/clients — list for the "Cliente" dropdown.
 export async function GET() {
-  const sb = supabaseServer();
+  /* Cinturón además de los tirantes: el middleware ya exige sesión, pero su matcher excluye
+     toda ruta con un punto. El patrón es el que /api/forms ya usaba. */
+  const unauth = await requireUser();
+  if (unauth) return unauth;
+
+  const sb = await supabaseAuthServer();
   const { data, error } = await sb
     .from('clients')
     .select('*')
     .order('name', { ascending: true });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return dbFail('clients', error, 500);
   return NextResponse.json(data ?? [], { headers: { 'Cache-Control': 'no-store' } });
 }
 
 // POST /api/clients — quick-add a client (used when the editor types a new one).
 export async function POST(req: Request) {
+  /* Cinturón además de los tirantes: el middleware ya exige sesión, pero su matcher excluye
+     toda ruta con un punto. El patrón es el que /api/forms ya usaba. */
+  const unauth = await requireUser();
+  if (unauth) return unauth;
+
   let body: ClientCreateInput;
   try {
     body = await req.json();
@@ -27,7 +37,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'name is required' }, { status: 400 });
   }
 
-  const sb = supabaseServer();
+  const sb = await supabaseAuthServer();
   const { data, error } = await sb
     .from('clients')
     .insert({
@@ -37,6 +47,6 @@ export async function POST(req: Request) {
     })
     .select()
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return dbFail('clients', error, 500);
   return NextResponse.json(data, { status: 201 });
 }

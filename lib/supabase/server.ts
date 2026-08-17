@@ -13,10 +13,18 @@ function env() {
   return { url, key };
 }
 
-/* Session-less data client for Route Handlers and Server Components.
-   Uses the public (anon) key with no session — RLS policies are permissive for now.
-   Used by the public deck viewer and by the (middleware-gated) editor data routes.
-   Hardening step (future): switch data reads to an authenticated client + tighten RLS with auth.uid(). */
+/* Cliente SIN sesión, con la clave anónima.
+
+   REGLA (2026-08-17, tras endurecer la RLS). Este cliente es SOLO para las tres superficies
+   genuinamente públicas, y en ellas se lee por RPC `SECURITY DEFINER`, no contra la tabla:
+     · el visor de propuestas (app/deck/[id]/view) y su imagen social  → deck_public(), deck_public_signature()
+     · POST /api/sign                                                  → deck_sign_target() + INSERT en signatures
+     · el formulario público (/forms/f/[id]) y POST /forms/api/submit  → políticas propias de forms/responses
+
+   Cualquier ruta bajo EDITOR_API usa `supabaseAuthServer()`. Antes esto daba igual porque las
+   políticas eran `USING (true)` para `anon`; ya no: `decks`, `clients` e `images` solo son
+   accesibles con sesión de equipo (supabase/migrations/20260817121000_tighten_rls.sql), así que
+   usar el cliente equivocado aquí ya no es un detalle de estilo, es un 403. */
 export function supabaseServer() {
   const { url, key } = env();
   return createClient(url, key, { auth: { persistSession: false } });
@@ -53,4 +61,19 @@ export async function requireUser(): Promise<NextResponse | null> {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
   return null;
+}
+
+/* Fallo de base de datos: al log del servidor, mensaje genérico al cliente.
+
+   Antes había 21 retornos con `{ error: error.message }` que reenviaban el texto de PostgREST tal
+   cual — nombres de columna, de restricción y de tipo — y ninguno de ellos dejaba rastro: en los
+   18 handlers de `app/api/**` no había un solo `console.*`. O sea que el error se le contaba al
+   cliente y no al equipo, que es justo al revés de lo que hace falta.
+
+   El patrón correcto ya existía en el repo, en los endpoints públicos de forms
+   (`app/forms/api/submit/route.ts:60`). Esto lo generaliza. Los mensajes de validación propios
+   ("commercial_id is required") se quedan como están: son útiles y no revelan nada. */
+export function dbFail(scope: string, e: { code?: string; message: string }, status = 500): NextResponse {
+  console.error(`[db:${scope}]`, e.code ?? '-', e.message);
+  return NextResponse.json({ error: 'No se pudo completar la operación' }, { status });
 }

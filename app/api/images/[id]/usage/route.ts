@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase/server';
+import { dbFail, requireUser, supabaseAuthServer } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,15 +12,20 @@ type Ctx = { params: Promise<{ id: string }> };
    galería, borrar una imagen usada por un formulario habría dicho "no se usa" y habría dejado
    el formulario con la imagen rota. */
 export async function GET(_req: Request, { params }: Ctx) {
+  /* Cinturón además de los tirantes: el middleware ya exige sesión, pero su matcher excluye
+     toda ruta con un punto. El patrón es el que /api/forms ya usaba. */
+  const unauth = await requireUser();
+  if (unauth) return unauth;
+
   const { id } = await params;
-  const sb = supabaseServer();
+  const sb = await supabaseAuthServer();
 
   const { data: img, error: findErr } = await sb
     .from('images')
     .select('url')
     .eq('id', id)
     .single();
-  if (findErr) return NextResponse.json({ error: findErr.message }, { status: 404 });
+  if (findErr) return dbFail('images/[id]/usage', findErr, 404);
 
   if (!img?.url) return NextResponse.json({ count: 0, uses: [] });
 

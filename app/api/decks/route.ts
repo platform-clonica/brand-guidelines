@@ -1,18 +1,23 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase/server';
+import { dbFail, requireUser, supabaseAuthServer } from '@/lib/supabase/server';
 import type { DeckCreateInput } from '@/lib/decks/types';
 
 export const dynamic = 'force-dynamic';
 
 // GET /api/decks — history list, newest first.
 export async function GET() {
-  const sb = supabaseServer();
+  /* Cinturón además de los tirantes: el middleware ya exige sesión, pero su matcher excluye
+     toda ruta con un punto. El patrón es el que /api/forms ya usaba. */
+  const unauth = await requireUser();
+  if (unauth) return unauth;
+
+  const sb = await supabaseAuthServer();
   const { data, error } = await sb
     .from('decks')
     .select('id, commercial_id, client_id, tags, md, type, created_at, updated_at, clients(name)')
     .order('updated_at', { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return dbFail('decks', error, 500);
 
   const list = (data ?? []).map((d: Record<string, unknown>) => ({
     id: d.id,
@@ -30,6 +35,11 @@ export async function GET() {
 
 // POST /api/decks — create a new deck.
 export async function POST(req: Request) {
+  /* Cinturón además de los tirantes: el middleware ya exige sesión, pero su matcher excluye
+     toda ruta con un punto. El patrón es el que /api/forms ya usaba. */
+  const unauth = await requireUser();
+  if (unauth) return unauth;
+
   let body: DeckCreateInput;
   try {
     body = await req.json();
@@ -40,7 +50,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'commercial_id is required' }, { status: 400 });
   }
 
-  const sb = supabaseServer();
+  const sb = await supabaseAuthServer();
   const { data, error } = await sb
     .from('decks')
     .insert({
@@ -56,6 +66,6 @@ export async function POST(req: Request) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return dbFail('decks', error, 500);
   return NextResponse.json(data, { status: 201 });
 }
