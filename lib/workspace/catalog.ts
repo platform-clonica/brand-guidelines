@@ -60,7 +60,7 @@ export const APPS: AppEntry[] = [
     label: 'ReWritr',
     group: 'tools',
     href: '/workspace/rewrit_r',
-    description: 'Mejora tus textos.',
+    description: 'Mejora tus textos',
     wordmark: { before: 'ReWrit', after: 'r' },
   },
   {

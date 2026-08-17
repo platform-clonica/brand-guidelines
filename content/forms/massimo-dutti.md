@@ -9,7 +9,7 @@ background: https://static.massimodutti.net/assets/public/51c2/dbae/9d3a463cac4e
 accent: opal
 intro_title: Antes de empezar
 submit_label: Enviar respuestas
-success_title: ¡Gracias!
+success_title: Gracias
 success_message: |
   Hemos recibido correctamente tus respuestas. Las revisaremos antes de la sesión.
 allow_multiple: true

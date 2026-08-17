@@ -67,8 +67,9 @@
    Medium over the Light the display text sits at — two steps, which is what it takes to read.
    Medium over Regular was tried first and read as nothing: the same step lands differently
    depending on the weight underneath it, and Light is what makes one visible.
-   ⚠️ 500 on serif is outside lib/tokens.ts (300/400). Alberto's call, taken with the evidence in
-   hand — pending being written into the scale.
+   Nota (2026-08-17): este comentario advertía de un "500 on serif fuera de lib/tokens.ts". Esa
+   decisión SE REVIRTIÓ y la regla de abajo es 400, dentro de la escala. El aviso llevaba tiempo
+   describiendo una desviación que ya no existe, y por él se cargaban Serif 500/600 en cada página.
    The corporate site strokes the glyphs instead (`-webkit-text-stroke: 0.6px`) because an outline
    can animate continuously while a weight jumps — an animation constraint, not a typographic one. */
 .ix-deck .emph{font-weight:400;}
