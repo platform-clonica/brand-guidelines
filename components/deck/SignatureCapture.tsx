@@ -1,7 +1,9 @@
 'use client';
 import { useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { signDeck } from '@/lib/decks/api';
+/* Desde publicApi, NO desde api: este componente lo monta el visor público, y api.ts arrastra el
+   SDK de Supabase entero. Ver la cabecera de lib/decks/publicApi.ts. */
+import { signDeck } from '@/lib/decks/publicApi';
 import type { DeckSignature } from '@/lib/decks/types';
 
 /* Client-facing signature pad on the Acceptance page (viewer route only). Draws on a canvas,

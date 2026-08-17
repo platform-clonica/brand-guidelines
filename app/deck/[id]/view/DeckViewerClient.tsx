@@ -3,7 +3,9 @@ import { useEffect, useMemo } from 'react';
 import { compileDeck } from '@/lib/deck';
 import type { DeckType } from '@/lib/deck';
 import type { DeckSignature } from '@/lib/decks/types';
-import { publicLogoUrl } from '@/lib/decks/api';
+/* Desde publicApi, NO desde api: `lib/decks/api.ts` importa el SDK de Supabase y esta es una ruta
+   pública. Ver la cabecera de lib/decks/publicApi.ts. */
+import { publicLogoUrl } from '@/lib/decks/publicApi';
 import { DeckRenderer } from '@/components/deck/DeckRenderer';
 
 /* Read-only render surface: just the slides, no editor or site chrome.

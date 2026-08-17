@@ -13,16 +13,20 @@ import type {
   SignInput,
 } from './types';
 
-const LOGO_BUCKET = 'deck-assets';
-const IMAGE_BUCKET = 'deck-images';
+/* Los constructores de URL pública, el desempaquetado de errores y la firma viven en
+   ./publicApi.ts, que NO importa el SDK. El visor de propuestas tira de ahí directamente para no
+   arrastrar supabase-js a una ruta pública; aquí se reexportan para que el editor siga
+   importándolo todo de un único sitio. Ver la cabecera de publicApi.ts. */
+import {
+  IMAGE_BUCKET,
+  LOGO_BUCKET,
+  json,
+  publicImageUrl,
+  publicLogoUrl,
+  signDeck,
+} from './publicApi';
 
-async function json<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const msg = await res.json().catch(() => ({}));
-    throw new Error((msg as { error?: string }).error ?? `Request failed (${res.status})`);
-  }
-  return res.json() as Promise<T>;
-}
+export { publicImageUrl, publicLogoUrl, signDeck };
 
 // ---- Decks ----
 export function listDecks(): Promise<DeckListItem[]> {
@@ -51,15 +55,6 @@ export function updateDeck(id: string, patch: DeckUpdateInput): Promise<DeckReco
 
 export function deleteDeck(id: string): Promise<{ ok: boolean }> {
   return fetch(`/api/decks/${id}`, { method: 'DELETE' }).then((r) => json<{ ok: boolean }>(r));
-}
-
-// ---- Signatures ----
-export function signDeck(deckId: string, input: SignInput): Promise<DeckSignature> {
-  return fetch('/api/sign', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ deck_id: deckId, ...input }),
-  }).then((r) => json<DeckSignature>(r));
 }
 
 // ---- Translation ----
@@ -118,12 +113,6 @@ export async function uploadLogo(file: File): Promise<string> {
   return path;
 }
 
-export function publicLogoUrl(path: string | null | undefined): string | null {
-  if (!path) return null;
-  const sb = supabaseBrowser();
-  return sb.storage.from(LOGO_BUCKET).getPublicUrl(path).data.publicUrl;
-}
-
 // ---- Images (gallery) ----
 /* Upload an (already optimised) image blob to the public bucket and return its
    storage path + public URL. The URL is what gets written into the deck markdown. */
@@ -139,12 +128,6 @@ export async function uploadImage(file: Blob, name: string): Promise<{ path: str
   if (error) throw new Error(error.message);
   const url = sb.storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl;
   return { path, url };
-}
-
-export function publicImageUrl(path: string | null | undefined): string | null {
-  if (!path) return null;
-  const sb = supabaseBrowser();
-  return sb.storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
 /* Gallery index: list every uploaded/generated image, newest first. */

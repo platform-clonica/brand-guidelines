@@ -10,8 +10,10 @@ const mono = IBM_Plex_Mono({
 });
 
 const serif = IBM_Plex_Serif({
-  // 500 carries the brand emphasis; 300 is the base display weight.
-  weight: ['300', '400', '500', '600'],
+  /* Solo 300/400, que es lo que declara `typography.contrast.weights` en lib/tokens.ts.
+     Antes se cargaban también 500 y 600: ninguna regla del proyecto los usa (verificado sobre
+     todos los CSS y .tsx), así que eran 52.864 B precargados en cada página para nada. */
+  weight: ['300', '400'],
   style: ['normal'],
   subsets: ['latin', 'latin-ext'],
   variable: '--font-ibm-plex-serif',
@@ -41,7 +43,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html className={`${mono.variable} ${serif.variable}`}>
+    /* `lang` es obligatorio (WCAG 2.1 SC 3.1.1, nivel A) y faltaba en todas las páginas.
+       Castellano por defecto, que es correcto para /workspace, /forms, /timer y /deck — su copy
+       es español fijo. Las rutas de [locale] lo afinan con un wrapper propio: este layout raíz no
+       recibe el locale, y leerlo de cookies aquí volvería dinámico el manual entero, que hoy es
+       estático con caché de un año. */
+    <html lang="es" className={`${mono.variable} ${serif.variable}`}>
       <body>{children}</body>
     </html>
   );
