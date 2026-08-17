@@ -8,7 +8,7 @@ const intl = createMiddleware(routing);
 
 /* Editor-only APIs that require a team session. Public APIs (/api/sign, /api/brand.json)
    are intentionally left open — the client-facing deck viewer depends on them. */
-const EDITOR_API = ['/api/decks', '/api/clients', '/api/images', '/api/translate', '/api/eval', '/api/forms'];
+const EDITOR_API = ['/api/decks', '/api/clients', '/api/images', '/api/translate', '/api/rewrite', '/api/eval', '/api/forms'];
 const isEditorApi = (p: string) => EDITOR_API.some((base) => p === base || p.startsWith(base + '/'));
 
 /* Páginas de /workspace alcanzables sin sesión: son la propia puerta de entrada. */

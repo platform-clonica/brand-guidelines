@@ -44,7 +44,7 @@ export const APPS: AppEntry[] = [
     label: 'DeckMakr',
     group: 'tools',
     href: '/workspace/deckmak_r',
-    description: 'Presentaciones',
+    description: 'Presentaciones comerciales',
     wordmark: { before: 'DeckMak', after: 'r' },
   },
   {
@@ -52,8 +52,16 @@ export const APPS: AppEntry[] = [
     label: 'FormMakr',
     group: 'tools',
     href: '/workspace/formmak_r',
-    description: 'Formularios',
+    description: 'Crea formularios',
     wordmark: { before: 'FormMak', after: 'r' },
+  },
+  {
+    id: 'rewritr',
+    label: 'ReWritr',
+    group: 'tools',
+    href: '/workspace/rewrit_r',
+    description: 'Mejora tus textos.',
+    wordmark: { before: 'ReWrit', after: 'r' },
   },
   {
     id: 'dsmakr',

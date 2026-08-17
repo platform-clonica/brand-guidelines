@@ -17,6 +17,7 @@ se mueve nunca: sus enlaces ya están enviados.
 | `/workspace/deckmak_r/[id]` | Editor de una presentación |
 | `/workspace/formmak_r` | Galería de formularios |
 | `/workspace/formmak_r/[id]` | Editor de un formulario |
+| `/workspace/rewrit_r` | Reescritura de correos y textos con la voz de marca |
 
 Todo `/workspace/*` lo protege [middleware.ts](../../middleware.ts): sin sesión, redirige a
 `/workspace/login?next=…`. Las tres páginas de acceso son la excepción. Todo lleva
