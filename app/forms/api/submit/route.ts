@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import { getPublishedForm } from '@/lib/forms/registry';
 import { validateAnswers, normalizeAnswers } from '@/lib/forms/schema';
 import { supabaseServer } from '@/lib/supabase/server';
+import { FORM_SUBMIT_LIMIT, allowRequest, tooManyRequests } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,15 +14,33 @@ type SubmitBody = { id?: string; answers?: Record<string, unknown>; hp?: string 
 const MAX_PAYLOAD = 200_000; // ~200 KB — text answers only; reject oversized bodies (open endpoint).
 
 export async function POST(req: Request) {
-  // Reject oversized payloads early when the client declares a length.
+  /* Público a propósito y sin límite de frecuencia hasta ahora: el honeypot para a los bots
+     triviales, y cualquier script que no rellene el campo oculto lo ignora. */
+  if (!(await allowRequest(req, FORM_SUBMIT_LIMIT))) return tooManyRequests(FORM_SUBMIT_LIMIT);
+
+  // Atajo barato para el cliente honrado que sí declara la longitud.
   const declared = Number(req.headers.get('content-length') ?? 0);
   if (declared > MAX_PAYLOAD) {
     return NextResponse.json({ error: 'Payload demasiado grande' }, { status: 413 });
   }
 
+  /* Y el tope de verdad, midiendo el cuerpo. Comprobar solo `content-length` era saltable con
+     `Transfer-Encoding: chunked`: sin esa cabecera el valor por defecto es 0, la comparación es
+     falsa y el cuerpo se leía entero. Medido en la auditoría: 400 KB, 1 MB, 4 MB y 8 MB aceptados
+     donde el tope declarado son 200 KB. Ahora el límite es el mismo por los dos caminos. */
+  let raw: string;
+  try {
+    raw = await req.text();
+  } catch {
+    return NextResponse.json({ error: 'No se pudo leer la petición' }, { status: 400 });
+  }
+  if (raw.length > MAX_PAYLOAD) {
+    return NextResponse.json({ error: 'Payload demasiado grande' }, { status: 413 });
+  }
+
   let body: SubmitBody;
   try {
-    body = await req.json();
+    body = JSON.parse(raw) as SubmitBody;
   } catch {
     return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
   }

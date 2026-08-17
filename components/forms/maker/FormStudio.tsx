@@ -23,6 +23,11 @@ const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
 const PREVIEW_DELAY = 250;   // recompilado del visor (igual que DeckStudio)
 const AUTOSAVE_DELAY = 1400; // guardado tras dejar de escribir (igual que DeckStudio)
+/* Tope de reintentos, igual que DeckStudio. `saveState` está en las dependencias del efecto de
+   autosave, así que un fallo lo re-dispara indefinidamente: error → reintento → error cada 1,4 s
+   mientras dure la causa. El arreglo va en las DOS copias a propósito — con el manejo del error de
+   carga ya pasó que se corrigió aquí y no allí, y estuvo meses descuadrado. */
+const AUTOSAVE_MAX_RETRIES = 3;
 
 const ASIDE_STORAGE_KEY = 'form.asideW';
 const ASIDE_DEFAULT = 460;
@@ -79,6 +84,7 @@ export function FormStudio({ formId }: { formId: string }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const draggingRef = useRef(false);
   const savingRef = useRef(false);
+  const retriesRef = useRef(0);
   const pendingSelection = useRef<{ start: number; end: number } | null>(null);
 
   const dirty = useMemo(() => snap(md, tags) !== savedSnap, [md, tags, savedSnap]);
@@ -141,8 +147,10 @@ export function FormStudio({ formId }: { formId: string }) {
         setRecord((prev) => (prev ? { ...prev, ...rec } : prev));
         setSavedSnap(snap(nextMd, nextTags));
         setSaveState('saved');
+        retriesRef.current = 0;
       } catch (e) {
         console.error(e);
+        retriesRef.current += 1;
         setSaveState('error');
       } finally {
         savingRef.current = false;
@@ -157,7 +165,8 @@ export function FormStudio({ formId }: { formId: string }) {
 
   useEffect(() => {
     if (!record || !dirty || savingRef.current) return;
-    const t = setTimeout(() => saveNowRef.current(), AUTOSAVE_DELAY);
+    if (retriesRef.current >= AUTOSAVE_MAX_RETRIES) return;
+    const t = setTimeout(() => saveNowRef.current(), AUTOSAVE_DELAY * 2 ** retriesRef.current);
     return () => clearTimeout(t);
   }, [md, tags, record, dirty, saveState]);
 
@@ -359,7 +368,11 @@ export function FormStudio({ formId }: { formId: string }) {
         onEditTitle={() => setEditingMeta(true)}
         onTogglePublish={onTogglePublish}
         onCopyUrl={onCopyUrl}
-        onSaveNow={() => void saveNow()}
+        onSaveNow={() => {
+          // Reintento manual: reanuda el autoguardado detenido tras agotar los intentos.
+          retriesRef.current = 0;
+          void saveNow();
+        }}
       />
 
       <div ref={rowRef} style={{ flex: 1, display: 'flex', minHeight: 0 }}>

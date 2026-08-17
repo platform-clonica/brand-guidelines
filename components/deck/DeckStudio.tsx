@@ -38,6 +38,13 @@ const snap = (md: string, meta: DeckMeta) => JSON.stringify({ md, meta });
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 // Idle time after the last edit before autosave fires.
 const AUTOSAVE_DELAY = 1400;
+/* Tope de reintentos del autoguardado. `saveState` está en las dependencias del efecto de
+   autosave, así que un fallo lo re-dispara: error → reintento → error, cada 1,4 s, indefinidamente
+   mientras dure la causa. Con la sesión caducada y una pestaña olvidada abierta son ~2.500 PATCH
+   fallidos por hora, justo cuando el servicio ya está degradado. Tres intentos con espera
+   creciente (1,4 s · 2,8 s · 5,6 s) y luego para: el botón "Error · reintentar" de la toolbar es
+   la vía manual para reanudar, y ya existía. */
+const AUTOSAVE_MAX_RETRIES = 3;
 // Idle time after the last edit before the live preview recompiles.
 const PREVIEW_DELAY = 250;
 
@@ -125,6 +132,11 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
   const saving = saveState === 'saving';
   // Guards against overlapping PATCHes (autosave + manual/share flush racing).
   const savingRef = useRef(false);
+  const retriesRef = useRef(0);
+  /* La carga puede fallar (sesión caducada, incidencia de Supabase). Antes solo se registraba en
+     la consola del navegador y el editor se quedaba en blanco en una URL que dice llevar un deck:
+     indistinguible de un deck vacío. FormStudio ya lo resolvía bien; esto es lo mismo. */
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   // Set when Compartir URL / Descargar PDF is clicked on an unsaved deck: the save dialog opens,
   // and the action runs automatically once the deck has an id.
@@ -250,7 +262,16 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
   // Load the deck addressed by the route.
   useEffect(() => {
     if (!deckId) return;
-    getDeck(deckId).then(loadRecord).catch((e) => console.error(e));
+    let alive = true;
+    getDeck(deckId)
+      .then((rec) => alive && loadRecord(rec))
+      .catch((e) => {
+        console.error(e);
+        if (alive) setLoadError(e instanceof Error ? e.message : 'No se pudo cargar la presentación');
+      });
+    return () => {
+      alive = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckId]);
 
@@ -296,9 +317,11 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
       await updateDeck(currentDeckId, { ...meta, md });
       setSavedSnap(snap(md, meta));
       setSaveState('saved');
+      retriesRef.current = 0;
     } catch (e) {
       // surface minimally; keep editor state so the user can retry
       console.error(e);
+      retriesRef.current += 1;
       setSaveState('error');
     } finally {
       savingRef.current = false;
@@ -309,6 +332,8 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
   saveNowRef.current = saveNow;
 
   const onSave = async () => {
+    // Reintento manual: reanuda el autoguardado que se detuvo tras agotar los intentos.
+    retriesRef.current = 0;
     if (!currentDeckId) {
       // Save-as: capture metadata first, keep current md.
       setModal({ kind: 'new', initial: { type: meta.type }, seedMd: md });
@@ -329,10 +354,14 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
     return () => clearTimeout(t);
   }, [md, meta.type]);
 
-  // Autosave: once the deck has an id, persist edits after a short idle window.
+  /* Autosave: once the deck has an id, persist edits after a short idle window.
+     Con tope y espera creciente — ver AUTOSAVE_MAX_RETRIES. Agotados los intentos, el autoguardado
+     se detiene y queda el botón "Error · reintentar" de la toolbar, que llama a `onSave` y pone el
+     contador a cero. */
   useEffect(() => {
     if (!currentDeckId || !dirty || savingRef.current) return;
-    const t = setTimeout(() => saveNowRef.current(), AUTOSAVE_DELAY);
+    if (retriesRef.current >= AUTOSAVE_MAX_RETRIES) return;
+    const t = setTimeout(() => saveNowRef.current(), AUTOSAVE_DELAY * 2 ** retriesRef.current);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [md, meta, currentDeckId, dirty, saveState]);
@@ -477,6 +506,27 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
     return (
       <div style={{ height: '100vh' }}>
         <DeckRenderer deck={deck} viewer clientLogo={clientLogo} />
+      </div>
+    );
+  }
+
+  /* Estado de error de carga, antes de pintar el editor.
+     Sin esto, un fallo de `getDeck` dejaba el editor VACÍO en una URL /workspace/deckmak_r/<id>,
+     sin ningún aviso. Y como `currentDeckId` se queda en null, el botón Guardar cambiaba de
+     significado: abría el modal de "Crear Nuevo Deck". El trabajo original nunca se sobrescribía
+     —el autosave está bloqueado por el guard `!currentDeckId`— pero el usuario podía acabar
+     reescribiendo la propuesta y creando un duplicado sin entender por qué. */
+  if (loadError) {
+    return (
+      <div style={{ padding: 40, font: `400 13px/1.6 ${'var(--font-ibm-plex-mono, monospace)'}`, color: '#99335F' }}>
+        No se pudo cargar la presentación. {loadError}{' '}
+        <button
+          onClick={() => router.push('/workspace/deckmak_r')}
+          style={{ font: `400 13px/1.6 ${'var(--font-ibm-plex-mono, monospace)'}`, color: '#1C1A17', background: 'none', border: 0,
+                   padding: 0, textDecoration: 'underline', cursor: 'pointer' }}
+        >
+          Volver a la galería
+        </button>
       </div>
     );
   }

@@ -135,7 +135,12 @@ function SaveIndicator({
 
   const label: { text: string; color: string; tip: string } = { text: 'Guardado ✓', color: colors.ash, tip: 'Guardado automático activo' };
   if (saving) { label.text = 'Guardando…'; }
-  else if (saveState === 'error') { label.text = 'Error · reintentar'; label.color = '#B4402E'; label.tip = 'Reintentar guardado'; }
+  /* Burdeos, no un rojo inventado. `lib/tokens.ts:28` declara #99335F como "alerta y estados
+     críticos en interfaz" — es el `uiRole` del acento, la regla que CLAUDE.md recoge. El repo lo
+     respeta en 26 sitios (authUi.errorBox, FormStudio, TranslatingOverlay, Rewriter, btnDanger de
+     este mismo ui.ts); este indicador era la única desviación, con un #B4402E que no sale de
+     ninguna parte. Mismo rol, un solo valor. */
+  else if (saveState === 'error') { label.text = 'Error · reintentar'; label.color = '#99335F'; label.tip = 'Reintentar guardado'; }
   else if (dirty) { label.text = 'Sin guardar'; label.tip = 'Guardar ahora'; }
 
   return (

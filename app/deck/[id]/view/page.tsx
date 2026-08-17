@@ -50,7 +50,16 @@ export default async function DeckViewPage({ params, searchParams }: Props) {
     sb.rpc('deck_public', { p_id: id }).maybeSingle(),
     sb.rpc('deck_public_signature', { p_id: id }).maybeSingle(),
   ]);
-  if (deckRes.error || !deckRes.data) notFound();
+  /* Distinguir "no existe" de "no se pudo leer". Antes las dos caían en el mismo `notFound()`, así
+     que una incidencia de Supabase le decía al cliente que su propuesta NO EXISTE — falso, y de lo
+     peor que se le puede decir a alguien que va a firmar. Ahora un fallo real sube al error
+     boundary de esta carpeta, que ofrece reintentar.
+     22P02 es `invalid text representation`: un id que no es un UUID. Eso sí es un 404. */
+  if (deckRes.error && deckRes.error.code !== '22P02') {
+    console.error('[deck/view] lectura fallida', deckRes.error.code, deckRes.error.message);
+    throw new Error('No se pudo cargar la propuesta');
+  }
+  if (!deckRes.data) notFound();
   const sig = sigRes.data;
 
   const deck = deckRes.data as Pick<DeckRecord, 'md' | 'type' | 'logo_path' | 'commercial_id'>;

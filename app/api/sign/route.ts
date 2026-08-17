@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase/server';
+import { SIGN_LIMIT, allowRequest, tooManyRequests } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,6 +8,10 @@ type SignBody = { deck_id?: string; signer_name?: string; signer_email?: string;
 
 // POST /api/sign — a client signs the Acceptance page of a saved deck.
 export async function POST(req: Request) {
+  /* Público a propósito y sin ningún límite hasta ahora: cada POST aceptado era una fila en
+     `signatures` con hasta 2 MB de PNG y un correo saliente por Resend. */
+  if (!(await allowRequest(req, SIGN_LIMIT))) return tooManyRequests(SIGN_LIMIT);
+
   let body: SignBody;
   try {
     body = await req.json();
