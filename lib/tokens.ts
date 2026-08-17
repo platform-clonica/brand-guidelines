@@ -36,10 +36,13 @@ export const colorsAccent: ColorToken[] = [
    `colorsAccent` uno a uno, así que este export no se cuela en ninguno. Están aquí, y no sueltos
    en el componente, porque una norma que solo vive en el CSS de una pieza no es una norma.
 
-   Decisión de Alberto, agosto de 2026, al entregar los iconos del dispatcher. Cada herramienta
-   interna lleva su propio acento saturado, ajeno al sistema cromático. Es deliberado y tiene
-   motivo: los tres acentos de marca identifican SERVICIOS (Opal, Burdeos, Esmeralda) y una
-   herramienta interna no es un servicio, así que usarlos aquí habría roto esa lectura.
+   Decisión de Alberto, agosto de 2026, al entregar los iconos del dispatcher. Los iconos usan
+   acentos saturados ajenos al sistema cromático. Es deliberado y tiene motivo: los tres acentos de
+   marca identifican SERVICIOS (Opal, Burdeos, Esmeralda) y una herramienta interna no es un
+   servicio, así que usarlos aquí habría roto esa lectura.
+
+   Un acento NO identifica una herramienta: dos pueden compartirlo, como hacen ReWrit_r y DSMak_r.
+   Es color de familia, no etiqueta.
 
    El alcance es estricto: components/workspace/AppIcon.tsx y nada más. No se usan como color de
    interfaz, ni de texto, ni de fondo, ni salen de la home. Para alertas sigue mandando Burdeos.
@@ -51,8 +54,8 @@ export const toolIconAccents: { app: string; hex: string; note: string }[] = [
   { app: 'rewritr',  hex: '#00D1FF', note: 'Cian — transformación del texto y nodos de IA' },
   { app: 'deckmakr', hex: '#FF6B6B', note: 'Coral — crecimiento y generación de la diapositiva' },
   { app: 'formmakr', hex: '#10B981', note: 'Verde — validación y envío del formulario' },
-  /* DSMak_r repite el cian de ReWrit_r. Entregado así, pendiente de confirmar si es deliberado
-     (cian = capa generativa, común a varias herramientas) o si le toca tono propio. */
+  /* DSMak_r comparte el cian de ReWrit_r a propósito — confirmado por Alberto en agosto de 2026.
+     El acento no es un identificador único por herramienta: dos pueden compartirlo. */
   { app: 'dsmakr',   hex: '#00D1FF', note: 'Cian — tokens de diseño y componente maestro' },
 ];
 
