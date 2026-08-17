@@ -1,4 +1,5 @@
 import { Wordmark } from '@/components/studio/Wordmark';
+import { AppIcon } from '@/components/workspace/AppIcon';
 import type { AppEntry } from '@/lib/workspace/catalog';
 
 /* Una tarjeta del dispatcher. Server component: sin estado, sin JavaScript.
@@ -10,6 +11,7 @@ export function AppTile({ app }: { app: AppEntry }) {
   const shape = app.group === 'tools' ? 'ixw-tile--tool' : 'ixw-tile--link';
   const body = (
     <>
+      <AppIcon id={app.id} />
       {app.wordmark ? (
         <Wordmark {...app.wordmark} title={app.label} height={22} muted={!app.href} align="center" />
       ) : (

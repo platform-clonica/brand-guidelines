@@ -5,7 +5,11 @@
    Convención de nombres `.ixw-*`, en paralelo a `.ixf-*` de components/forms/forms.css.
 
    Los tokens son los --c-* de app/globals.css, que a su vez reflejan lib/tokens.ts.
-   Solo paleta base: los tres acentos identifican SERVICIOS, no herramientas internas. */
+   Solo paleta base: los tres acentos identifican SERVICIOS, no herramientas internas.
+
+   Con una excepción, y está declarada: los iconos de las tarjetas (components/workspace/AppIcon.tsx)
+   llevan cada uno su acento propio, listado en `toolIconAccents` de lib/tokens.ts. Vive dentro del
+   SVG y no toca ni una regla de esta hoja. */
 
 .ix-workspace {
   --mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
@@ -114,6 +118,23 @@ a.ixw-tile:focus-visible {
   background: var(--c-warm-light);
   color: var(--c-ash);
   cursor: default;
+}
+
+/* Icono de la herramienta. 72 px no es un capricho: el trazo del SVG es 6 sobre un lienzo de 400,
+   así que a este tamaño cae en 1,08 px — el mismo grosor que los filetes de toda la interfaz.
+   Más pequeño se afila y desaparece. */
+.ixw-tile__icon {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+}
+
+/* Una herramienta apagada pierde también el color del icono. Mismo criterio que el wordmark
+   `muted` (components/studio/Wordmark.tsx), que colapsa tinta y acento a Ash: si la tarjeta está
+   off, nada dentro puede parecer encendido. */
+.ixw-tile--off .ixw-tile__icon {
+  filter: grayscale(1);
+  opacity: 0.55;
 }
 
 .ixw-tile__label {
