@@ -32,7 +32,14 @@ export const seg: CSSProperties = {
   flex: 1, padding: '7px 6px', border: `1px solid ${colors.warmDark}`, background: 'transparent', color: colors.ash,
   font: `500 10px/1 ${MONO}`, letterSpacing: '.06em', textTransform: 'uppercase', cursor: 'pointer',
 };
-export const segOn: CSSProperties = { background: colors.dark, color: colors.warmLight, borderColor: colors.dark };
+/* `border` completo, no `borderColor`: `seg` fija el shorthand, y pisarlo con la propiedad larga
+   mezcla las dos formas. Al apagar el segmento React quita `borderColor` y deja el `border`
+   original — de ahí el aviso "Removing a style property during rerender". Mismo píxel, sin mezcla. */
+export const segOn: CSSProperties = {
+  background: colors.dark,
+  color: colors.warmLight,
+  border: `1px solid ${colors.dark}`,
+};
 
 export const label: CSSProperties = {
   display: 'block', font: `500 10px/1.4 ${MONO}`, letterSpacing: '.08em', textTransform: 'uppercase', color: colors.ash, marginBottom: 6,
