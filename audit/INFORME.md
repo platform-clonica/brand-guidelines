@@ -7,6 +7,38 @@
 
 ---
 
+## 0 · Estado de aplicación · 2026-08-17
+
+**Las dos críticas y las cuatro altas están corregidas y desplegadas.** Commits `c722eca..c585a48`
+en `main`. Lo que sigue describe los problemas tal como se encontraron; esta sección dice cuáles
+siguen abiertos.
+
+| Hallazgo | Estado |
+|---|---|
+| SEC-01 · RLS abierta | ✅ Cerrada. `anon` recibe 401 en `decks`, `clients`, `images`, `signatures`. Migración `20260817121000` |
+| SEC-03 · Storage anónimo | ✅ Cerrado, más límites de tamaño y MIME. Migración `20260817122000` |
+| SEC-17 · PII en el visor | ✅ Cero apariciones de `ip`, `user_agent` y `Mozilla` en el HTML servido |
+| SEC-04 · Bypass del punto | ✅ `requireUser()` dentro de los seis handlers: `/api/decks/abc.json` → 401 |
+| ESC-01 · Rate limiting | ✅ Por IP, 5/h en `/api/sign` y 10/h en `/forms/api/submit`. Verificado: 10 pasan, el 11 es 429 |
+| SEC-09 · Tope saltable con `chunked` | ✅ Se mide el cuerpo. 400 KB troceados → 413 |
+| PERF-03 · SDK en el visor | ✅ `/deck/[id]/view` de 181 kB a 115 kB |
+| TRV-02 · `lang` ausente | ✅ `lang="es"` en la raíz, wrapper por locale para `/en` y `/ca` |
+| TRV-05 · `¡Gracias!` | ✅ Fuera de los dos formularios publicados |
+| TRV-03 · Sin CI ni linter | ✅ ESLint configurado (0 errores) y CI con type-check, tests, lint y build |
+| SEC-06 · Cabeceras | ✅ Cinco cabeceras en producción, `DENY` en `/workspace`. Sin `X-Powered-By`. **CSP pendiente** |
+| QA-01 · Errores sin registrar | ✅ `dbFail()` en los 21 retornos, con `console.error` |
+| QA-02 · Autosave sin freno | ✅ Tres intentos con espera creciente, en las dos copias |
+| QA-03 · Fallo de carga tragado | ✅ Estado de error en `DeckStudio` |
+| TRV-14 · Sin error boundaries | ✅ `global-error.tsx` y uno propio para el visor |
+| QA-07 · Rojo inventado | ✅ Burdeos, el `uiRole` declarado |
+| TRV-09 · Esquema sin versionar | ⚠️ Existe `supabase/migrations/`, pero **faltan las 8 migraciones históricas** (`supabase db pull`) |
+| SEC-02 · Registro abierto | ⚠️ **Requiere el panel de Supabase.** Ver §7 |
+| PERF-01 · Imágenes | ⏳ Abierto. `loading="lazy"` y `next/image` |
+| TRV-04 · Contraste · TRV-06 · Foco | ⏳ Abiertos |
+| §4 · Decisiones de marca | ⏳ Mono 700, acentos de formulario, `prework-taller-acme` |
+
+---
+
 ## 1 · Resumen ejecutivo
 
 | Eje | Semáforo | Lectura en una línea |

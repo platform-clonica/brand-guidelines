@@ -34,17 +34,27 @@ Manual de marca **vivo y _AI-ready_** de Interactius. Una sola fuente de verdad 
 Requisitos: **Node 18+** (probado con Node 24) y npm.
 
 ```bash
-npm install        # instalar dependencias
-npm run dev        # servidor de desarrollo en http://localhost:3000
+npm install                    # instalar dependencias
+cp .env.example .env.local     # y rellenar las dos variables de Supabase
+npm run dev                    # servidor de desarrollo en http://localhost:3000
 ```
+
+**`.env.local` no es opcional.** Sin `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+el área `/workspace` responde 500: el middleware crea el cliente de Supabase en cada petición y
+`lib/supabase/server.ts` lanza si faltan. El manual público y `/timer` sí funcionan sin ellas.
+`ANTHROPIC_API_KEY` solo hace falta para traducir decks y para ReWrit_r; `.env.example` explica
+cada variable.
 
 Comprobaciones de salud:
 
 ```bash
 npm run type-check # TypeScript sin emitir
-npm run lint       # ESLint (preset de Next.js)
-npm run test       # tests del generador de decks (node:test)
+npm run lint       # ESLint (config plana, preset de Next.js)
+npm run test       # 235 tests de lib/ (node:test, sin framework)
+npm run build      # build de producción
 ```
+
+Las cuatro corren en CI (`.github/workflows/ci.yml`) en cada PR y en cada push a `main`.
 
 ---
 
@@ -74,7 +84,7 @@ Una página de scroll continuo con **15 secciones** documentadas, navegables des
 | 14 | Movimiento | 3 curvas de easing + 6 duraciones canónicas |
 | 15 | Manual para IA | Cómo cargar la marca en un LLM (llms.txt, brand.json, prompt maestro) |
 
-### 2. Generador de presentaciones (`/[locale]/presentaciones`)
+### 2. Generador de presentaciones (`/workspace/deckmak_r`)
 
 Un editor (**DeckStudio**) que compila **Markdown → deck de diapositivas** de forma totalmente determinista (sin IA en runtime). Detecta automáticamente el tipo de cada slide, inyecta páginas comerciales de marca, audita el tono del texto y permite exportar a PDF o compartir por URL. Ver [Generador de presentaciones](#generador-de-presentaciones).
 
@@ -139,7 +149,14 @@ app/
   [locale]/
     layout.tsx               Provider i18n + Sidebar + MobileHeader + MenuOverlay
     page.tsx                 Las 15 secciones en secuencia
-    presentaciones/page.tsx  Generador de decks (DeckStudio)
+  workspace/                 Área interna, con login (ver más abajo)
+    page.tsx                 Lanzador de herramientas
+    deckmak_r/               Generador de presentaciones
+    formmak_r/               Editor de formularios
+    rewrit_r/                Reescritura de textos con la voz de marca
+  deck/[id]/view/            Visor PÚBLICO de una propuesta guardada + su imagen social
+  forms/f/[id]/              Formulario público
+  timer/                     Temporizador de sesiones, público
   api/
     brand.json/route.ts      GET → tokens de marca en JSON
     eval/route.ts            GET (docs) · POST (valida copy)
@@ -228,7 +245,7 @@ Detalle completo en [docs/API.md](docs/API.md).
 
 ## Generador de presentaciones
 
-Disponible en `/[locale]/presentaciones`. Escribes Markdown a la izquierda y obtienes un deck 16:9 a la derecha. El pipeline es **`parse → classify → compile → render`**, 100 % determinista:
+Disponible en `/workspace/deckmak_r`, detrás del login de equipo. Escribes Markdown a la izquierda y obtienes un deck 16:9 a la derecha. El pipeline es **`parse → classify → compile → render`**, 100 % determinista:
 
 - **17 layouts** detectados automáticamente: portada, statement, bullets, columnas, split, gantt, presupuesto, roadmap por fases, contexto, el reto, objetivos, cierre, y páginas comerciales inyectadas (manifesto, equipo, clientes, aceptación).
 - **Diagramas Gantt** y **tablas de presupuesto** con autosuma, escritos en bloques de código.
@@ -259,7 +276,15 @@ Configurado para **Netlify** ([netlify.toml](netlify.toml)):
   package = "@netlify/plugin-nextjs"
 ```
 
-Producción: <https://brand.interactius.com>. No hay variables de entorno obligatorias; los valores sensibles, si los hubiera, se configuran en el panel de Netlify.
+Producción: <https://brand.interactius.com>, desplegado desde `main`.
+
+**Variables de entorno.** Las dos de Supabase son obligatorias para `/workspace`, `/forms` y el
+visor de propuestas, y son públicas por diseño: viajan en el bundle del cliente, y `netlify.toml`
+las excluye del escaneo de secretos por eso. `ANTHROPIC_API_KEY` y las tres de Resend son
+server-only. Ver `.env.example`.
+
+**El esquema de la base de datos vive en `supabase/migrations/`** y se cambia por PR, nunca desde
+el panel. Ojo con el rollback: revertir un despliegue en Netlify **no** revierte el esquema.
 
 ---
 
