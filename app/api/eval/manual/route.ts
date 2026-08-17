@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { evalText, type EvalViolation } from '@/lib/eval';
+import { evalText, hardFailFor, isLengthViolation, scoreFor, type EvalViolation } from '@/lib/eval';
 import esMessages from '@/messages/es.json';
 import enMessages from '@/messages/en.json';
 import caMessages from '@/messages/ca.json';
@@ -84,10 +84,6 @@ function isExcluded(path: string): boolean {
   return META_PATHS_EXCLUDED.some((p) => path.startsWith(p));
 }
 
-function isLengthOnly(violation: EvalViolation): boolean {
-  return violation.rule === 'length:under_min' || violation.rule === 'length:over_max';
-}
-
 type LocaleReport = {
   locale: 'es' | 'en' | 'ca';
   totalStrings: number;
@@ -118,23 +114,18 @@ function reportForLocale(locale: 'es' | 'en' | 'ca', messages: unknown): LocaleR
     // Filter length violations on very short labels (eyebrows, hints, titles)
     const filtered =
       wordCount < LENGTH_MIN_WORDS_TO_CHECK
-        ? result.violations.filter((v) => !isLengthOnly(v))
+        ? result.violations.filter((v) => !isLengthViolation(v))
         : result.violations;
 
     if (filtered.length === 0) continue;
 
-    const hardFail = filtered.some(
-      (v) =>
-        v.rule === 'forbidden' ||
-        v.rule === 'punctuation:exclamation' ||
-        v.rule === 'punctuation:ellipsis',
-    );
-
+    /* score y hardFail salen de lib/eval.ts: antes se recalculaban aquí a mano y eran una
+       segunda copia de la misma rúbrica. */
     violations.push({
       path: entry.path,
       text: entry.text,
-      score: Math.max(0, 100 - filtered.length * 10),
-      hardFail,
+      score: scoreFor(filtered),
+      hardFail: hardFailFor(filtered),
       violations: filtered,
     });
   }

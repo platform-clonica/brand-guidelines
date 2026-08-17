@@ -4,10 +4,9 @@
    - scripts/eval-content.ts (CI / manual self-validation)
    - Future agent loops that need to validate before returning copy. */
 
-import {
-  forbiddenVocabularyDetailed,
-  sentenceLength,
-} from '@/lib/tokens';
+/* Relativo con extensión, no el alias `@/`: es la convención de lib/forms y lo que permite
+   cargar el módulo desde node --test, que no resuelve los paths de tsconfig. */
+import { forbiddenVocabularyDetailed, sentenceLength } from './tokens.ts';
 
 export type EvalViolation =
   | {
@@ -117,26 +116,43 @@ export function evalText(text: string): EvalResult {
     violations.push({ rule: 'punctuation:ellipsis', index: m.index });
   }
 
-  // Score: each violation subtracts 10 points, floored at 0.
-  const score = Math.max(0, 100 - violations.length * 10);
-
   // Word count for the whole text (sum of sentence words).
   const wordCount = sentences.reduce((sum, s) => sum + countWords(s), 0);
 
-  // Hard fail = any forbidden or punctuation violation. Length issues are
-  // soft (style alert) — copy can sometimes need a short fragment.
-  const hardFail = violations.some(
+  return {
+    score: scoreFor(violations),
+    violations,
+    sentenceCount: sentences.length,
+    wordCount,
+    hardFail: hardFailFor(violations),
+  };
+}
+
+/* ─── La rúbrica, como funciones puras ───
+
+   Extraídas para que quien filtre violaciones (la política por tipo de texto de ReWrit_r, el
+   descarte de etiquetas cortas de /api/eval/manual) recalcule score y hardFail con ESTA regla y
+   no con una copia. Antes /api/eval/manual repetía a mano el `100 - n*10` y la lista de reglas
+   duras; dos copias de la misma rúbrica que podían separarse sin que nada avisara.
+
+   `evalText` no cambia de firma ni de comportamiento: solo delega. */
+
+export function isLengthViolation(v: EvalViolation): boolean {
+  return v.rule === 'length:under_min' || v.rule === 'length:over_max';
+}
+
+/** Cada violación resta 10 puntos, con suelo en 0. */
+export function scoreFor(violations: readonly EvalViolation[]): number {
+  return Math.max(0, 100 - violations.length * 10);
+}
+
+/* Solo vocabulario prohibido y puntuación son no negociables. Las de longitud son blandas:
+   un texto puede necesitar un fragmento corto. */
+export function hardFailFor(violations: readonly EvalViolation[]): boolean {
+  return violations.some(
     (v) =>
       v.rule === 'forbidden' ||
       v.rule === 'punctuation:exclamation' ||
       v.rule === 'punctuation:ellipsis',
   );
-
-  return {
-    score,
-    violations,
-    sentenceCount: sentences.length,
-    wordCount,
-    hardFail,
-  };
 }
