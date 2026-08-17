@@ -12,12 +12,19 @@ export async function SectionIntro() {
           <div className="font-mono text-caption uppercase tracking-[0.08em] text-dark/60">
             01/ {t('kicker')}
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo/interactius-positivo.svg"
-            alt="interactīus"
-            className="block w-full max-w-[320px] h-auto"
-          />
+          {/* El documento no tenía ningún <h1>: arrancaba en H2 y encadenaba 35 encabezados sin
+              raíz, así que quien navega por encabezados —la forma habitual de recorrer un
+              documento de 24.000 px— entraba por la mitad. El título de nivel 1 es el logotipo,
+              que es literalmente el título del manual; su nombre accesible sale del alt.
+              `m-0 leading-[0]` neutraliza los márgenes por defecto del h1: ni un píxel cambia. */}
+          <h1 className="m-0 leading-[0]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo/interactius-positivo.svg"
+              alt="interactīus · Brand Guidelines 2026"
+              className="block w-full max-w-[320px] h-auto"
+            />
+          </h1>
           <span className="font-mono text-body-sm text-dark/70">{t('tagline')}</span>
         </div>
       </div>

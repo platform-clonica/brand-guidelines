@@ -5,7 +5,7 @@ import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server
 import { routing, type Locale } from '@/lib/i18n/routing';
 import { Sidebar } from '@/components/chrome/Sidebar';
 import { MobileHeader } from '@/components/chrome/MobileHeader';
-import { MenuOverlay } from '@/components/chrome/MenuOverlay';
+import { MenuOverlayLazy } from '@/components/chrome/MenuOverlayLazy';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -34,7 +34,7 @@ export default async function LocaleLayout({
       <div lang={locale} style={{ display: 'contents' }}>
         <Sidebar />
         <MobileHeader ariaOpen={t('openMenu')} />
-        <MenuOverlay />
+        <MenuOverlayLazy />
         <main className="pl-0 md:pl-[var(--sidebar-w)] min-h-dvh pt-14 md:pt-0">
           {children}
         </main>

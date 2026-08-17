@@ -13,16 +13,23 @@ export const metadata: Metadata = {
    warm-light brand background, con el imagotipo de Interactius encima. */
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div
+    /* <main> y no <div>: estas pantallas no tenían NINGÚN landmark — ni main, ni nav, ni header —
+       así que axe reportaba sus seis nodos como contenido fuera de toda región y el atajo de
+       "saltar al contenido principal" no tenía destino. */
+    <main
       style={{
         minHeight: '100vh', background: colors.warmLight, color: colors.dark,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         padding: 24, gap: 28,
       }}
     >
-      {/* Logotipo completo: el login es la portada de la marca, no una barra interna. */}
-      <BrandMark height={26} variant="lockup" />
+      {/* Logotipo completo: el login es la portada de la marca, no una barra interna.
+          Envuelto en el <h1> de la página: tampoco había encabezado de nivel 1, y el nombre
+          accesible sale del alt del imagotipo. Sin margen, para no mover un píxel. */}
+      <h1 style={{ margin: 0, lineHeight: 0 }}>
+        <BrandMark height={26} variant="lockup" />
+      </h1>
       <div style={{ width: 'min(380px, 100%)' }}>{children}</div>
-    </div>
+    </main>
   );
 }
