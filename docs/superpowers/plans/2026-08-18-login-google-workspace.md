@@ -20,7 +20,11 @@
 | 7 · Seam `created_by` | ✅ `3f29588` · 0 filas sin dueño; una pieza nueva lleva el uuid de Google |
 | 8 · Retirar la contraseña | ✅ `fc2297a` · cero `signInWithPassword` en el repo |
 | 9 · Documentación | ✅ `c530562` · doc nuevo, README, `.env.example`, urls, migraciones y auditoría |
-| 10 · Cerrar la puerta vieja | ⏳ en curso — desactivar el provider `email` y desplegar |
+| 10 · Cerrar la puerta vieja | ✅ `9a82229` desplegado. Provider `email` desactivado |
+| — · Incidente y arreglo | ✅ `11ec7e3`. Al desactivar `email`, `disable_signup` quedó en `true` y **bloqueó las altas por Google**: dos personas fuera con un error genérico mientras quien ya tenía cuenta entraba. Reactivado. El callback ahora distingue el motivo y lo escribe en el log |
+
+**Objetivo cumplido y verificado en producción:** `lucho.dominguez@interactius.com` se creó solo a
+las 07:58:50 y entró 6 segundos después, sin que nadie tocara el panel.
 
 **Verificado el 18/08:** el alta es automática (`carlos.ruiz@interactius.com` se creó sola con
 provider `google`, sin tocar el panel). `type-check`, `lint` (0 errores), `test` (241/241) y `build`
