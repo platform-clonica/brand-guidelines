@@ -129,6 +129,24 @@ refresco, y sus refresh tokens **no caducan por defecto**. Suspender a alguien e
 > **Al dar de baja a alguien hay que borrar o banear su fila en Supabase → Auth → Users.**
 > Es el único paso manual que queda, y sin él la persona conserva el acceso indefinidamente.
 
+## La cuenta compartida ya no existe (2026-08-18)
+
+`info@interactius.com` está **borrada**. Antes de retirarla se reasignó a
+`carlos.ruiz@interactius.com` el `created_by` de las 71 piezas que tenía a su nombre: 12
+propuestas, 14 clientes, 44 imágenes y 1 formulario. Cero filas sin dueño después.
+
+Se reasignaron **las cuatro tablas y no solo las propuestas**, que era lo que se había pedido: el
+`on delete set null` de la columna habría dejado los 14 clientes y las 44 imágenes sin autor, que
+es justo el dato que el seam venía a guardar.
+
+> La migración `20260818100000_created_by_seam.sql` sigue diciendo que `info@` es la dueña de todo.
+> **No se toca**: describe con exactitud el estado en que se aplicó, y reescribir una migración ya
+> aplicada es peor que una nota desactualizada. Esta sección es la nota.
+
+Si `info@interactius.com` existe además como cuenta de Google Workspace, alguien podría entrar con
+ella y se crearía un usuario nuevo y vacío — sin acceso especial a nada, porque no hay permisos por
+cuenta.
+
 ## Permisos
 
 **No hay.** Todas las políticas RLS son `for all to authenticated using (true)`: dentro del

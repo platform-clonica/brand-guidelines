@@ -79,6 +79,7 @@ desde Google Admin; el login por contraseña desaparece.
 1. **Google como único método.** Se retira contraseña, `forgot` y `reset`.
 2. **Tres capas de barrera de dominio:** consent screen *Internal* + hook Postgres + `isTeamEmail`.
 3. **`info@interactius.com` se queda** de momento; no cuelga ningún dato de ella.
+   *(Revisado el mismo 18/08: se reasignaron sus 71 piezas a `carlos.ruiz` y se borró la cuenta.)*
 4. **Habrá permisos dentro del workspace** — los tres modelos a la vez: propiedad por pieza, acceso
    por herramienta y roles admin/editor/lector. **No se implementan aquí**, pero esta entrega deja
    el seam que los hace posibles (Task 7). Los roles vivirán en **una tabla de Supabase**, no en
@@ -578,6 +579,8 @@ una herramienta más del dispatcher (`/workspace/admin`), con el mismo patrón q
 - **`/api/translate`, `/api/rewrite` y `/api/eval` no llaman a `requireUser()`** — dependen solo del
   middleware, y son justo los que gastan cuota de Anthropic. Con identidades reales, además, ya se
   podría limitar por `user.id` y no solo por IP.
-- **`info@interactius.com`.** Se queda; decidir si se borra cuando todo el equipo tenga su cuenta.
+- ~~**`info@interactius.com`.** Se queda; decidir si se borra cuando todo el equipo tenga su cuenta.~~
+  **Hecho el 18/08:** 71 piezas reasignadas a `carlos.ruiz` y cuenta borrada. Ya no hay credencial
+  compartida. Ver [el doc de acceso](../../features/workspace-login-google.md).
   Ojo: es la dueña de las 12 propuestas tras el backfill, así que borrarla las dejaría con
   `created_by = null` (no las borra — el `on delete set null` está puesto justo para eso).
