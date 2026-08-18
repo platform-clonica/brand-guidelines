@@ -43,10 +43,19 @@ test('el dispatcher', () => {
 
 test('las páginas de acceso', () => {
   assert.equal(legacyRedirect('/deck/login'), '/workspace/login');
-  assert.equal(legacyRedirect('/deck/forgot'), '/workspace/forgot');
-  // Crítico: los emails de recuperación ya enviados apuntan aquí.
-  assert.equal(legacyRedirect('/deck/reset'), '/workspace/reset');
   assert.equal(legacyRedirect('/deck/logout'), '/workspace/logout');
+});
+
+test('lo que era recuperar contraseña lleva al login', () => {
+  /* Ya no hay contraseña que recuperar: se entra con Google. Estas dos rutas siguen aquí y no se
+     borran porque hay enlaces circulando —los emails de recuperación ya enviados apuntan a
+     /deck/reset— y un 404 sería peor respuesta que la pantalla de acceso. */
+  assert.equal(legacyRedirect('/deck/forgot'), '/workspace/login');
+  assert.equal(legacyRedirect('/deck/reset'), '/workspace/login');
+  // Y la generación intermedia: los emails enviados desde que las herramientas están en
+  // /workspace apuntan a /workspace/reset, que tampoco existe ya.
+  assert.equal(legacyRedirect('/workspace/forgot'), '/workspace/login');
+  assert.equal(legacyRedirect('/workspace/reset'), '/workspace/login');
 });
 
 test('las landings de cada herramienta', () => {

@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { routing } from './lib/i18n/routing';
 import { updateSession } from './lib/supabase/middleware';
 import { legacyRedirect } from './lib/auth/legacyRoutes';
+import { isTeamEmail } from './lib/auth/team';
 
 const intl = createMiddleware(routing);
 
@@ -11,9 +12,11 @@ const intl = createMiddleware(routing);
 const EDITOR_API = ['/api/decks', '/api/clients', '/api/images', '/api/translate', '/api/rewrite', '/api/eval', '/api/forms'];
 const isEditorApi = (p: string) => EDITOR_API.some((base) => p === base || p.startsWith(base + '/'));
 
-/* Páginas de /workspace alcanzables sin sesión: son la propia puerta de entrada. */
-const isAuthPage = (p: string) =>
-  p === '/workspace/login' || p === '/workspace/forgot' || p === '/workspace/reset';
+/* Páginas de /workspace alcanzables sin sesión: son la propia puerta de entrada.
+   `/workspace/callback` es el retorno de Google y entra aquí por obligación: llega SIN sesión —
+   la está creando— así que si el gate lo tratara como una página normal lo mandaría al login y el
+   `?code=` se perdería en el rebote. */
+const isAuthPage = (p: string) => p === '/workspace/login' || p === '/workspace/callback';
 
 /* El visor de presentaciones es PÚBLICO y NO se ha movido a /workspace: su URL se manda a
    clientes, se firma desde ahí y ya hay enlaces circulando. Ver docs/features/urls-workspace.md. */
@@ -37,7 +40,10 @@ export default async function middleware(request: NextRequest) {
     const { response, user } = await updateSession(request);
     response.headers.set('X-Robots-Tag', 'noindex, nofollow');
     if (isAuthPage(pathname)) return response;
-    if (!user) {
+    /* "Autenticado" no basta: tiene que ser del dominio. Antes eran sinónimos por convención
+       —solo existía una cuenta, creada a mano— y la auditoría lo señaló (SEC-02): una equivalencia
+       que no está escrita deja de ser cierta el día que alguien reabre el registro, sin avisar. */
+    if (!user || !isTeamEmail(user.email)) {
       const url = request.nextUrl.clone();
       url.pathname = '/workspace/login';
       url.search = `?next=${encodeURIComponent(pathname)}`;
@@ -86,7 +92,9 @@ export default async function middleware(request: NextRequest) {
   if (pathname.startsWith('/api')) {
     if (!isEditorApi(pathname)) return NextResponse.next();
     const { response, user } = await updateSession(request);
-    if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+    if (!user || !isTeamEmail(user.email)) {
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+    }
     return response;
   }
 

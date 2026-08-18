@@ -1,9 +1,15 @@
-# Acceso con login (email + contraseña) al Deck Maker
+# Acceso con login (email + contraseña) al Deck Maker · **HISTÓRICO**
 
-> ⚠ **Las rutas de este documento son las originales y ya no existen.** El login pasó a
-> `/workspace/login` y las herramientas a `/workspace/*` — el mapa vigente está en
-> [urls-workspace.md](urls-workspace.md). El mecanismo (sesión de Supabase, middleware,
-> `requireUser`) sigue siendo el que se describe aquí.
+> ⛔ **Este documento describe un mecanismo que ya no existe.** Desde el 2026-08-18 el acceso al
+> workspace es con la **cuenta de Google de Interactius**: no hay contraseña, ni recuperación, ni
+> `/workspace/{forgot,reset}`. El modelo vigente está en
+> [workspace-login-google.md](workspace-login-google.md) y el mapa de URLs en
+> [urls-workspace.md](urls-workspace.md).
+>
+> Se conserva porque explica de dónde vienen piezas que **siguen vivas** —`@supabase/ssr`, la
+> sesión en cookies, el ruteo por pathname del middleware, `requireUser()`— y porque documenta las
+> decisiones que se tomaron entonces. Nada de lo que dice sobre contraseñas, recovery o rutas
+> `/deck/*` es aplicable hoy.
 
 > Implementado. Login de **equipo** que protege las herramientas internas.
 > Los usuarios se crean a mano en Supabase (sin panel de admin, sin registro público).

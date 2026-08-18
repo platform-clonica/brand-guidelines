@@ -10,8 +10,8 @@ se mueve nunca: sus enlaces ya están enviados.
 | URL | Qué es |
 |---|---|
 | `/workspace` | Dispatcher: el lanzador de aplicaciones |
-| `/workspace/login` | Acceso |
-| `/workspace/forgot` · `/workspace/reset` | Recuperar y cambiar contraseña |
+| `/workspace/login` | Acceso — botón de Google, sin campos |
+| `/workspace/callback` | Retorno de Google: cierra el PKCE y deja la sesión puesta |
 | `/workspace/logout` | `POST` → cierra sesión |
 | `/workspace/deckmak_r` | Galería de presentaciones |
 | `/workspace/deckmak_r/[id]` | Editor de una presentación |
@@ -19,8 +19,10 @@ se mueve nunca: sus enlaces ya están enviados.
 | `/workspace/formmak_r/[id]` | Editor de un formulario |
 | `/workspace/rewrit_r` | Reescritura de correos y textos con la voz de marca |
 
-Todo `/workspace/*` lo protege [middleware.ts](../../middleware.ts): sin sesión, redirige a
-`/workspace/login?next=…`. Las tres páginas de acceso son la excepción. Todo lleva
+Todo `/workspace/*` lo protege [middleware.ts](../../middleware.ts): **sin sesión de equipo**
+—sesión Y cuenta `@interactius.com`, ver [workspace-login-google.md](workspace-login-google.md)—
+redirige a `/workspace/login?next=…`. Las dos páginas de acceso son la excepción: el login, y el
+callback, que por fuerza llega sin sesión porque la está creando. Todo lleva
 `X-Robots-Tag: noindex, nofollow`.
 
 ## Lo público (NO se mueve)
@@ -48,27 +50,34 @@ pestaña vieja).
 | `/home` | `/workspace` |
 | `/deck` | `/workspace/deckmak_r` |
 | `/deck/[id]` | `/workspace/deckmak_r/[id]` |
-| `/deck/login` · `/deck/forgot` · `/deck/reset` · `/deck/logout` | `/workspace/…` |
+| `/deck/login` · `/deck/logout` | `/workspace/…` |
+| `/deck/forgot` · `/deck/reset` · `/workspace/forgot` · `/workspace/reset` | `/workspace/login` |
 | `/forms/maker` · `/forms/maker/[id]` | `/workspace/formmak_r/…` |
 
 **`/deck/[id]/view` no está en esa tabla, y es lo importante del fichero.** Hay un test que lo
 exige explícitamente ([legacyRoutes.test.ts](../../lib/auth/__tests__/legacyRoutes.test.ts)):
 si alguien añade una regla que se coma el visor, el test falla.
 
-## Pendiente de configurar a mano
+## Configurado a mano en Supabase
 
-**Supabase → Authentication → URL Configuration → Redirect URLs.** El email de recuperación de
-contraseña apunta ahora a `{origin}/workspace/reset` ([ForgotForm.tsx](../../components/deck/auth/ForgotForm.tsx)),
-y Supabase solo redirige a URLs de su lista blanca. Hay que añadir:
+Nada de esto vive en el repo. Está detallado en
+[workspace-login-google.md](workspace-login-google.md); el resumen:
+
+**Authentication → URL Configuration → Redirect URLs.** El login manda a
+`{origin}/workspace/callback?next=…` y Supabase solo redirige a URLs de su lista blanca:
 
 ```
-https://brand.interactius.com/workspace/reset
-http://localhost:3000/workspace/reset
+https://brand.interactius.com/workspace/callback
+https://brand.interactius.com/workspace/callback?**
+http://localhost:3000/workspace/callback
+http://localhost:3000/workspace/callback?**
 ```
 
-Hasta que esté, **recuperar contraseña no funciona**. Los emails ya enviados apuntan a
-`/deck/reset` y siguen valiendo gracias a la redirección 308, pero solo si esa URL antigua
-continúa en la lista blanca: no la quites.
+Las entradas antiguas de `/workspace/reset` y `/deck/reset` ya no hacen falta: esas rutas no
+existen y sus enlaces se redirigen al login con un 308.
+
+**Authentication → Providers:** Google activo (con Client ID **y** Secret), Email desactivado.
+**Authentication → Hooks:** *Before User Created* → `public.hook_restrict_signup_by_email_domain`.
 
 ## Decisiones
 

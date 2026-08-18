@@ -7,11 +7,15 @@
 
 ---
 
-## 0 · Estado de aplicación · 2026-08-17
+## 0 · Estado de aplicación · 2026-08-18
 
 **Las dos críticas y las cuatro altas están corregidas y desplegadas.** Commits `c722eca..c585a48`
 en `main`. Lo que sigue describe los problemas tal como se encontraron; esta sección dice cuáles
 siguen abiertos.
+
+> **Actualizada el 2026-08-18.** La versión anterior de esta tabla se escribió a las 13:22 del 17/08
+> y se quedó obsoleta esa misma tarde: tres commits posteriores (`d8b7dee`, `78fe530`, `79219ca`)
+> cerraron TRV-06, TRV-11, TRV-12 y PERF-06 sin que nadie la tocara.
 
 | Hallazgo | Estado |
 |---|---|
@@ -32,10 +36,15 @@ siguen abiertos.
 | TRV-14 · Sin error boundaries | ✅ `global-error.tsx` y uno propio para el visor |
 | QA-07 · Rojo inventado | ✅ Burdeos, el `uiRole` declarado |
 | TRV-09 · Esquema sin versionar | ⚠️ Existe `supabase/migrations/`, pero **faltan las 8 migraciones históricas** (`supabase db pull`) |
-| SEC-02 · Registro abierto | ⚠️ **Requiere el panel de Supabase.** Ver §7 |
-| PERF-01 · Imágenes | ⏳ Abierto. `loading="lazy"` y `next/image` |
-| TRV-04 · Contraste · TRV-06 · Foco | ⏳ Abiertos |
-| §4 · Decisiones de marca | ⏳ Mono 700, acentos de formulario, `prework-taller-acme` |
+| SEC-02 · Registro abierto | ✅ **Cerrado el 18/08.** Se entra solo con la cuenta de Google de la empresa: proveedor de email desactivado, hook `before-user-created` que rechaza otros dominios (migración `20260818090000`) e `isTeamEmail()` en el gate. Ver §7 |
+| PERF-01 · Imágenes | 🟡 **Parcial** (`d8b7dee`). `loading="lazy"` hecho: −82 % de peso, LCP 5,0 s → 3,7 s. Falta `next/image`: los rasters se sirven a 2400 px para huecos de 364 px |
+| TRV-06 · Foco | ✅ Cerrado (`d8b7dee`). `lib/hooks/useFocusTrap.ts`, en el overlay y en el Modal |
+| TRV-11 · `eval-content.ts` | ✅ Cerrado (`d8b7dee`). El script existe y está en `package.json` |
+| TRV-12 · Encabezados | ✅ Cerrado (`78fe530`). `h1` en el manual, `<main>` en la pantalla de acceso |
+| PERF-06 · framer-motion | ✅ Cerrado (`78fe530`). Fuera de la carga inicial vía `next/dynamic` |
+| TRV-04 · Contraste | 🟡 **Parcial** (`79219ca`). Corregidos los fallos inequívocos. Quedan 148 nodos de texto secundario: eso es la escala de gris del manual y es decisión de Alberto (§4) |
+| §4 · Decisiones de marca | ⏳ Abierto. Mono 700 sigue vivo en `Wordmark.tsx:48` y sin declarar en `lib/tokens.ts`; acentos de formulario; `prework-taller-acme` |
+| — · Trazabilidad | ➕ **Nuevo el 18/08.** `created_by` en `decks`, `clients`, `images` y `forms` (migración `20260818100000`). No filtra nada todavía: es el prerrequisito de los permisos |
 
 ---
 
@@ -193,6 +202,29 @@ contiene: user_agent · signer_email · "ip" · Mozilla
 **Dato tranquilizador.** `auth.users` tiene **exactamente un usuario**, dominio `interactius.com`, creado el 15 de julio. Nadie ha entrado por ahí.
 
 **Arreglo.** Dos, y hacen falta los dos. (a) Desactivar "Allow new users to sign up" en el panel — es un interruptor. (b) Dejar de tratar "autenticado" como sinónimo de "del equipo": un `requireTeam()` junto a `requireUser()` que compruebe dominio o un claim explícito, usado en el middleware, y reflejado en las políticas de `forms` y `responses` que hoy confían en el rol `authenticated` a secas.
+
+---
+
+**RESUELTO · 2026-08-18.** Se cierra por una vía distinta a la propuesta aquí. En vez de
+desactivar el registro y confiar en la convención operativa, **el acceso pasa a ser la cuenta de
+Google de la empresa**, con tres capas: el consent screen *Internal* del cliente OAuth en Google
+Cloud, un hook `before-user-created` en Postgres que rechaza cualquier dominio que no sea
+`interactius.com` (migración `20260818090000`), e `isTeamEmail()` en el middleware, en las APIs de
+editor y en `requireUser()`. El proveedor de email queda desactivado.
+
+Eso responde al párrafo *"lo que hay que escribir en alguna parte"*: la regla ya no descansa en una
+convención no codificada, sino en un fichero del repositorio que se revisa en un PR. El
+`requireTeam()` que aquí se planteaba como opcional **sí se implementó**, con otro nombre.
+
+Verificado: alta con un `@gmail.com` → **403** con el mensaje del hook, y `auth.users` no sube.
+
+**Riesgo residual, y no es pequeño: la baja no es instantánea.** Supabase no revalida contra Google
+en cada refresco y sus refresh tokens no caducan por defecto, así que **suspender a alguien en
+Google Admin no le cierra la sesión del workspace**. Los controles que lo resolverían —*time-box
+user sessions* e *inactivity timeout*— son de plan **Pro**, y la organización está en **free**. Al
+dar de baja a alguien hay que **borrar o banear su fila en Supabase → Auth → Users**. Está escrito
+en `README.md`, en `.env.example` y en `docs/features/workspace-login-google.md`, que es donde lo
+va a buscar quien lo necesite.
 
 ---
 
@@ -388,7 +420,7 @@ Los pasos 3, 4 y 5 van **en el mismo PR y en ese orden**: invertirlo deja el wor
 
 ### Siguiente — importante, requiere planificación · ~1 semana
 
-CI con `type-check` + `test` + `build` y protección de rama **[TRV-03]** · configurar ESLint y arreglar el script · `supabase db pull` para materializar las 8 migraciones **[TRV-09]** · helper `dbFail()` con `console.error` en los 21 retornos **[QA-01]** · rate limiting por IP **[ESC-01]** · `requireTeam()` **[SEC-02b]** · error boundaries **[TRV-14]** · backoff y tope en el autosave **[QA-02]** · estado de error de carga en `DeckStudio` **[QA-03]** · quitar el SDK del visor **[PERF-03]** · cabeceras de seguridad **[SEC-06]**.
+CI con `type-check` + `test` + `build` y protección de rama **[TRV-03]** · configurar ESLint y arreglar el script · `supabase db pull` para materializar las 8 migraciones **[TRV-09]** · helper `dbFail()` con `console.error` en los 21 retornos **[QA-01]** · rate limiting por IP **[ESC-01]** · `requireTeam()` **[SEC-02b]** (hecho el 18/08 como `isTeamEmail()`) · error boundaries **[TRV-14]** · backoff y tope en el autosave **[QA-02]** · estado de error de carga en `DeckStudio` **[QA-03]** · quitar el SDK del visor **[PERF-03]** · cabeceras de seguridad **[SEC-06]**.
 
 ### Después — deuda estructural · a decidir
 

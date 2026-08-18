@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { User } from '@supabase/supabase-js';
+import { isTeamEmail } from '@/lib/auth/team';
 
 function env() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -56,10 +57,16 @@ export async function getUser(): Promise<User | null> {
   return data.user ?? null;
 }
 
-/* Route Handler guard: returns a 401 response when there is no session, else null. */
+/* Route Handler guard: 401 si no hay sesión de equipo, null si la hay.
+
+   "De equipo" es sesión Y dominio. Poner el `isTeamEmail` aquí y no en cada handler es
+   deliberado: los nueve que ya llaman a `requireUser()` heredan la comprobación sin tocarlos, y
+   el que se escriba mañana la hereda también. */
 export async function requireUser(): Promise<NextResponse | null> {
   const user = await getUser();
-  if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  if (!user || !isTeamEmail(user.email)) {
+    return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  }
   return null;
 }
 
