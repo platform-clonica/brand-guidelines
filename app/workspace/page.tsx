@@ -2,12 +2,17 @@ import type { Metadata } from 'next';
 import { GROUPS, appsIn } from '@/lib/workspace/catalog';
 import { AppTile } from '@/components/workspace/AppTile';
 import { BrandMark } from '@/components/studio/BrandMark';
-import { LogoutButton } from '@/components/studio/LogoutButton';
+import { UserMenu, type SessionUser } from '@/components/studio/UserMenu';
+import { getUser } from '@/lib/supabase/server';
 import '@/components/workspace/workspace.css';
 
 /* Dispatcher: la pantalla a la que se llega al iniciar sesión (lib/auth/safeNext.ts).
-   Server component puro — los enlaces son <a> y cerrar sesión es un form POST, así que la página
-   no embarca JavaScript de cliente. El acceso lo controla middleware.ts. */
+   El acceso lo controla middleware.ts.
+
+   Deja de ser estática y de ser JavaScript cero, y las dos cosas son consecuencia de lo mismo:
+   la cabecera muestra la foto de quien ha entrado. Leer la sesión obliga a renderizar por
+   petición, y el menú desplegable necesita cliente. Lo único que se envía al navegador es
+   UserMenu; las tarjetas siguen siendo server components y los enlaces siguen siendo <a>. */
 
 /* Descripción validada con el motor de tono del repo (lib/eval.ts): 21 palabras, dentro del rango
    de sentenceLength (15-22), score 100, sin lista roja ni puntuación prohibida.
@@ -29,7 +34,20 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  /* El middleware garantiza que aquí hay sesión de equipo; los `??` son por si acaso, no por si
+     no. Google manda `full_name`/`name` y `avatar_url`/`picture` — se leen los dos nombres porque
+     el proveedor puebla ambos y no conviene depender de cuál. */
+  const user = await getUser();
+  const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
+  const str = (k: string) => (typeof meta[k] === 'string' ? (meta[k] as string) : null);
+
+  const sesion: SessionUser = {
+    name: str('full_name') ?? str('name') ?? user?.email ?? 'Cuenta',
+    email: user?.email ?? '',
+    avatarUrl: str('avatar_url') ?? str('picture'),
+  };
+
   return (
     <div className="ix-workspace">
       {/* Misma cabecera que las landings de las herramientas: barra con filete inferior,
@@ -39,7 +57,7 @@ export default function HomePage() {
           <BrandMark height={22} />
           <span className="ixw-sr">Interactius</span>
         </h1>
-        <LogoutButton className="ixw-header__logout" />
+        <UserMenu user={sesion} className="ixw-header__logout" />
       </header>
 
       <main className="ixw-main">

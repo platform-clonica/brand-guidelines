@@ -9,22 +9,34 @@ const MONO = 'var(--font-ibm-plex-mono, monospace)';
    Estaba copiado en DeckGallery y en FormGallery; el dispatcher habría sido la tercera copia.
 
    Dos variantes:
-   - `bar`    — el botón rectangular de las cabeceras de las galerías.
-   - `avatar` — el círculo del dispatcher (/home). Es un botón de salir directo, no un menú:
-                decisión tomada a sabiendas de que un clic accidental cierra la sesión. */
+   - `bar`  — el botón rectangular de las cabeceras de las galerías.
+   - `menu` — la fila dentro del desplegable de UserMenu, en el dispatcher.
+
+   Había una tercera, `avatar`: un círculo con icono de apagado que cerraba la sesión de un clic.
+   No la usaba nadie —el dispatcher montaba `bar`— y su comentario defendía una decisión que se ha
+   revertido: ahora la foto del usuario abre un menú, precisamente para que cerrar sesión exija
+   intención y no se dispare con un clic accidental. Se retira en vez de dejar código muerto que
+   documenta lo contrario de lo que hace la aplicación. */
 export function LogoutButton({
   variant = 'bar',
   className,
 }: {
-  variant?: 'bar' | 'avatar';
+  variant?: 'bar' | 'menu';
   className?: string;
 }) {
-  const isAvatar = variant === 'avatar';
+  const isMenu = variant === 'menu';
 
   return (
-    <form action="/workspace/logout" method="post" className={className}>
-      <button type="submit" title="Cerrar sesión" aria-label="Cerrar sesión" style={isAvatar ? avatar : bar}>
-        {isAvatar ? <PowerIcon /> : 'Cerrar sesión'}
+    <form action="/workspace/logout" method="post" className={className} style={isMenu ? { display: 'block' } : undefined}>
+      <button
+        type="submit"
+        title="Cerrar sesión"
+        aria-label="Cerrar sesión"
+        role={isMenu ? 'menuitem' : undefined}
+        style={isMenu ? menuRowBtn : bar}
+      >
+        {isMenu && <PowerIcon />}
+        Cerrar sesión
       </button>
     </form>
   );
@@ -42,18 +54,21 @@ const bar: CSSProperties = {
   textTransform: 'uppercase',
 };
 
-const avatar: CSSProperties = {
+/* Fila del desplegable: ancho completo, sin filete propio — el panel ya lo pone. */
+const menuRowBtn: CSSProperties = {
   appearance: 'none',
   cursor: 'pointer',
-  display: 'grid',
-  placeItems: 'center',
-  width: 40,
-  height: 40,
-  borderRadius: '50%',
-  border: `1px solid ${colors.ash}`,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 9,
+  width: '100%',
+  border: 'none',
   background: 'transparent',
-  color: colors.ash,
-  padding: 0,
+  color: colors.dark,
+  padding: '11px 14px',
+  font: `500 11px/1 ${MONO}`,
+  letterSpacing: '.04em',
+  textAlign: 'left',
 };
 
 function PowerIcon() {
