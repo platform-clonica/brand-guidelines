@@ -11,21 +11,24 @@
 | Task | Estado |
 |---|---|
 | 0 · Versionar el plan | ✅ `1a932f5` |
-| 1 · Panel Google Cloud + Supabase | ⏳ **manual — bloquea la verificación de 2, 5 y 7** |
-| 2 · Hook de dominio | ✅ escrita, aplicada y privilegios verificados (`5445947`). ⏳ falta **registrarla** en Authentication → Hooks, y la prueba de rechazo hasta entonces |
-| 3 · `lib/auth/team.ts` | ✅ `69b465f` · 5 tests en verde |
-| 4 · Callback de OAuth | ✅ `baf2650` · build lo emite como ruta dinámica |
-| 5 · Botón de Google | ✅ `57c1048`. ⏳ falta probar el flujo real (necesita Task 1) |
+| 1 · Panel Google Cloud + Supabase | ✅ manual. El Client Secret quedó vacío en el primer intento: el interruptor se veía activo y `/auth/v1/settings` decía `google: true`, pero `/auth/v1/authorize` devolvía **400 `missing OAuth secret`** |
+| 2 · Hook de dominio | ✅ `5445947` · aplicada, registrada y probada: alta con `@gmail.com` → **403**, `auth.users` no sube |
+| 3 · `lib/auth/team.ts` | ✅ `69b465f` · 5 tests |
+| 4 · Callback de OAuth | ✅ `baf2650` |
+| 5 · Botón de Google | ✅ `57c1048` · login real verificado |
 | 6 · Dominio en el gate | ✅ `cdb9426` |
-| 7 · Seam `created_by` | ✅ `3f29588` · aplicada y verificada: **0 filas sin dueño** en las 4 tablas. ⏳ falta comprobar que una pieza nueva lleva el uuid de Google |
-| 8 · Retirar la contraseña | ⛔ **no empezada, a propósito** — su primer paso es "comprobar que la Task 5 funciona de verdad" |
-| 9 · Documentación | ⛔ no empezada |
-| 10 · Cerrar la puerta vieja | ⛔ no empezada |
+| 7 · Seam `created_by` | ✅ `3f29588` · 0 filas sin dueño; una pieza nueva lleva el uuid de Google |
+| 8 · Retirar la contraseña | ✅ `fc2297a` · cero `signInWithPassword` en el repo |
+| 9 · Documentación | ✅ `c530562` · doc nuevo, README, `.env.example`, urls, migraciones y auditoría |
+| 10 · Cerrar la puerta vieja | ⏳ en curso — desactivar el provider `email` y desplegar |
 
-`npm run type-check`, `npm run lint` (0 errores) y `npm test` (240/240) en verde. `main` sin tocar.
+**Verificado el 18/08:** el alta es automática (`carlos.ruiz@interactius.com` se creó sola con
+provider `google`, sin tocar el panel). `type-check`, `lint` (0 errores), `test` (241/241) y `build`
+en verde. Regresiones de superficies públicas comprobadas: visor **200**, `/timer` **200**,
+`/api/brand.json` **200**, manual **200**; internas **401**; las cuatro redirecciones legacy, **308**.
 
-**La contraseña sigue funcionando.** Nada de lo desplegable se ha desplegado y el provider `email`
-sigue activo, así que el acceso actual no ha cambiado.
+> Un 500 del visor durante las pruebas resultó ser caché de `.next` corrompida por correr `build`
+> con el `dev` levantado, no una regresión. Con `.next` limpio, **200**.
 
 ## Context
 
