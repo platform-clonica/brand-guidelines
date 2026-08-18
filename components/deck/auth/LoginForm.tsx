@@ -1,62 +1,62 @@
 'use client';
-import { useState, type FormEvent } from 'react';
-import Link from 'next/link';
+import { useState } from 'react';
 import { supabaseBrowser } from '@/lib/supabase/client';
 import { safeNext } from '@/lib/auth/safeNext';
+import { TEAM_DOMAIN } from '@/lib/auth/team';
 import * as s from './authUi';
 
-/* Only allow same-app redirects into the team tools (avoid open-redirect) — lib/auth/safeNext.ts. */
+/* Acceso al workspace: la cuenta de Google de Interactius, y nada más.
 
-export function LoginForm({ next }: { next: string | null }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+   El `hd` es SOLO comodidad de interfaz — le dice a Google que preseleccione la cuenta del dominio
+   en el selector. No es una barrera y no debe contarse como tal: la persona puede editar la URL de
+   consentimiento y quitarlo. Lo que de verdad cierra la puerta son el consent screen "Internal"
+   del cliente OAuth, el hook before-user-created en Postgres, e isTeamEmail() en el gate.
+
+   `prompt: 'select_account'` fuerza el selector en vez de reusar en silencio la última cuenta de
+   Google del navegador. En equipos donde conviven la cuenta personal y la de empresa, entrar con
+   la equivocada sin enterarse es el fallo más habitual. */
+
+const ERRORS: Record<string, string> = {
+  oauth: 'No se pudo completar el acceso. Inténtalo otra vez.',
+  dominio: `Esa cuenta no es de ${TEAM_DOMAIN}. Entra con tu cuenta de Interactius.`,
+};
+
+export function LoginForm({ next, error }: { next: string | null; error?: string | null }) {
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
+  const message = failed ?? (error ? (ERRORS[error] ?? ERRORS.oauth) : null);
+
+  async function onGoogle() {
     setBusy(true);
-    const { error } = await supabaseBrowser().auth.signInWithPassword({ email: email.trim(), password });
-    if (error) {
+    setFailed(null);
+    const { error: oauthError } = await supabaseBrowser().auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/workspace/callback?next=${encodeURIComponent(safeNext(next))}`,
+        queryParams: { hd: TEAM_DOMAIN, prompt: 'select_account' },
+      },
+    });
+    // En el camino feliz el navegador ya se ha ido a Google y esto no llega a ejecutarse.
+    if (oauthError) {
+      console.error('[auth:login] signInWithOAuth', oauthError.message);
       setBusy(false);
-      setError('Email o contraseña incorrectos.');
-      return;
+      setFailed(ERRORS.oauth);
     }
-    // Full navigation so the fresh session cookie reaches the middleware gate.
-    window.location.assign(safeNext(next));
   }
 
   return (
-    <form onSubmit={onSubmit} style={s.card}>
+    <div style={s.card}>
       <div style={s.title}>Iniciar sesión</div>
-      {/* Este login ya no es solo del DeckMaker: da acceso a todas las herramientas internas. */}
       <div style={s.subtitle}>Acceso a las herramientas de Interactius.</div>
 
-      {error && <div style={s.errorBox}>{error}</div>}
+      {message && <div style={s.errorBox}>{message}</div>}
 
-      <div style={s.field}>
-        <label style={s.label} htmlFor="email">Email</label>
-        <input
-          id="email" type="email" autoComplete="username" required
-          value={email} onChange={(e) => setEmail(e.target.value)} style={s.input}
-        />
-      </div>
-      <div style={s.field}>
-        <label style={s.label} htmlFor="password">Contraseña</label>
-        <input
-          id="password" type="password" autoComplete="current-password" required
-          value={password} onChange={(e) => setPassword(e.target.value)} style={s.input}
-        />
-      </div>
-
-      <button type="submit" disabled={busy} style={busy ? s.submitBusy : s.submit}>
-        {busy ? 'Entrando…' : 'Entrar'}
+      <button type="button" onClick={onGoogle} disabled={busy} style={busy ? s.submitBusy : s.submit}>
+        {busy ? 'Conectando…' : 'Continuar con Google'}
       </button>
 
-      <div style={s.footer}>
-        <Link href="/workspace/forgot" style={s.link}>¿Olvidaste tu contraseña?</Link>
-      </div>
-    </form>
+      <div style={s.footer}>Con tu cuenta @{TEAM_DOMAIN}.</div>
+    </div>
   );
 }
