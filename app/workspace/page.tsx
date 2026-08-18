@@ -9,9 +9,24 @@ import '@/components/workspace/workspace.css';
    Server component puro — los enlaces son <a> y cerrar sesión es un form POST, así que la página
    no embarca JavaScript de cliente. El acceso lo controla middleware.ts. */
 
+/* Descripción validada con el motor de tono del repo (lib/eval.ts): 21 palabras, dentro del rango
+   de sentenceLength (15-22), score 100, sin lista roja ni puntuación prohibida.
+
+   Lleva `openGraph` propio a propósito. Next NO fusiona ese objeto con el del layout raíz: sin
+   esto, un enlace al workspace pegado en Slack se anunciaría como "Interactius · Brand Guidelines
+   2026", que es otra cosa. La imagen se repite para que la tarjeta no salga vacía. */
 export const metadata: Metadata = {
-  title: 'Interactius',
+  title: 'Workspace de Interactius',
+  description:
+    'Punto de entrada a las herramientas internas de Interactius: presentaciones, formularios y reescritura de textos con la voz de la marca.',
   robots: { index: false, follow: false },
+  openGraph: {
+    title: 'Workspace de Interactius',
+    description:
+      'Punto de entrada a las herramientas internas de Interactius: presentaciones, formularios y reescritura de textos con la voz de la marca.',
+    type: 'website',
+    images: [{ url: '/og-default.png', width: 1200, height: 630 }],
+  },
 };
 
 export default function HomePage() {
