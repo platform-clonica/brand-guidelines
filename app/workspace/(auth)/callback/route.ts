@@ -32,18 +32,42 @@ export async function GET(req: NextRequest) {
   const origin =
     process.env.NODE_ENV === 'development' || !forwardedHost ? url.origin : `https://${forwardedHost}`;
 
-  const fail = (reason: 'oauth' | 'dominio') =>
+  const fail = (reason: 'oauth' | 'dominio' | 'altas') =>
     NextResponse.redirect(`${origin}/workspace/login?error=${reason}`);
 
-  // Google devuelve `error=access_denied` si la persona cancela en la pantalla de consentimiento.
-  if (!code) return fail('oauth');
+  /* Traduce el motivo real a uno de nuestros tres slugs, y lo DEJA EN EL LOG.
+
+     Esto no estaba y costó un diagnóstico: cuando Supabase rechaza el intercambio, redirige aquí
+     sin `code` y con el motivo en `error_description`. La primera versión veía "no hay code" y
+     devolvía un genérico, así que dos causas muy distintas —el registro desactivado y el hook
+     rechazando un dominio— llegaban al usuario como la misma frase inútil. El motivo real estaba
+     solo en los logs de Supabase, que no es donde mira quien no puede entrar. */
+  const clasificar = (detalle: string): 'oauth' | 'dominio' | 'altas' => {
+    const d = detalle.toLowerCase();
+    if (d.includes('signups not allowed') || d.includes('signup_disabled')) return 'altas';
+    if (d.includes('interactius')) return 'dominio'; // el mensaje del hook de dominio
+    return 'oauth';
+  };
+
+  /* Supabase devuelve el fallo como parámetros de query, no como excepción. También llega por
+     aquí el `access_denied` de quien cancela en la pantalla de consentimiento de Google. */
+  const provErr = url.searchParams.get('error_description') ?? url.searchParams.get('error');
+  if (provErr) {
+    console.error('[auth:callback] proveedor:', provErr);
+    return fail(clasificar(provErr));
+  }
+
+  if (!code) {
+    console.error('[auth:callback] sin code y sin error: petición incompleta');
+    return fail('oauth');
+  }
 
   const sb = await supabaseAuthServer();
 
   const { error } = await sb.auth.exchangeCodeForSession(code);
   if (error) {
-    console.error('[auth:callback] exchange', error.message);
-    return fail('oauth');
+    console.error('[auth:callback] exchange:', error.message);
+    return fail(clasificar(error.message));
   }
 
   /* Tercera capa de la barrera de dominio. El hook `before-user-created` ya impide que se cree una

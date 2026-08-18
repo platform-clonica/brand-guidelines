@@ -16,9 +16,13 @@ import * as s from './authUi';
    Google del navegador. En equipos donde conviven la cuenta personal y la de empresa, entrar con
    la equivocada sin enterarse es el fallo más habitual. */
 
+/* Tres motivos, tres mensajes. El genérico solo se usa cuando de verdad no sabemos qué pasó: un
+   mensaje que no distingue causas convierte cualquier incidencia en una sesión de depuración. */
 const ERRORS: Record<string, string> = {
   oauth: 'No se pudo completar el acceso. Inténtalo otra vez.',
   dominio: `Esa cuenta no es de ${TEAM_DOMAIN}. Entra con tu cuenta de Interactius.`,
+  altas: 'Las altas están desactivadas en Supabase (Authentication → "Allow new users to sign up"). '
+       + 'Tu cuenta no existe todavía y no se puede crear hasta que se reactiven.',
 };
 
 export function LoginForm({ next, error }: { next: string | null; error?: string | null }) {

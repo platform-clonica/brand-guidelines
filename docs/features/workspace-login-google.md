@@ -95,6 +95,17 @@ Nada de esto está en el repo; si se pierde, el acceso deja de funcionar.
   interruptor se ve encendido y `/auth/v1/settings` dice `google: true`, pero `/auth/v1/authorize`
   responde **400 `missing OAuth secret`**. Pasó al configurarlo.
 - *Providers → Email*: **desactivado**.
+- *Sign In / Providers → "Allow new users to sign up"*: **ACTIVADO**. ⚠️ Cuidado con este
+  interruptor: es **global, no por proveedor**. Desactivarlo no cierra "el registro por email",
+  cierra la creación de cualquier usuario, **también por Google** — con lo que el alta automática,
+  que es el motivo entero de este montaje, deja de funcionar. Los usuarios que ya existen siguen
+  entrando, así que el fallo no se ve hasta que lo prueba alguien nuevo, y llega como un
+  `422: Signups not allowed for this instance` en los logs de Auth.
+
+  Que el registro esté abierto **no** reabre SEC-02: el agujero era registro abierto *más*
+  proveedor de email *más* cero comprobación de dominio. Con el email desactivado, el consent
+  screen en Internal y el hook rechazando otros dominios, el registro abierto es exactamente lo que
+  el diseño necesita. **El hook existe para que pueda estarlo.**
 - *Hooks → Before User Created → Postgres function* → `public.hook_restrict_signup_by_email_domain`.
 - *URL Configuration → Redirect URLs*:
   ```
@@ -137,3 +148,10 @@ acceso por herramienta, roles admin/editor/lector), documentados en
 - `/workspace/{forgot,reset}` y `/deck/{forgot,reset}` → **308** al login.
 - Login real con Google → sesión y aterrizaje en `/workspace`; el usuario se crea solo.
 - Una propuesta creada después lleva `created_by` = el uuid de la cuenta de Google.
+
+**Incidente el mismo día del despliegue.** Al desactivar el proveedor de email, `disable_signup`
+quedó en `true` y las altas dejaron de funcionar: dos personas se quedaron fuera con un error
+genérico mientras quienes ya tenían cuenta entraban con normalidad. Se arregló reactivando
+*"Allow new users to sign up"*. De ahí salió también la mejora del callback: ahora distingue entre
+registro desactivado, dominio rechazado y fallo genérico, y **deja el motivo real en el log del
+servidor** en vez de solo en los logs de Supabase.

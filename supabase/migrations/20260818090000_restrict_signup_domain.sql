@@ -25,6 +25,12 @@
 -- es SOLO comodidad de interfaz: preselecciona la cuenta del dominio en el selector. No es una
 -- barrera de seguridad y no debe contarse como una de las tres capas.
 --
+-- ⚠️ ESTE HOOK EXIGE QUE EL REGISTRO SIGA ABIERTO. `disable_signup` debe quedarse en `false`.
+-- Ese interruptor es global, no por proveedor: cerrarlo no bloquea "las altas por email" —el
+-- proveedor de email ya está desactivado— sino TODAS, Google incluido, y entonces nadie nuevo
+-- puede entrar. Quien ya tiene cuenta sigue entrando, así que el fallo pasa desapercibido hasta
+-- que lo prueba alguien nuevo. Pasó el 18/08, el día del despliegue.
+--
 -- Registro (manual, una vez):
 --   Supabase → Authentication → Hooks → Before User Created → Postgres function
 --   → public.hook_restrict_signup_by_email_domain

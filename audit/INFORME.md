@@ -218,6 +218,14 @@ convención no codificada, sino en un fichero del repositorio que se revisa en u
 
 Verificado: alta con un `@gmail.com` → **403** con el mensaje del hook, y `auth.users` no sube.
 
+**Matiz importante, aprendido a base de romperlo.** El registro **sigue abierto a propósito**
+(`disable_signup: false`), y así debe quedarse. Cerrarlo con el interruptor *"Allow new users to
+sign up"* no endurece nada —el proveedor de email ya está desactivado— y en cambio **impide el alta
+por Google**, que es el mecanismo entero: quien ya tiene cuenta sigue entrando y quien no la tiene
+se queda fuera con un `422: Signups not allowed for this instance`. Quien mire este proyecto y vea
+`disable_signup: false` puede pensar que SEC-02 sigue vivo: no lo está. El hook de dominio es lo
+que hace seguro dejarlo abierto.
+
 **Riesgo residual, y no es pequeño: la baja no es instantánea.** Supabase no revalida contra Google
 en cada refresco y sus refresh tokens no caducan por defecto, así que **suspender a alguien en
 Google Admin no le cierra la sesión del workspace**. Los controles que lo resolverían —*time-box
