@@ -6,6 +6,27 @@
 
 ---
 
+## Estado de ejecución · 2026-08-18
+
+| Task | Estado |
+|---|---|
+| 0 · Versionar el plan | ✅ `1a932f5` |
+| 1 · Panel Google Cloud + Supabase | ⏳ **manual — bloquea la verificación de 2, 5 y 7** |
+| 2 · Hook de dominio | ✅ escrita, aplicada y privilegios verificados (`5445947`). ⏳ falta **registrarla** en Authentication → Hooks, y la prueba de rechazo hasta entonces |
+| 3 · `lib/auth/team.ts` | ✅ `69b465f` · 5 tests en verde |
+| 4 · Callback de OAuth | ✅ `baf2650` · build lo emite como ruta dinámica |
+| 5 · Botón de Google | ✅ `57c1048`. ⏳ falta probar el flujo real (necesita Task 1) |
+| 6 · Dominio en el gate | ✅ `cdb9426` |
+| 7 · Seam `created_by` | ✅ `3f29588` · aplicada y verificada: **0 filas sin dueño** en las 4 tablas. ⏳ falta comprobar que una pieza nueva lleva el uuid de Google |
+| 8 · Retirar la contraseña | ⛔ **no empezada, a propósito** — su primer paso es "comprobar que la Task 5 funciona de verdad" |
+| 9 · Documentación | ⛔ no empezada |
+| 10 · Cerrar la puerta vieja | ⛔ no empezada |
+
+`npm run type-check`, `npm run lint` (0 errores) y `npm test` (240/240) en verde. `main` sin tocar.
+
+**La contraseña sigue funcionando.** Nada de lo desplegable se ha desplegado y el provider `email`
+sigue activo, así que el acceso actual no ha cambiado.
+
 ## Context
 
 Hoy `/workspace` se abre con **email + contraseña de Supabase**, y en `auth.users` hay
