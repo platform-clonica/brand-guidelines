@@ -11,9 +11,13 @@ const intl = createMiddleware(routing);
 const EDITOR_API = ['/api/decks', '/api/clients', '/api/images', '/api/translate', '/api/rewrite', '/api/eval', '/api/forms'];
 const isEditorApi = (p: string) => EDITOR_API.some((base) => p === base || p.startsWith(base + '/'));
 
-/* Páginas de /workspace alcanzables sin sesión: son la propia puerta de entrada. */
+/* Páginas de /workspace alcanzables sin sesión: son la propia puerta de entrada.
+   `/workspace/callback` es el retorno de Google y entra aquí por obligación: llega SIN sesión —
+   la está creando— así que si el gate lo tratara como una página normal lo mandaría al login y el
+   `?code=` se perdería en el rebote. */
 const isAuthPage = (p: string) =>
-  p === '/workspace/login' || p === '/workspace/forgot' || p === '/workspace/reset';
+  p === '/workspace/login' || p === '/workspace/callback' ||
+  p === '/workspace/forgot' || p === '/workspace/reset';
 
 /* El visor de presentaciones es PÚBLICO y NO se ha movido a /workspace: su URL se manda a
    clientes, se firma desde ahí y ya hay enlaces circulando. Ver docs/features/urls-workspace.md. */
