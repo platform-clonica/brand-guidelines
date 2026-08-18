@@ -131,6 +131,31 @@ DeckStudio gana estado y se divide en piezas. Estado nuevo: `currentDeckId`, `me
 - **Coherencia de rutas** con los planes de login/firma: unificar en `/deck` (editor) y decidir la ruta del viewer del cliente (`/deck/v/<id>`).
 - **Subida de SVG**: validar tipo/size; SVG conlleva riesgo XSS si se inyecta inline — preferir servirlo como `<img src>` desde Storage, no inline.
 
+## Quién creó cada pieza — `created_by` (2026-08-18)
+
+`decks`, `clients`, `images` y `forms` tienen una columna `created_by uuid references auth.users(id)`
+con `default auth.uid()` y `on delete set null`
+(`supabase/migrations/20260818100000_created_by_seam.sql`).
+
+**No filtra nada.** Las políticas siguen siendo `for all to authenticated using (true)`: dentro del
+workspace se sigue viendo y editando todo. La columna solo guarda el dato, que hasta ahora se
+tiraba.
+
+Se rellena sola, sin tocar los handlers, porque los seis de editor insertan con
+`supabaseAuthServer()` —la sesión del usuario— y no con la clave anónima. Esa regla está escrita en
+`lib/supabase/server.ts:16-27`.
+
+Se añadió el mismo día que el login con Google, y a propósito: hasta entonces había **una sola
+cuenta compartida**, así que el backfill de las 12 propuestas, 14 clientes, 44 imágenes y 1
+formulario existentes era exacto. Con varias personas ya no se habría podido reconstruir — quién
+creó qué no estaba en la base de datos, ni en git, ni en ningún log.
+
+`signatures` y `responses` quedan fuera a propósito: quien firma una propuesta o responde un
+formulario es un cliente sin cuenta.
+
+Es el prerrequisito de los permisos que se decidieron ese día y todavía no existen — ver
+[el plan](../superpowers/plans/2026-08-18-login-google-workspace.md) §Permisos.
+
 ## Fases de implementación (orden metódico)
 1. **Supabase**: crear proyecto/tablas (`clients`, `decks`), bucket `deck-assets`, políticas MVP; variables de entorno.
 2. **Capa de datos**: `lib/supabase/*` + Route Handlers CRUD (`/api/decks`, `/api/clients`) + `lib/decks/api.ts`. Probar con `curl`.

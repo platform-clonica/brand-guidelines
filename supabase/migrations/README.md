@@ -39,6 +39,11 @@ qué ni cuándo.
 `20260817120000_public_deck_rpcs.sql` es **aditiva** y se puede aplicar en cualquier momento: solo
 crea funciones.
 
+`20260818090000_restrict_signup_domain.sql` (hook de dominio del login con Google) y
+`20260818100000_created_by_seam.sql` (columna `created_by`) también son **aditivas**. La primera no
+hace nada hasta registrarla en Authentication → Hooks; la segunda añade columnas con `default
+auth.uid()` y no cambia ninguna política — nadie filtra por ese dato todavía.
+
 `20260817121000_tighten_rls.sql` y `20260817122000_tighten_storage.sql` son **restrictivas** y
 rompen el código que había antes. Se aplican **después** de que esté desplegado el commit que
 migra los handlers a `supabaseAuthServer()` y el visor público a las RPC. Aplicarlas antes deja

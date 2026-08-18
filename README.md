@@ -25,6 +25,7 @@ Manual de marca **vivo y _AI-ready_** de Interactius. Una sola fuente de verdad 
 - [Generador de presentaciones](#generador-de-presentaciones)
 - [Generación de assets (kits y formas)](#generación-de-assets-kits-y-formas)
 - [Despliegue](#despliegue)
+- [Acceso al workspace](#acceso-al-workspace)
 - [Documentación ampliada](#documentación-ampliada)
 
 ---
@@ -149,7 +150,7 @@ app/
   [locale]/
     layout.tsx               Provider i18n + Sidebar + MobileHeader + MenuOverlay
     page.tsx                 Las 15 secciones en secuencia
-  workspace/                 Área interna, con login (ver más abajo)
+  workspace/                 Área interna, con acceso por cuenta de Google (ver más abajo)
     page.tsx                 Lanzador de herramientas
     deckmak_r/               Generador de presentaciones
     formmak_r/               Editor de formularios
@@ -245,7 +246,7 @@ Detalle completo en [docs/API.md](docs/API.md).
 
 ## Generador de presentaciones
 
-Disponible en `/workspace/deckmak_r`, detrás del login de equipo. Escribes Markdown a la izquierda y obtienes un deck 16:9 a la derecha. El pipeline es **`parse → classify → compile → render`**, 100 % determinista:
+Disponible en `/workspace/deckmak_r`, detrás del acceso de equipo. Escribes Markdown a la izquierda y obtienes un deck 16:9 a la derecha. El pipeline es **`parse → classify → compile → render`**, 100 % determinista:
 
 - **17 layouts** detectados automáticamente: portada, statement, bullets, columnas, split, gantt, presupuesto, roadmap por fases, contexto, el reto, objetivos, cierre, y páginas comerciales inyectadas (manifesto, equipo, clientes, aceptación).
 - **Diagramas Gantt** y **tablas de presupuesto** con autosuma, escritos en bloques de código.
@@ -288,8 +289,31 @@ el panel. Ojo con el rollback: revertir un despliegue en Netlify **no** revierte
 
 ---
 
+## Acceso al workspace
+
+Se entra con la **cuenta de Google de Interactius**. No hay contraseña, ni recuperación, ni panel de
+alta: **la primera vez que alguien de `@interactius.com` entra, su usuario se crea solo**.
+
+Tres capas garantizan que solo entre gente de la casa — el consent screen *Internal* del cliente
+OAuth en Google Cloud, un hook `before-user-created` en Postgres, y `isTeamEmail()` en el gate del
+middleware. Las dos primeras miran el alta; la tercera, cada petición.
+
+> **La baja NO es automática.** Suspender a alguien en Google Admin **no le cierra la sesión**:
+> Supabase no revalida contra Google y sus refresh tokens no caducan por defecto. Hay que borrar o
+> banear su fila en **Supabase → Auth → Users**. Es el único paso manual que queda.
+
+Dentro del workspace **no hay permisos**: quien entra lo ve todo. Las piezas guardan quién las creó
+(`created_by`), pero ese dato todavía no filtra nada.
+
+El detalle completo —configuración de Google Cloud y Supabase, y por qué el PKCE se cierra en el
+servidor— está en
+[docs/features/workspace-login-google.md](docs/features/workspace-login-google.md).
+
+---
+
 ## Documentación ampliada
 
+- [docs/features/workspace-login-google.md](docs/features/workspace-login-google.md) — el acceso al workspace: las tres capas, la configuración manual y por qué la baja no es automática.
 - [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md) — arquitectura técnica completa, flujo de datos y convenciones.
 - [docs/API.md](docs/API.md) — referencia de los endpoints `brand.json`, `llms.txt` y `eval`.
 - [docs/PRESENTACIONES.md](docs/PRESENTACIONES.md) — interno del generador de decks (pipeline, layouts, tests).

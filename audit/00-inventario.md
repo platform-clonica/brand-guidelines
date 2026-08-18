@@ -95,7 +95,7 @@ Runtime: **todo Node**. No hay ni una ruta declarada como Edge.
 | `/workspace/deckmak_r` | Static | sí | + `/[id]` dinámica, 237 KB |
 | `/workspace/formmak_r` | Static | sí | + `/[id]` dinámica, **265 KB, la más pesada de todas** |
 | `/workspace/rewrit_r` | Static | sí | 108 KB |
-| `/workspace/{login,forgot,reset}` | Dinámica | no (son la puerta) | |
+| `/workspace/{login,callback}` | Dinámica | no (son la puerta) | `forgot` y `reset` se retiraron el 18/08 con el login de Google |
 | `/workspace/logout` | Dinámica | sí | |
 
 ### API
