@@ -17,7 +17,7 @@
      de marca y no deben salir de estos iconos. Si añades una herramienta, su acento se declara
      ALLÍ antes que aquí. */
 
-import type { ReactElement } from 'react';
+import { cloneElement, type ReactElement } from 'react';
 
 const ICONS: Record<string, ReactElement> = {
   rewritr: (
@@ -126,6 +126,14 @@ const ICONS: Record<string, ReactElement> = {
   ),
 };
 
-export function AppIcon({ id }: { id: string }) {
-  return ICONS[id] ?? null;
+/* `size` reduce el icono para la cabecera sin tocar los SVG ni duplicarlos: sustituye la clase
+   de 72 px de la tarjeta por medidas en línea. Sin `size`, se comporta como siempre. */
+export function AppIcon({ id, size }: { id: string; size?: number }) {
+  const icon = ICONS[id];
+  if (!icon) return null;
+  if (size === undefined) return icon;
+  return cloneElement(icon, {
+    className: undefined,
+    style: { width: size, height: size, flexShrink: 0 },
+  } as Partial<ReactElement['props']>);
 }

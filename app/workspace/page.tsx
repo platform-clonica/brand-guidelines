@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { GROUPS, appsIn } from '@/lib/workspace/catalog';
 import { AppTile } from '@/components/workspace/AppTile';
-import { BrandMark } from '@/components/studio/BrandMark';
+import { ToolsMenu } from '@/components/workspace/ToolsMenu';
 import { UserMenu, type SessionUser } from '@/components/studio/UserMenu';
 import { getUser } from '@/lib/supabase/server';
 import '@/components/workspace/workspace.css';
@@ -53,8 +53,10 @@ export default async function HomePage() {
       {/* Misma cabecera que las landings de las herramientas: barra con filete inferior,
           imagotipo a la izquierda y cerrar sesión a la derecha. */}
       <header className="ixw-header">
+        {/* El imagotipo es el <h1> de la página y, al pasar por encima, el atajo a las Tools.
+            Sigue enlazando a la home: el menú acompaña al enlace, no lo sustituye. */}
         <h1 className="ixw-header__title">
-          <BrandMark height={22} />
+          <ToolsMenu />
           <span className="ixw-sr">Interactius</span>
         </h1>
         <UserMenu user={sesion} className="ixw-header__logout" />
