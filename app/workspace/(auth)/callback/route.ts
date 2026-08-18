@@ -7,12 +7,13 @@ export const dynamic = 'force-dynamic';
 
 /* GET /workspace/callback — cierra el flujo PKCE de Google y deja la sesión puesta.
 
-   Por qué en el servidor y no en el cliente, como hacía ResetForm. El cliente de navegador es
+   Por qué en el servidor. El cliente de navegador es
    `createBrowserClient` de @supabase/ssr (lib/supabase/client.ts), que guarda la sesión en COOKIES
    y no en localStorage — precisamente para que el servidor pueda leerla. Eso implica que el
    verificador PKCE también viaja en una cookie, así que el intercambio se puede hacer aquí, y
    conviene: la sesión queda escrita antes del primer render y el middleware la ve al primer
-   intento, sin el rebote que tenía el flujo anterior.
+   intento. El flujo de recuperación que había antes hacía el intercambio en el navegador y por eso
+   necesitaba un estado de "comprobando" y un rebote; aquí no hace falta ninguno de los dos.
 
    OJO con lib/supabase/server.ts:45. El `setAll` de `supabaseAuthServer()` lleva un try/catch
    porque desde un Server Component las cookies son de solo lectura. Aquí NO es el caso: un Route

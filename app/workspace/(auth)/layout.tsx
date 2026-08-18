@@ -9,8 +9,9 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/* Shared chrome for the auth screens (login / forgot / reset): centered card on the
-   warm-light brand background, con el imagotipo de Interactius encima. */
+/* Chrome de la pantalla de acceso: tarjeta centrada sobre el fondo Warm Light de marca, con el
+   imagotipo encima. Desde que se entra con Google es una sola pantalla; antes eran tres
+   (login / forgot / reset). El callback de OAuth cuelga del mismo grupo pero no renderiza nada. */
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     /* <main> y no <div>: estas pantallas no tenían NINGÚN landmark — ni main, ni nav, ni header —

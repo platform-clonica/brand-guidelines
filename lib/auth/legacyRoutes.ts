@@ -1,7 +1,12 @@
 /* Rutas antiguas → nuevas, tras mover las herramientas internas bajo /workspace.
 
-   Existe porque hay enlaces circulando: pestañas abiertas, marcadores, y sobre todo los emails
-   de recuperación de contraseña ya enviados, que apuntan a /deck/reset.
+   Existe porque hay enlaces circulando: pestañas abiertas, marcadores, y los emails de
+   recuperación de contraseña ya enviados, que apuntan a /deck/reset.
+
+   Desde que el acceso es con Google no hay contraseña que recuperar, así que `forgot` y `reset`
+   ya no existen como páginas. No se borran de este mapa: se redirigen al login. Un enlace viejo
+   que lleva a la pantalla de acceso es mejor respuesta que un 404, y aquí entran las dos
+   generaciones de la URL — la de /deck y la de /workspace.
 
    Lo que NO se redirige, y es lo importante de este fichero:
    - `/deck/{id}/view` — el visor público. Se manda a clientes, se firma desde ahí y hay enlaces
@@ -15,9 +20,12 @@ const EXACT: Record<string, string> = {
   '/home': '/workspace',
   '/deck': '/workspace/deckmak_r',
   '/deck/login': '/workspace/login',
-  '/deck/forgot': '/workspace/forgot',
-  '/deck/reset': '/workspace/reset',
   '/deck/logout': '/workspace/logout',
+  // Recuperar contraseña ya no existe: se entra con Google.
+  '/deck/forgot': '/workspace/login',
+  '/deck/reset': '/workspace/login',
+  '/workspace/forgot': '/workspace/login',
+  '/workspace/reset': '/workspace/login',
   '/forms/maker': '/workspace/formmak_r',
 };
 
