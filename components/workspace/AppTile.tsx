@@ -13,7 +13,7 @@ export function AppTile({ app }: { app: AppEntry }) {
     <>
       <AppIcon id={app.id} />
       {app.wordmark ? (
-        <Wordmark {...app.wordmark} title={app.label} height={22} muted={!app.href} align="center" />
+        <Wordmark {...app.wordmark} title={app.label} height={22} muted={!app.href} />
       ) : (
         <span className="ixw-tile__label">{app.label}</span>
       )}

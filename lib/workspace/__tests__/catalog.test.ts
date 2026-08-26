@@ -64,8 +64,14 @@ test('ningún grupo se queda vacío', () => {
 });
 
 test('appsIn respeta el orden de declaración', () => {
-  // La deshabilitada va la última: es el hueco reservado, no una herramienta más.
-  assert.deepEqual(appsIn('tools').map((a) => a.id), ['deckmakr', 'formmakr', 'rewritr', 'dsmakr']);
+  // Las deshabilitadas van las últimas: son huecos reservados, no herramientas más.
+  assert.deepEqual(appsIn('tools').map((a) => a.id), [
+    'deckmakr',
+    'formmakr',
+    'rewritr',
+    'dsmakr',
+    'socialmakr',
+  ]);
   assert.deepEqual(appsIn('links').map((a) => a.id), ['starmeapp', 'timer']);
 });
 
@@ -76,4 +82,5 @@ test('las herramientas que ya existen apuntan a sus rutas reales', () => {
   assert.equal(byId.get('rewritr')?.href, '/workspace/rewrit_r');
   assert.equal(byId.get('timer')?.href, '/timer');
   assert.equal(byId.get('dsmakr')?.href, null);
+  assert.equal(byId.get('socialmakr')?.href, null);
 });

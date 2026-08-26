@@ -71,6 +71,14 @@ export const APPS: AppEntry[] = [
     description: 'Próximamente',
     wordmark: { before: 'DSMak', after: 'r' },
   },
+  {
+    id: 'socialmakr',
+    label: 'SocialMakr',
+    group: 'tools',
+    href: null,
+    description: 'Próximamente',
+    wordmark: { before: 'SocialMak', after: 'r' },
+  },
 ];
 
 /* Los grupos, en el orden en el que se pintan. El título es el del wireframe. */

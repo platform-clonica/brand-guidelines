@@ -117,6 +117,15 @@ el acento en `colors.ash`, para la tarjeta de DSMak_r. La tarjeta llama a
 
 `DeckLogo` y `FormLogo` se quedan como están, para las cabeceras de sus herramientas.
 
+**Agosto de 2026 — el lienzo pasa a calcularse.** El `viewBox` era `0 0 250 80`, fijo. IBM Plex Mono
+avanza 0.6em por glifo y el texto va a 40px con `letter-spacing: 0.05em`, así que cada carácter
+ocupa 26px: `DeckMak_r` y `FormMak_r` (9 caracteres) cabían justos, y `SocialMak_r` (11) se salía por
+la derecha, recortado sin aviso. Ahora el ancho sale de la longitud del texto
+(`(before + 1 + after) * 26 + 16`), que para 9 caracteres da exactamente 250 — los wordmarks
+existentes no se mueven ni un píxel. Con la caja ajustada al texto, el prop `align` dejó de tener
+sentido (existía porque una marca corta como `DSMak_r` quedaba descentrada dentro de la caja de 250)
+y se retiró: la tarjeta ya centra con `align-items: center`.
+
 ### `LogoutButton`
 
 El mismo `<form action="/deck/logout" method="post">` está copiado en `DeckGallery` y en
@@ -185,7 +194,13 @@ Fiel al wireframe:
 5. El círculo cierra sesión y deja en `/deck/login`.
 6. "← Inicio" desde las dos galerías vuelve a `/workspace`.
 7. Con el teclado: el orden de tabulación recorre las cuatro tarjetas activas y el logout, saltándose
-   DSMak_r.
+   DSMak_r y SocialMak_r.
+
+## Herramientas pendientes
+
+`DSMak_r` y `SocialMak_r` (añadida en agosto de 2026) son entradas con `href: null`: tarjeta apagada,
+descripción "Próximamente", fuera del orden de tabulación. Cuando exista la herramienta basta con
+darle su `href` en `lib/workspace/catalog.ts`.
 
 ## Avisos de marca
 

@@ -2,6 +2,14 @@ import { colors } from '@/components/deck/studio/ui';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
+/* El lienzo se calcula, no se fija. IBM Plex Mono avanza 0.6em por glifo y aquí el texto va a 40px
+   con `letter-spacing: 0.05em`, así que cada carácter ocupa 24 + 2 = 26px. Con los 16px de holgura,
+   una marca de 9 caracteres (DeckMak_r, FormMak_r) da exactamente los 250 de siempre: los wordmarks
+   existentes no se mueven ni un píxel. Los más largos (SocialMak_r, 11) ensanchan el viewBox en vez
+   de salirse de él — un `viewBox` fijo los recortaba por la derecha, sin aviso. */
+const GLYPH = 26;
+const PAD = 16;
+
 /* Marca de las herramientas internas (DeckMakr, FormMakr). SVG inline para que use la IBM Plex
    Mono ya cargada por la página en vez de un @import externo, con el acento de cursor (brick).
 
@@ -14,36 +22,32 @@ export function Wordmark({
   height = 30,
   title,
   muted = false,
-  align = 'left',
 }: {
   before: string;
   after: string;
   height?: number;
   title: string;
-  /** Apagado: para una herramienta que todavía no existe (ver el dispatcher de /home). */
+  /** Apagado: para una herramienta que todavía no existe (ver el dispatcher de /workspace). */
   muted?: boolean;
-  /* El viewBox es fijo pero el texto no: una marca corta (DSMak_r, 7 caracteres) deja hueco a la
-     derecha y se ve desplazada dentro de una caja centrada. `center` la ancla al medio.
-     Por defecto `left`, que es como se alinean las marcas en las cabeceras de las herramientas. */
-  align?: 'left' | 'center';
 }) {
   const ink = muted ? colors.ash : colors.dark;
   const accent = muted ? colors.ash : colors.brick;
-  const centered = align === 'center';
+  // +1 por el guión bajo del acento, que también es un glifo.
+  const width = (before.length + 1 + after.length) * GLYPH + PAD;
 
   return (
     <svg
-      viewBox="0 0 250 80"
+      viewBox={`0 0 ${width} 80`}
       height={height}
-      width={(height * 250) / 80}
+      width={(height * width) / 80}
       role="img"
       aria-label={title}
       style={{ display: 'block' }}
     >
       <text
-        x={centered ? 125 : 0}
+        x="0"
         y="49"
-        textAnchor={centered ? 'middle' : 'start'}
+        textAnchor="start"
         fontFamily={MONO}
         fontWeight={700}
         fill={ink}
