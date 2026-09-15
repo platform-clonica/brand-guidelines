@@ -5,7 +5,7 @@
    validado, y quien lo abre tiene que pasar por compileSystem (./compile.ts). Tiparlas como `Brand`
    sería afirmar algo que nadie ha comprobado. */
 
-import type { Brand, Configs, Overrides, Tokens } from './schema.ts';
+import type { Brand, Configs, Overrides } from './schema.ts';
 
 export type DsStatus = 'draft' | 'published';
 
@@ -48,14 +48,17 @@ export type DesignSystemCreateInput =
   | { duplicateOf: string; name?: string; client?: string | null; tags?: string[] };
 
 /* `expectedUpdatedAt` es obligatorio: sin él no hay forma de detectar que otra pestaña guardó antes
-   (plan, H7). El servidor responde 409 si no coincide. */
+   (plan, H7). El servidor responde 409 si no coincide.
+
+   No hay `tokens`: los calcula el servidor con su motor cuando llegan `brand` y `overrides`, que van
+   siempre juntos y con `engineVersion`. Si el editor corre otra versión del motor (una pestaña abierta
+   durante un despliegue), el servidor responde 409 en vez de guardar tokens de un motor distinto. */
 export type DesignSystemUpdateInput = {
   expectedUpdatedAt: string;
+  engineVersion?: string;
   brand?: Brand;
   overrides?: Overrides;
   configs?: Configs;
-  tokens?: Tokens;
-  engine_version?: string;
   status?: DsStatus;
   tags?: string[];
   logo_path?: string | null;

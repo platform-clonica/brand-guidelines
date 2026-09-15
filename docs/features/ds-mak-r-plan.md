@@ -600,7 +600,55 @@ al empezarlo, no aquí: el desglose depende de lo que se decida en H1–H7.
   de los tres de la tabla del §7. El glob de `lib/hooks/__tests__` se añade en el bloque 5a, cuando
   exista.
 
+## Bloque 2 · datos
+
+- Migración `20260915212500_create_design_systems.sql` aplicada a mano por Carlos en el SQL Editor
+  el 2026-09-15: el clasificador de permisos de Claude Code bloquea `apply_migration` contra
+  producción. Verificado después con consultas de solo lectura:
+  - columnas, check de estado, FK a `auth.users` con `on delete set null`, trigger e índices;
+  - RLS activa, con una única política `design_systems_team` para `authenticated`;
+  - `anon` sin ningún privilegio: la petición REST con la clave anónima devuelve 401,
+    `permission denied for table design_systems`;
+  - el asesor de seguridad no lista la tabla.
+- `public_id` lo genera la base de datos (`ds_` + 16 hex), así que un duplicado recibe uno nuevo sin
+  código.
+- Las columnas JSONB se tipan como `unknown` en `lib/ds/types.ts`: se abren con `compileSystem`.
+
+## Bloque 3 · API
+
+- **Los tokens nunca vienen del cliente.** El servidor los calcula con su motor a partir de `brand` y
+  `overrides`, que se guardan siempre juntos y con `engineVersion`. Si el editor corre otro motor
+  (una pestaña abierta durante un despliegue), el PATCH responde 409 en vez de guardar tokens de
+  otra versión. Cambia el tipo `DesignSystemUpdateInput` respecto al bloque 2: sale `tokens`, entra
+  `engineVersion`.
+- **Crear valida como el editor.** Los errores de `compileSystem` (familia reservada, breakpoints
+  solapados) son motivo de 400.
+- **Concurrencia (H7).** El PATCH actualiza con `.eq('updated_at', expectedUpdatedAt)`. Si no toca
+  ninguna fila y la fila existe, responde 409 con el `updated_at` actual. `lib/ds/api.ts` lo lanza
+  como `ConflictError`.
+- **Rutas de logo.** Solo se aceptan bajo `ds/<id>/`. Borrar un sistema borra sus logos, así que
+  aceptar una ruta ajena permitiría borrar el logo de una propuesta.
+- **Duplicar** copia la fila tal cual, incluidos tokens y versión del motor (duplicar no es
+  regenerar). Nace borrador y copia los logos al prefijo nuevo.
+- **Ids.** Un id mal formado responde 404 antes de llegar a PostgREST, que respondería 500.
+- **Buckets.** Los nombres de bucket pasan a `lib/storage/paths.ts`, sin `'use client'`: una constante
+  importada de un módulo cliente no llega como valor a un Route Handler. `publicApi.ts` los
+  reexporta. La subida de logos pasa a `lib/storage/logos.ts` y `lib/decks/api.ts` la reexporta.
+- **Sin tests de handler.** La lógica está en `lib/ds/server.ts` y se testea en node; los handlers solo
+  hacen de fontanería. Del middleware se comprobó a mano que `/api/design-systems` responde 401 sin
+  sesión.
+
 ## Hallazgos fuera del alcance (para que consten, no se tocan aquí)
+
+- **Storage sin política de lectura para el equipo.** `storage.objects` tiene políticas de insert,
+  update y delete para `authenticated` en los dos buckets, pero ninguna de select. Según la
+  documentación de Supabase, `remove()` y `copy()` necesitan select. Sin ella, `remove()` no da error
+  pero no borra nada. Dato de producción del 2026-09-15: 13 de las 69 imágenes de `deck-images` no
+  tienen fila en `images`, y la más reciente es del 2026-09-02, posterior a `tighten_storage`. Es
+  compatible con la hipótesis pero no la prueba: también pueden ser subidas que nunca llegaron a
+  registrarse. Para confirmarla hace falta subir y borrar una imagen con sesión y ver si el objeto
+  sigue en `storage.objects`. DSMak_r comprueba lo que Storage confirma haber borrado o copiado y lo
+  deja en el log si no cuadra.
 
 - **`colors.brick: '#C24B36'`** en `components/deck/studio/ui.ts:16`. No está en `lib/tokens.ts` y
   es el acento del cursor de los wordmarks de las herramientas (`Wordmark.tsx:34`) y de los enlaces

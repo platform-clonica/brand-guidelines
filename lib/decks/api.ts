@@ -19,7 +19,6 @@ import type {
    importándolo todo de un único sitio. Ver la cabecera de publicApi.ts. */
 import {
   IMAGE_BUCKET,
-  LOGO_BUCKET,
   json,
   publicImageUrl,
   publicLogoUrl,
@@ -98,20 +97,9 @@ export function addClient(input: ClientCreateInput): Promise<ClientRecord> {
 }
 
 // ---- Storage (logos) ----
-/* Upload an SVG logo to the public bucket and return its storage path.
-   Render it via publicLogoUrl() as an <img src> — never inline SVG (XSS). */
-export async function uploadLogo(file: File): Promise<string> {
-  const sb = supabaseBrowser();
-  const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const path = `logos/${Date.now()}-${safe}`;
-  const { error } = await sb.storage.from(LOGO_BUCKET).upload(path, file, {
-    cacheControl: '3600',
-    contentType: file.type || 'image/svg+xml',
-    upsert: false,
-  });
-  if (error) throw new Error(error.message);
-  return path;
-}
+/* La subida vive en lib/storage/logos.ts desde DSMak_r, que la usa con su propio prefijo. Aquí se
+   reexporta para que DeckMak_r siga importándolo todo de un único sitio. */
+export { uploadLogo } from '@/lib/storage/logos';
 
 // ---- Images (gallery) ----
 /* Upload an (already optimised) image blob to the public bucket and return its
