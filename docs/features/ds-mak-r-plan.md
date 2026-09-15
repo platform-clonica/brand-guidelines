@@ -644,10 +644,14 @@ al empezarlo, no aquí: el desglose depende de lo que se decida en H1–H7.
   update y delete para `authenticated` en los dos buckets, pero ninguna de select. Según la
   documentación de Supabase, `remove()` y `copy()` necesitan select. Sin ella, `remove()` no da error
   pero no borra nada. Dato de producción del 2026-09-15: 13 de las 69 imágenes de `deck-images` no
-  tienen fila en `images`, y la más reciente es del 2026-09-02, posterior a `tighten_storage`. Es
-  compatible con la hipótesis pero no la prueba: también pueden ser subidas que nunca llegaron a
-  registrarse. Para confirmarla hace falta subir y borrar una imagen con sesión y ver si el objeto
-  sigue en `storage.objects`. DSMak_r comprueba lo que Storage confirma haber borrado o copiado y lo
+  tienen fila en `images`, y la más reciente es del 2026-09-02, posterior a `tighten_storage`.
+  **Confirmado el mismo día con una prueba controlada.** Desde la galería de DeckMak_r se subió y se
+  borró `images/1789503530988-BLANC_MAD_02-215.jpg`. En los logs, la fila de `images` se borra
+  (`204`) y Storage responde `DELETE … 200`, pero el objeto sigue en `storage.objects`: los
+  huérfanos pasaron de 13 a 14. Arreglo preparado en
+  `supabase/migrations/20260915224000_storage_select_team.sql`, pendiente de ejecutar a mano. Los
+  huérfanos que ya existen no se limpian con la migración: borrar ficheros va aparte y con
+  confirmación. DSMak_r comprueba igualmente lo que Storage confirma haber borrado o copiado y lo
   deja en el log si no cuadra.
 
 - **`colors.brick: '#C24B36'`** en `components/deck/studio/ui.ts:16`. No está en `lib/tokens.ts` y
