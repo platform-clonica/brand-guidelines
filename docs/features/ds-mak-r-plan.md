@@ -796,6 +796,102 @@ Lógica pura, con tests:
    prueba. Se abre en solo lectura, "Regenerar" enseña los cambios, y al confirmar se guarda y vuelve
    a `engine_version = '1'`.
 
+## Bloque 5c · editor, paso 3
+
+Dos decisiones de Carlos del 2026-09-15, al empezar el bloque:
+
+- **Idioma de los componentes.** Los valores de los ejes (Primary, Hover, Solid, SM) se quedan en
+  inglés: son el vocabulario que usará quien implemente, en el editor y en el styleguide. Los nombres
+  de eje (Variante, Estado) y la anatomía van en castellano, **opciones incluidas**. El prototipo
+  mezclaba "Derecha" con "Top". Se traducen Flecha / Más / menos, Píldora / Recta, Ajustado / Ancho
+  completo, Flotante, Externo, Cuadrado / Redondeado / Círculo, Segmentado / Contorno y Arriba / Abajo /
+  Izquierda / Derecha. Ninguna fila guardaba todavía configuración de componentes, y si llega una
+  opción retirada, `compileSystem` la repone y avisa.
+- **Lista y detalle**, no tarjetas con modal. A la izquierda, los 17 con buscador y la marca ● en
+  los tocados. A la derecha, el elegido: previsualización, ejes, anatomía, propiedades y nota. El
+  modal del prototipo tapaba la previsualización mientras se editaba.
+
+### Base
+
+| Fichero | Qué hace |
+|---|---|
+| `lib/ds/components.ts` | + `configFor` (la guardada o la de por defecto), `propControl` e `isValidProp` (qué control edita cada prop y qué valores admite), `repairConfig` |
+| `lib/ds/configs.ts` | Ediciones del paso 3: ejes, anatomía, props, nota y restablecer. Lo que no vale devuelve el mismo objeto |
+| `components/ds/previews/` | Los 17 renders, en cuatro ficheros por familia más `shared.tsx` e `index.tsx` |
+| `components/ds/steps/ComponentsStep.tsx` | El paso |
+
+### Decisiones al implementarlo
+
+- **`configs` es disperso de verdad.**
+  - Una prop igual a la calculada para la talla actual no se guarda.
+  - Un componente que vuelve a su configuración por defecto desaparece de `configs`, con la misma
+    regla que `edit.ts` aplica a `overrides`.
+  - Una prop fijada a mano gana en todas las tallas.
+- **Los 17 salen siempre en JSON y styleguide** (`configFor`). Cambia lo que fijó el bloque 1
+  ("solo los componentes configurados"). Con `configs` disperso, un componente sin tocar desaparecía
+  de la entrega. El prototipo no tenía el problema porque rellenaba las 17 configuraciones al entrar
+  al paso 3.
+- **`compileSystem` mira `configs` contra el catálogo actual.** Además de la forma, comprueba lo
+  siguiente, con un aviso por campo (`configs.button.variant`):
+  - un componente que no existe se ignora;
+  - un valor de eje que no existe, o un eje que el componente no tiene, se repone;
+  - una opción de anatomía retirada se repone;
+  - una prop desconocida o con un valor que no encaja se quita.
+
+  Una opción de anatomía que el catálogo gane después se rellena sin aviso, porque no es un fallo de
+  nadie.
+- **Sin "regenerar componente".** Las props que nadie tocó salen siempre de los tokens (§2).
+- **Renders puros.** Son funciones sin hooks ni manejadores, de tokens resueltos y configuración a
+  un elemento, para que en 5d sirvan tal cual con `renderToStaticMarkup` (R3). Difieren del
+  prototipo en esto:
+  - el menú del Dropdown y el autocompletado del Search van en el flujo y no en posición absoluta,
+    porque la tarjeta del styleguide recorta lo que se sale (`overflow: hidden`);
+  - el Button primario ya no pierde el anillo de foco bajo su sombra;
+  - el texto de muestra va en castellano y sin puntos suspensivos: "Botón", "Cargando", "Buscar",
+    "Escribe aquí";
+  - el hueco de la paginación es un icono de tres puntos y no el carácter de puntos suspensivos;
+  - el Link no lleva `href`, para que en el styleguide no salte al principio de la página;
+  - los bordes que cambian por variante se escriben por lados, para no mezclar propiedad corta y
+    larga en React.
+- **Previsualización.**
+  - El componente se pinta en cada valor de su primer eje (variante, intención o talla), con el resto
+    de la configuración elegida, y el valor elegido lleva la marca "· elegida".
+  - El modal va solo.
+  - Con modo "ambos", un selector claro/oscuro.
+  - Las fuentes del cliente se cargan con un `<link>` por familia, igual que en el paso 2.
+- **Solo lectura.** La lista se puede recorrer y los controles quedan desactivados. Por eso el paso 3
+  lleva su propio `fieldset` en vez del que envuelve los pasos 1 y 2.
+- **Incidencias.** Las de `configs.*` llevan al paso 3.
+- **Comprobación de los renders, fuera del repo.** Un script en node cargó los renders con sucrase y
+  los pasó por `renderToStaticMarkup` en todas las combinaciones: los ejes, cada opción de anatomía,
+  claro y oscuro, y dos marcas, una con radio píldora y sin sombra. Fueron 9.272 renders, con cero
+  excepciones y sin `NaN`, `undefined` ni puntos suspensivos en el HTML. Es la primera evidencia para
+  R3: los renders se serializan sin navegador. Falta comprobar en 5d que Next acepta
+  `react-dom/server` desde el cliente.
+
+### Pendiente
+
+- Pulsar una incidencia de `configs.<componente>` lleva al paso 3, pero no abre ese componente.
+- Las etiquetas de las props mezclan nombres de CSS (Padding X, Font size, Border width) con
+  castellano (Tamaño icono). Se dejan como vocabulario técnico, igual que los valores de los ejes.
+  Algunas etiquetas de anatomía siguen siendo anglicismos ("Layout", "Label", "Footer fijo").
+
+### Verificación manual
+
+1. Paso 3 disponible en la barra. Se abre con Accordion elegido y su previsualización por variante.
+2. Buscar "bot" deja solo Button. Buscar "zzz" dice que no hay coincidencias.
+3. En Button, cambiar la talla a LG: la previsualización crece, sale ● en la lista y "Guardado ✓".
+   Volver a MD quita la ●.
+4. Fijar Padding X a 40 y pasar por SM, MD y LG: se queda en 40. "Restablecer" lo devuelve al
+   calculado.
+5. Cambiar el radio en el paso 2 (o el estilo de radio en el 1) y volver al paso 3: las props sin tocar
+   siguen a los tokens.
+6. Dropdown en estado Open y Search en Typing: el menú se ve entero y empuja lo de debajo.
+7. Modo "ambos": el selector claro/oscuro repinta el lienzo con las superficies oscuras.
+8. Sistema de motor antiguo: el paso 3 deja recorrer la lista y no deja cambiar nada.
+9. Escribir una nota, recargar y comprobar que sigue ahí. Borrarla entera quita la ● si no había
+   nada más tocado.
+
 ## Hallazgos fuera del alcance (para que consten, no se tocan aquí)
 
 - **Storage sin política de lectura para el equipo.** `storage.objects` tiene políticas de insert,

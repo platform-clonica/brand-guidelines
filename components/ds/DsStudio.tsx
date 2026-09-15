@@ -18,6 +18,7 @@ import { ALERT, MONO } from './controls';
 import { DsToolbar } from './DsToolbar';
 import { Preview } from './preview/Preview';
 import { BrandStep, type LogoKind } from './steps/BrandStep';
+import { ComponentsStep } from './steps/ComponentsStep';
 import { FoundationsStep } from './steps/FoundationsStep';
 
 const GALLERY = '/workspace/dsmak_r';
@@ -296,7 +297,12 @@ export function DsStudio({ systemId }: { systemId: string }) {
       )}
 
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+        {/* Paso 3: lleva su propio `fieldset`, porque en solo lectura la lista de componentes tiene que
+            poder recorrerse aunque sus controles no respondan. */}
+        {step === 3 && <ComponentsStep tokens={tokens} configs={configs} readOnly={readOnly} onConfigs={setConfigs} />}
+
         {/* Solo lectura = los controles no responden. `fieldset` los desactiva todos de una vez. */}
+        {step !== 3 && (
         <fieldset disabled={readOnly} style={{ border: 0, margin: 0, padding: 0, minWidth: 0, flex: 1, display: 'flex', minHeight: 0 }}>
           {step === 1 && (
             <div style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
@@ -325,6 +331,7 @@ export function DsStudio({ systemId }: { systemId: string }) {
             </div>
           )}
         </fieldset>
+        )}
 
         {step === 2 && (
           <aside style={{ width: 'min(440px, 40vw)', flexShrink: 0, overflowY: 'auto', borderLeft: `1px solid ${colors.warmDark}` }}>
@@ -339,11 +346,11 @@ export function DsStudio({ systemId }: { systemId: string }) {
         staleMessage="Hay valores no válidos: la pantalla muestra la última versión válida y no se guarda nada hasta corregirlos."
         locate={(issue) => {
           const target = stepForPath(issue.path);
-          return target && target <= 2 ? { label: `P${target}`, title: `Ir al paso ${target}` } : null;
+          return target ? { label: `P${target}`, title: `Ir al paso ${target}` } : null;
         }}
         onJump={(issue) => {
           const target = stepForPath(issue.path);
-          if (target === 1 || target === 2) setStep(target);
+          if (target) setStep(target);
         }}
       />
 
