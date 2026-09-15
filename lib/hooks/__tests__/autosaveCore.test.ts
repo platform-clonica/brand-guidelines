@@ -19,6 +19,11 @@ test('autoguardado: no se programa sin cambios, desactivado o con un guardado en
   assert.equal(autosaveDelay({ ...base, saving: true }), null);
 });
 
+test('en pausa (p. ej. con errores de validación): no se programa, pero el trabajo sigue pendiente', () => {
+  assert.equal(autosaveDelay({ ...base, paused: true }), null);
+  assert.equal(hasPendingWork({ enabled: true, dirty: true, state: 'idle' }), true);
+});
+
 test('autoguardado: el retraso y el tope se pueden ajustar', () => {
   assert.equal(autosaveDelay({ ...base, retries: 1, delay: 100, maxRetries: 5 }), 200);
   assert.equal(autosaveDelay({ ...base, retries: 1, maxRetries: 1 }), null);

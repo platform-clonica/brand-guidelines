@@ -34,9 +34,14 @@ export function useAutosave<T>({
   delay = AUTOSAVE_DELAY,
   maxRetries = AUTOSAVE_MAX_RETRIES,
   isConflict,
+  paused = false,
 }: {
   /** Sin esto no se guarda nada (p. ej. DeckMak_r antes de tener id, FormMak_r antes de cargar). */
   enabled: boolean;
+  /* En pausa no se guarda, ni solo ni a mano, pero lo pendiente sigue contando para el aviso al
+     cerrar. DSMak_r la usa mientras hay errores de validación: el servidor los rechazaría con un 400
+     y el autoguardado gastaría sus reintentos en algo que solo arregla el diseñador. */
+  paused?: boolean;
   value: T;
   save: (value: T) => Promise<unknown>;
   delay?: number;
@@ -51,16 +56,16 @@ export function useAutosave<T>({
   const retriesRef = useRef(0);
 
   /* El temporizador y los manejadores llaman siempre a lo más reciente sin reiniciarse al teclear. */
-  const latest = useRef({ enabled, value, save, isConflict });
-  latest.current = { enabled, value, save, isConflict };
+  const latest = useRef({ enabled, paused, value, save, isConflict });
+  latest.current = { enabled, paused, value, save, isConflict };
 
   const dirty = serialized !== savedSnap;
 
   /* `override` guarda un valor que el estado todavía no refleja (p. ej. publicar justo después de
      reescribir el documento, en el mismo evento). */
   const saveNow = useCallback(async (override?: T) => {
-    const { enabled, value, save, isConflict } = latest.current;
-    if (!enabled || savingRef.current) return;
+    const { enabled, paused, value, save, isConflict } = latest.current;
+    if (!enabled || paused || savingRef.current) return;
     const next = override ?? value;
     savingRef.current = true;
     setSaveState('saving');
@@ -86,8 +91,12 @@ export function useAutosave<T>({
   }, [saveNow]);
 
   /* Tras cargar un documento, o tras guardarlo por otra vía: esta es la versión que ya está en la
-     base de datos. */
-  const markSaved = useCallback((saved: T) => setSavedSnap(JSON.stringify(saved)), []);
+     base de datos. Un `conflict` pendiente se da por resuelto (quien llama acaba de recargar lo que
+     escribió la otra pestaña); un `error` no, porque recargar no arregla la red. */
+  const markSaved = useCallback((saved: T) => {
+    setSavedSnap(JSON.stringify(saved));
+    setSaveState((s) => (s === 'conflict' ? 'idle' : s));
+  }, []);
 
   useEffect(() => {
     const ms = autosaveDelay({
@@ -98,11 +107,12 @@ export function useAutosave<T>({
       state: saveState,
       delay,
       maxRetries,
+      paused,
     });
     if (ms === null) return;
     const t = setTimeout(() => void saveNow(), ms);
     return () => clearTimeout(t);
-  }, [serialized, enabled, dirty, saveState, delay, maxRetries, saveNow]);
+  }, [serialized, enabled, paused, dirty, saveState, delay, maxRetries, saveNow]);
 
   useEffect(() => {
     if (saveState !== 'saved') return;

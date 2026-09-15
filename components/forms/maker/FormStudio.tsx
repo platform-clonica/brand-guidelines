@@ -17,7 +17,7 @@ import { useAutosave } from '@/lib/hooks/useAutosave';
 import { FormToolbar } from './FormToolbar';
 import { FormEditorBar } from './FormEditorBar';
 import { FormMetaModal, type FormMetaValues } from './FormMetaModal';
-import { IssuesPanel } from './IssuesPanel';
+import { IssuesPanel } from '@/components/studio/IssuesPanel';
 import '@/components/forms/forms.css';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
@@ -339,7 +339,12 @@ export function FormStudio({ formId }: { formId: string }) {
             }}
           />
           <div style={{ margin: '0 -20px' }}>
-            <IssuesPanel issues={issues} stale={!compiles} onJump={jumpToLine} />
+            <IssuesPanel
+              issues={issues}
+              stale={!compiles}
+              locate={(issue) => (issue.line ? { label: `L${issue.line}`, title: `Ir a la línea ${issue.line}` } : null)}
+              onJump={(issue) => issue.line && jumpToLine(issue.line)}
+            />
           </div>
         </aside>
 

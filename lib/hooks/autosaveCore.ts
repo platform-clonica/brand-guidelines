@@ -31,9 +31,11 @@ export function autosaveDelay(o: {
   state: SaveState;
   delay?: number;
   maxRetries?: number;
+  /** El documento no se puede guardar ahora mismo (p. ej. tiene errores que el servidor rechazaría). */
+  paused?: boolean;
 }): number | null {
   const { delay = AUTOSAVE_DELAY, maxRetries = AUTOSAVE_MAX_RETRIES } = o;
-  if (!o.enabled || !o.dirty || o.saving || o.state === 'conflict') return null;
+  if (!o.enabled || o.paused || !o.dirty || o.saving || o.state === 'conflict') return null;
   if (o.retries >= maxRetries) return null;
   return delay * 2 ** o.retries;
 }
