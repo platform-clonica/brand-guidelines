@@ -44,6 +44,9 @@ crea funciones.
 hace nada hasta registrarla en Authentication → Hooks; la segunda añade columnas con `default
 auth.uid()` y no cambia ninguna política — nadie filtra por ese dato todavía.
 
+`20260915212500_create_design_systems.sql` (DSMak_r) es **aditiva**: crea `design_systems` con su
+RLS y no toca ninguna tabla existente.
+
 `20260817121000_tighten_rls.sql` y `20260817122000_tighten_storage.sql` son **restrictivas** y
 rompen el código que había antes. Se aplican **después** de que esté desplegado el commit que
 migra los handlers a `supabaseAuthServer()` y el visor público a las RPC. Aplicarlas antes deja
