@@ -670,6 +670,38 @@ Además:
 - **Qué falta para usarla.** La tarjeta abre `/workspace/dsmak_r/[id]`, que no existe hasta 5b y hoy
   da 404. La galería tampoco está enlazada desde `/workspace` hasta el bloque 6.
 
+## Bloque 5a · `useAutosave`
+
+Tres commits, como pedía el §5: el hook con sus tests, FormStudio y DeckStudio.
+
+- **Reparto.** Las decisiones (cuándo programar, backoff, qué es trabajo pendiente) viven en
+  `lib/hooks/autosaveCore.ts`, sin React y con tests. `lib/hooks/useAutosave.ts` solo las cablea. Las
+  constantes y el comentario de los ~2.500 PATCH por hora, que estaban copiados en los dos editores,
+  quedan en un único sitio.
+- **Firma.** La del §5, con dos ajustes. `retry` devuelve la promesa, porque DeckMak_r la espera
+  antes de abrir la pestaña del PDF. `isConflict` es el predicado que convierte un error en
+  `conflict`, así el hook no importa `lib/ds/api.ts`.
+- **`SaveState`** incluye `conflict` y sale del hook. `FormToolbar` y `DeckStudio` lo reexportan.
+  Sus indicadores no pintan `conflict` porque nunca les llega: no pasan `isConflict`.
+- **`markSaved` solo marca la versión guardada.** No limpia un `error` ni reinicia intentos, igual
+  que hacían las copias al cargar o al editar metadatos. DSMak_r decidirá en 5b qué hace "Recargar"
+  tras un conflicto.
+- **Dos diferencias invisibles.**
+  - FormStudio parte de la instantánea del estado vacío, no de `''`. Antes de cargar el editor no se
+    pinta, así que nadie ve ese `dirty`.
+  - `saveNow` comprueba `enabled`. FormStudio no lo comprobaba, pero solo se llamaba con el
+    formulario ya cargado.
+- **Build aislado.** Se construye en un worktree temporal para no pisar el `.next` de un `next dev` en
+  marcha (ver bloque 4).
+- **Verificación manual pendiente, en las dos herramientas.** Comprobar cada una de estas cosas:
+  - escribir y ver "Guardado ✓";
+  - cortar la red y ver tres reintentos y "Error · reintentar";
+  - reintentar con la red de vuelta;
+  - recargar con cambios pendientes y ver el aviso del navegador;
+  - volver a la galería con cambios y ver el `ConfirmModal`;
+  - en FormMak_r, publicar y editar metadatos, y ver el guardado inmediato;
+  - en DeckMak_r, Compartir URL y Descargar PDF con cambios sin guardar.
+
 ## Hallazgos fuera del alcance (para que consten, no se tocan aquí)
 
 - **Storage sin política de lectura para el equipo.** `storage.objects` tiene políticas de insert,
@@ -691,8 +723,9 @@ Además:
   de `authUi.ts`. Es una norma de facto sin documentar: o se declara en `lib/tokens.ts`, como se hizo
   con `toolIconAccents`, o se retira.
 - **Mono a 300** en `FormGallery.tsx:169` (el "+" de crear). IBM Plex Mono admite 400/500/600.
-- **Puntos suspensivos** en el chrome: "Cargando…" en `FormGallery.tsx:176` y `FormStudio.tsx:353`.
-  DSMak_r no los copia.
+- **Puntos suspensivos** en el chrome: "Cargando…" en `FormGallery.tsx:176` y `FormStudio.tsx`, y
+  "Guardando…" en los indicadores de `FormToolbar.tsx` y `DeckToolbar.tsx`. El 5a no los toca porque
+  era un cambio sin efectos visibles. DSMak_r no los copia.
 - **Logos huérfanos en decks.** `DELETE /api/decks/[id]` borra la fila y deja el logo en el bucket.
   DSMak_r sí limpia (comprobación 7); decks sigue igual.
 - **Remotos.** En esta máquina solo existe `origin` → `platform-clonica/brand-guidelines`, que es el
