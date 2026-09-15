@@ -702,6 +702,100 @@ Tres commits, como pedía el §5: el hook con sus tests, FormStudio y DeckStudio
   - en FormMak_r, publicar y editar metadatos, y ver el guardado inmediato;
   - en DeckMak_r, Compartir URL y Descargar PDF con cambios sin guardar.
 
+## Bloque 5b · editor, pasos 1 y 2
+
+### Base del editor
+
+Lógica pura, con tests:
+
+| Fichero | Qué hace |
+|---|---|
+| `lib/ds/edit.ts` | Ediciones sobre `overrides` y familias. Una sección vacía desaparece; renombrar o quitar una familia se lleva sus ajustes |
+| `lib/ds/live.ts` | El sistema mientras se edita: incidencias, avisos de contraste y `blocking` |
+| `lib/ds/steps.ts` | A qué paso lleva cada incidencia |
+| `lib/ds/diff.ts` | Qué valores cambian al regenerar |
+| `lib/ds/preview.ts` | Variables de la previsualización |
+
+### Decisiones al implementarlo
+
+- **El paso 2 no tiene "Guardar cambios" por sección.** El prototipo editaba cada sección en un
+  borrador que se tiraba sin avisar al abrir otra. Aquí cada retoque es un override y lo recoge el
+  autoguardado. "Restablecer" y "Volver al del motor" quitan el override. Una marca (●) señala lo
+  retocado a mano.
+- **Lo estructural solo se edita en el paso 1** (H1): fuentes, unidad, densidad, estilo de radio,
+  breakpoints y retícula. El prototipo también los tocaba en el paso 2, sobre los tokens. La excepción
+  es el color base de cada familia, que el plan permite cambiar también en el paso 2.
+- **La previsualización es nueva.** El prototipo no tenía ninguna en los pasos 1 y 2. Va al lado del
+  paso 2, en un contenedor con las variables `--ds-*`, y enseña titulares, texto, botones, un campo,
+  una tarjeta y avisos. Usa los mismos nombres de variable que `tokens.css`, porque `css.ts` y
+  `preview.ts` comparten `tokenVariables()`, y un test lo comprueba.
+- **Validación en vivo y autoguardado en pausa.**
+  - `useAutosave` gana `paused`: no guarda, pero lo pendiente cuenta para el aviso al cerrar.
+  - Con errores de validación (breakpoints solapados, un nombre vacío) el servidor respondería 400,
+    así que el editor no guarda.
+  - La barra dice "Sin guardar · corrige los errores" y la previsualización se queda en la última
+    versión válida.
+  - Los campos de número y de color solo confirman valores válidos, así que al estado no llega nunca
+    un NaN ni un hex a medias.
+- **Contraste (H5).** Los avisos salen en tres sitios, en Burdeos: el panel de incidencias, la muestra
+  afectada y, en el caso del primario sobre el fondo, un texto bajo el campo del paso 1.
+- **Conflicto (H7).**
+  - El 409 abre un modal con "Recargar" y "Guardar encima".
+  - Guardar encima reintenta con el `updated_at` que devolvió el servidor.
+  - Recargar aplica la fila y `markSaved` da el conflicto por resuelto.
+  - Si el 409 es por versión del motor, el modal solo ofrece recargar la página.
+- **Motor antiguo (H4).**
+  - El editor abre en solo lectura con los tokens guardados: un `fieldset` desactiva todos los
+    controles.
+  - "Regenerar" enseña antes cuántos valores cambian y cuáles.
+  - La versión del motor viaja en el valor del autoguardado, así que regenerar deja el documento
+    `dirty` y se guarda por la vía normal.
+- **`IssuesPanel`** pasa a `components/studio/`. Cada editor dice adónde lleva cada incidencia con
+  `locate`: FormMak_r, a una línea (`L12`); DSMak_r, a un paso (`P1`).
+- **Familias.**
+  - Se renombran en el paso 1, con validación (formato CSS, reservadas, repetidas).
+  - Quitar una familia se lleva sus ajustes.
+  - "Derivar secundario y acento del primario" sustituye el secundario y crea o sustituye `accent`,
+    igual que el prototipo.
+- **Fallos del prototipo que no se portan:**
+  - la colisión de nombres al añadir colores tras borrar uno;
+  - la densidad que se multiplica en cada clic;
+  - el bloqueo que solo escondía un botón;
+  - el logo oscuro que se subía y no se usaba.
+- **Pasos 3 y 4.** Se ven apagados en la barra hasta 5c y 5d. El paso activo vive en el estado, no
+  en la URL.
+- **Norma.** Chrome en IBM Plex Mono 400/500/600 y sin puntos suspensivos ("Guardando", "Subiendo",
+  "Cargando"). La previsualización y la columna de muestra de tipografía usan las fuentes y pesos del
+  cliente.
+
+### Pendiente
+
+- **Logos huérfanos al sustituir.** Cambiar o quitar un logo deja el fichero anterior en
+  `deck-assets/ds/<id>/`. Borrar el sistema sí limpia la ruta vigente. Para no dejar huérfanos
+  habría que borrar el anterior después de un guardado confirmado.
+- **`tokens.css` no entrega las rampas completas de los semánticos**, solo sus fondos suaves
+  (50/100/200). Es así desde el bloque 1 y ya lo hacía el prototipo (`F0`). La previsualización sí
+  necesita los escalones fuertes y los declara aparte. Se decide en 5d, con la entrega.
+
+### Verificación manual
+
+1. Abrir un sistema desde la galería: se ve el paso 1 con sus valores, y "Guardado ✓" tras el primer
+   cambio.
+2. Cambiar el primario y ver el paso 2 y la previsualización actualizados.
+3. Retocar una muestra (●), bloquear la familia, cambiar el primario en el paso 1 y comprobar que la
+   familia bloqueada no se mueve (comprobación 6).
+4. Solapar dos breakpoints: sale el error en el panel, la barra dice "Sin guardar · corrige los
+   errores" y pulsar la incidencia lleva al paso 1.
+5. Poner un primario muy claro, como `#DDDDDD`: sale el aviso de contraste en el paso 1, en el panel y
+   en las muestras (comprobación 9, parte del editor).
+6. Abrir el mismo sistema en dos pestañas, cambiar algo en las dos y comprobar el modal de conflicto
+   con sus dos salidas (comprobación 5).
+7. Subir un logo claro y otro oscuro y verlos en la previsualización en los dos modos.
+8. Renombrar una familia añadida con un nombre inválido (`Mi Color`, `error`) y con uno válido.
+9. Sistema de motor antiguo: `update design_systems set engine_version = '0' where id = …` en uno de
+   prueba. Se abre en solo lectura, "Regenerar" enseña los cambios, y al confirmar se guarda y vuelve
+   a `engine_version = '1'`.
+
 ## Hallazgos fuera del alcance (para que consten, no se tocan aquí)
 
 - **Storage sin política de lectura para el equipo.** `storage.objects` tiene políticas de insert,
