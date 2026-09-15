@@ -23,6 +23,7 @@ import {
   type Overrides,
   type Tokens,
 } from './schema.ts';
+import { getComponent, repairConfig } from './components.ts';
 import { composeTokens, ENGINE_VERSION } from './engine/index.ts';
 import { defaultBrand } from './engine/presets.ts';
 
@@ -150,8 +151,19 @@ function repairConfigs(raw: unknown, issues: DsIssue[]): Configs {
   const out: Configs = {};
   for (const [key, value] of Object.entries(raw)) {
     const parsed = componentConfigSchema.safeParse(value);
-    if (parsed.success) out[key] = parsed.data;
-    else issues.push({ level: 'warning', path: `configs.${key}`, message: 'La configuración de este componente no es válida. Se ha descartado.' });
+    if (!parsed.success) {
+      issues.push({ level: 'warning', path: `configs.${key}`, message: 'La configuración de este componente no es válida. Se ha descartado.' });
+      continue;
+    }
+    const spec = getComponent(key);
+    if (!spec) {
+      issues.push({ level: 'warning', path: `configs.${key}`, message: 'No hay ningún componente con ese nombre en el catálogo. Se ignora.' });
+      continue;
+    }
+    /* La forma es buena, pero los valores se miran contra el catálogo actual (ejes, anatomía, props). */
+    const repaired = repairConfig(spec, parsed.data);
+    for (const p of repaired.problems) issues.push({ level: 'warning', path: `configs.${key}.${p.field}`, message: p.message });
+    out[key] = repaired.config;
   }
   return out;
 }

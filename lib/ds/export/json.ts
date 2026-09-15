@@ -8,7 +8,7 @@
    - `radiusMap` va al mismo nivel que `radius`. El prototipo lo metía dentro como `componentMap`,
      mezclando la escala con el mapa por componente. */
 
-import { COMPONENTS, resolveProps } from '../components.ts';
+import { COMPONENTS, configFor, resolveProps } from '../components.ts';
 import { ENGINE_VERSION } from '../engine/version.ts';
 import { rateContrast, type ContrastLevel } from '../engine/contrast.ts';
 import { radiusCss, resolveTokens, shadowCss } from '../engine/resolve.ts';
@@ -64,9 +64,10 @@ const rated = (ramp: Record<string, string>): Record<string, ColorEntry> =>
 export function exportJson(tokens: Tokens, opts: { name: string; generatedAt: string; configs: Configs }): DsJson {
   const resolved = resolveTokens(tokens, 'light');
   const components: DsJson['components'] = {};
+  /* Los 17, siempre. `configs` solo guarda lo que el diseñador tocó (DSMak_r 5c): lo demás sale con
+     su configuración por defecto, como hacía el prototipo al rellenarlas todas al entrar al paso 3. */
   for (const spec of COMPONENTS) {
-    const config = opts.configs[spec.key];
-    if (!config) continue;
+    const config = configFor(opts.configs, spec);
     components[spec.key] = {
       name: spec.name,
       variants: spec.variants,

@@ -4,12 +4,15 @@ import {
   COMPONENTS,
   componentAxes,
   componentSummary,
+  configFor,
   defaultConfig,
   getComponent,
+  isValidProp,
+  propControl,
   resolveProps,
 } from '../components.ts';
 import { composeTokens } from '../engine/index.ts';
-import { defaultBrand } from '../engine/presets.ts';
+import { defaultBrand, RADIUS_NAMES, SHADOW_NAMES } from '../engine/presets.ts';
 import { resolveTokens } from '../engine/resolve.ts';
 import { componentConfigSchema } from '../schema.ts';
 
@@ -41,6 +44,19 @@ test('los valores por defecto de la anatomía están entre sus opciones', () => 
   }
 });
 
+test('la anatomía no mezcla idiomas: las opciones van en castellano', () => {
+  const english = [
+    'Chevron', 'Plus / Minus', 'Full', 'Sharp', 'Hug', 'Full width', 'External', 'Floating', 'Square', 'Rounded',
+    'Circle', 'Pill', 'Segmented', 'Outlined', 'Top', 'Bottom', 'Left', 'Right',
+  ];
+  for (const spec of COMPONENTS) {
+    for (const [key, a] of Object.entries(spec.anatomy)) {
+      if (a.type !== 'select') continue;
+      for (const option of a.options) assert.ok(!english.includes(option), `${spec.key}.${key}: ${option}`);
+    }
+  }
+});
+
 test('la configuración por defecto es válida y no guarda props: solo lo que el diseñador cambie', () => {
   for (const spec of COMPONENTS) {
     const config = defaultConfig(spec);
@@ -59,6 +75,13 @@ test('la configuración por defecto elige MD, la segunda intención y el primer 
   assert.equal(modal.state, null);
 });
 
+test('configuración efectiva: la guardada, o la de por defecto si el componente no se ha tocado', () => {
+  const button = getComponent('button')!;
+  const saved = { ...defaultConfig(button), size: 'LG' };
+  assert.equal(configFor({ button: saved }, button), saved);
+  assert.deepEqual(configFor({}, button), defaultConfig(button));
+});
+
 test('las props salen de los tokens y la talla, y lo editado a mano gana en cualquier talla', () => {
   const button = getComponent('button')!;
   const md = resolveProps(button, resolved, { ...defaultConfig(button), size: 'MD' });
@@ -71,6 +94,38 @@ test('las props salen de los tokens y la talla, y lo editado a mano gana en cual
   assert.equal(out.padX, 40);
   assert.equal(out.radiusToken, 'full');
   assert.equal(out.inventada, undefined);
+});
+
+test('cada prop dice con qué control se edita', () => {
+  assert.deepEqual(propControl('radiusToken'), { kind: 'radius' });
+  assert.deepEqual(propControl('menuRadiusToken'), { kind: 'radius' });
+  assert.deepEqual(propControl('elevation'), { kind: 'shadow' });
+  assert.deepEqual(propControl('thumbShadow'), { kind: 'shadow' });
+  assert.deepEqual(propControl('backdropOpacity'), { kind: 'number', min: 0, max: 1 });
+  assert.deepEqual(propControl('padX'), { kind: 'number', min: 0, max: 999 });
+});
+
+test('toda prop calculada encaja con su control', () => {
+  for (const spec of COMPONENTS) {
+    for (const size of [0.86, 1, 1.14]) {
+      for (const [key, value] of Object.entries(spec.props(resolved, size))) {
+        assert.ok(isValidProp(key, value), `${spec.key}.${key} = ${value}`);
+      }
+    }
+  }
+  assert.ok((RADIUS_NAMES as readonly string[]).includes('md'));
+  assert.ok((SHADOW_NAMES as readonly string[]).includes('lg'));
+});
+
+test('una prop con un valor que no encaja con su control no es válida', () => {
+  assert.equal(isValidProp('radiusToken', 'enorme'), false);
+  assert.equal(isValidProp('radiusToken', 4), false);
+  assert.equal(isValidProp('elevation', 'gigante'), false);
+  assert.equal(isValidProp('padX', 'mucho'), false);
+  assert.equal(isValidProp('padX', -1), false);
+  assert.equal(isValidProp('padX', Number.NaN), false);
+  assert.equal(isValidProp('backdropOpacity', 1.5), false);
+  assert.equal(isValidProp('padX', 12.5), true);
 });
 
 test('ejes en orden variante, intención, tamaño y estado, y resumen en castellano', () => {

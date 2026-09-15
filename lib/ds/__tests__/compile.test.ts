@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compileSystem, type DsIssue } from '../compile.ts';
+import { defaultConfig, getComponent } from '../components.ts';
 import { composeTokens, ENGINE_VERSION } from '../engine/index.ts';
 import { defaultBrand } from '../engine/presets.ts';
 
@@ -107,6 +108,57 @@ test('una configuración de componente inválida se descarta con aviso', () => {
   assert.ok(find(res.issues, 'configs.button'));
   assert.ok(find(res.issues, 'configs.input'));
   assert.deepEqual(res.system?.configs, {});
+});
+
+test('una configuración de componente válida se conserva tal cual y sin incidencias', () => {
+  const button = getComponent('button')!;
+  const configs = { button: { ...defaultConfig(button), size: 'LG', props: { padX: 40, radiusToken: 'full' }, note: 'Escala en hover' } };
+  const res = compileSystem({ ...validRow(), configs });
+  assert.deepEqual(res.issues, []);
+  assert.deepEqual(res.system?.configs, configs);
+});
+
+test('un componente que no está en el catálogo se ignora con aviso', () => {
+  const res = compileSystem({ ...validRow(), configs: { carrusel: defaultConfig(getComponent('button')!) } });
+  assert.equal(find(res.issues, 'configs.carrusel')?.level, 'warning');
+  assert.deepEqual(res.system?.configs, {});
+});
+
+test('ejes, anatomía y props que no encajan se reparan campo a campo, con su ruta', () => {
+  const button = getComponent('button')!;
+  const res = compileSystem({
+    ...validRow(),
+    configs: {
+      button: {
+        ...defaultConfig(button),
+        variant: 'Fantasma',
+        intention: 'Primary',
+        size: 'LG',
+        anatomy: { icon: 'Derecha', width: 'Full width', inventada: true },
+        props: { gap: 7, padX: 'mucho', radiusToken: 'enorme', inventada: 3 },
+      },
+    },
+  });
+  const c = res.system!.configs.button;
+  assert.equal(c.variant, 'Primary');
+  assert.equal(c.intention, null);
+  assert.equal(c.size, 'LG');
+  assert.deepEqual(c.anatomy, { icon: 'Derecha', width: 'Ajustado' });
+  assert.deepEqual(c.props, { gap: 7 });
+  for (const path of [
+    'configs.button.variant', 'configs.button.intention', 'configs.button.anatomy.width', 'configs.button.anatomy.inventada',
+    'configs.button.props.padX', 'configs.button.props.radiusToken', 'configs.button.props.inventada',
+  ]) {
+    assert.equal(find(res.issues, path)?.level, 'warning', path);
+  }
+  assert.equal(res.ok, true);
+});
+
+test('una opción de anatomía que el catálogo añadió después se rellena sin aviso', () => {
+  const button = getComponent('button')!;
+  const res = compileSystem({ ...validRow(), configs: { button: { ...defaultConfig(button), anatomy: { icon: 'Izquierda' } } } });
+  assert.deepEqual(res.system?.configs.button.anatomy, { icon: 'Izquierda', width: 'Ajustado' });
+  assert.deepEqual(res.issues, []);
 });
 
 test('tokens guardados dañados: error y sin tokens, para que el editor pida regenerar', () => {

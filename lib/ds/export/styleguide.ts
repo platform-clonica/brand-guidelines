@@ -13,7 +13,7 @@
      es del cliente y no lleva colores de Interactius.
    - Ratios con coma decimal y niveles en castellano. */
 
-import { COMPONENTS, componentAxes, componentSummary, type AxisKey } from '../components.ts';
+import { COMPONENTS, componentAxes, componentSummary, configFor, type AxisKey } from '../components.ts';
 import { rateContrast, type ContrastLevel } from '../engine/contrast.ts';
 import { TYPE_ROLES } from '../engine/presets.ts';
 import { radiusCss, shadowCss, type ResolvedTokens } from '../engine/resolve.ts';
@@ -51,8 +51,9 @@ export function buildStyleguideComponents(opts: {
   resolved: ResolvedTokens;
   render: RenderComponent;
 }): StyleguideComponent[] {
-  return COMPONENTS.filter((spec) => opts.configs[spec.key]).map((spec) => {
-    const config = opts.configs[spec.key];
+  // Los 17: un componente sin tocar entra con su configuración por defecto (ver configFor).
+  return COMPONENTS.map((spec) => {
+    const config = configFor(opts.configs, spec);
     const axes = componentAxes(spec);
 
     let combos: Partial<Record<AxisKey, string>>[] = [{}];

@@ -43,12 +43,15 @@ test('JSON: tipografía, espaciado, radios, sombras, breakpoints y retícula con
   assert.deepEqual(json.grid.desktop, { columns: 12, margin: '40px', gutter: '24px' });
 });
 
-test('JSON: solo los componentes configurados, con sus props resueltas', () => {
+test('JSON: los 17 componentes, con la configuración guardada o la de por defecto, y sus props resueltas', () => {
   const button = getComponent('button')!;
-  const json = exportJson(tokensFor(), { name: 'Acme', generatedAt: GENERATED_AT, configs: { button: defaultConfig(button) } });
-  assert.deepEqual(Object.keys(json.components), ['button']);
-  assert.equal(json.components.button.selected.size, 'MD');
-  assert.equal(json.components.button.tokens.padX, 26);
+  const configs = { button: { ...defaultConfig(button), size: 'LG' } };
+  const json = exportJson(tokensFor(), { name: 'Acme', generatedAt: GENERATED_AT, configs });
+  assert.equal(Object.keys(json.components).length, 17);
+  assert.equal(json.components.button.selected.size, 'LG');
+  assert.equal(json.components.button.tokens.padX, 29);
+  assert.equal(json.components.badge.selected.variant, 'Solid');
+  assert.equal(json.components.badge.note, null);
 });
 
 // ── CSS ──────────────────────────────────────────────────────────────────────
@@ -153,27 +156,34 @@ test('styleguide: los avisos de contraste aparecen', () => {
   assert.ok(html.includes('#FFD400'));
 });
 
+test('styleguide: salen los 17 componentes aunque no se haya tocado ninguno, en el orden del catálogo', () => {
+  const sections = buildStyleguideComponents({ configs: {}, resolved: resolveTokens(tokensFor(), 'light'), render: () => '<b>ok</b>' });
+  assert.equal(sections.length, 17);
+  assert.equal(sections[0].key, 'accordion');
+  assert.equal(sections.find((s) => s.key === 'button')!.variants.find((v) => v.selected)!.key, 'Primary||MD||Default');
+});
+
 test('styleguide: cada combinación de ejes se pinta, y solo la seleccionada es visible', () => {
   const button = getComponent('button')!;
-  const [section] = buildStyleguideComponents({
-    configs: { button: defaultConfig(button) },
+  const section = buildStyleguideComponents({
+    configs: { button: { ...defaultConfig(button), size: 'LG' } },
     resolved: resolveTokens(tokensFor(), 'light'),
     render: (key, config) => `<b>${config.variant}-${config.size}-${config.state}</b>`,
-  });
+  }).find((s) => s.key === 'button')!;
   assert.equal(section.variants.length, 4 * 3 * 6);
   assert.equal(section.variants.filter((v) => v.selected).length, 1);
-  assert.equal(section.variants.find((v) => v.selected)!.html, '<b>Primary-MD-Default</b>');
+  assert.equal(section.variants.find((v) => v.selected)!.html, '<b>Primary-LG-Default</b>');
 });
 
 test('styleguide: si un render falla, esa combinación sale vacía y las demás siguen', () => {
   const button = getComponent('button')!;
-  const [section] = buildStyleguideComponents({
+  const section = buildStyleguideComponents({
     configs: { button: defaultConfig(button) },
     resolved: resolveTokens(tokensFor(), 'light'),
     render: (key, config) => {
       if (config.state === 'Loading') throw new Error('boom');
       return '<b>ok</b>';
     },
-  });
+  }).find((s) => s.key === 'button')!;
   assert.equal(section.variants.filter((v) => v.html === '<em>—</em>').length, 4 * 3);
 });
