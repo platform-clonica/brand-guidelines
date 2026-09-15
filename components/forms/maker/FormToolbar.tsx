@@ -6,7 +6,7 @@ import { colors, toolbarBtn } from '@/components/deck/studio/ui';
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 const ALERT = '#99335F'; // Burdeos — rol de alerta declarado en lib/tokens.ts
 
-export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+import type { SaveState } from '@/lib/hooks/useAutosave';
 
 /* Barra superior del editor de formularios. Misma anatomía que DeckToolbar:
    imagotipo (vuelve a la galería) · título editable · estado de guardado · acciones. */
