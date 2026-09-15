@@ -69,3 +69,7 @@ export function DeckLogo({ height = 30, title = 'DeckMakr' }: { height?: number;
 export function FormLogo({ height = 30, title = 'FormMakr' }: { height?: number; title?: string }) {
   return <Wordmark before="FormMak" after="r" height={height} title={title} />;
 }
+
+export function DsLogo({ height = 30, title = 'DSMakr' }: { height?: number; title?: string }) {
+  return <Wordmark before="DSMak" after="r" height={height} title={title} />;
+}

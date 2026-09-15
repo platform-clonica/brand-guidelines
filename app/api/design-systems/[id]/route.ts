@@ -3,7 +3,7 @@
 
 import { NextResponse } from 'next/server';
 import { dbFail, requireUser, supabaseAuthServer } from '@/lib/supabase/server';
-import { buildPatch, isUuid, ownedLogoPaths } from '@/lib/ds/server';
+import { buildPatch, isUuid, ownedLogoPaths, renamePatch } from '@/lib/ds/server';
 import { LOGO_BUCKET } from '@/lib/storage/paths';
 
 export const dynamic = 'force-dynamic';
@@ -46,6 +46,17 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: parsed.status });
 
   const sb = await supabaseAuthServer();
+
+  /* Renombrar necesita la marca guardada para reescribir su nombre sin recalcular tokens. Leerla antes
+     no abre carrera: la escritura sigue condicionada a `updated_at`, así que si la fila cambió entre
+     medias responde 409 igual. */
+  if (parsed.rename) {
+    const { data: current, error: brandErr } = await sb.from('design_systems').select('brand').eq('id', id).maybeSingle();
+    if (brandErr) return dbFail('design-systems/[id]', brandErr);
+    if (!current) return notFound();
+    Object.assign(parsed.patch, renamePatch(current.brand, parsed.rename));
+  }
+
   const { data, error } = await sb
     .from('design_systems')
     .update(parsed.patch)

@@ -55,6 +55,10 @@ export type DesignSystemCreateInput =
    durante un despliegue), el servidor responde 409 en vez de guardar tokens de un motor distinto. */
 export type DesignSystemUpdateInput = {
   expectedUpdatedAt: string;
+  /* Renombrar sin la marca entera (galería): reescribe `brand.name`/`brand.client` y los espejos,
+     sin recalcular tokens. No se pueden mandar junto a `brand`. */
+  name?: string;
+  client?: string | null;
   engineVersion?: string;
   brand?: Brand;
   overrides?: Overrides;

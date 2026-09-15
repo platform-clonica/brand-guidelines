@@ -638,6 +638,38 @@ al empezarlo, no aquí: el desglose depende de lo que se decida en H1–H7.
   hacen de fontanería. Del middleware se comprobó a mano que `/api/design-systems` responde 401 sin
   sesión.
 
+## Bloque 4 · galería
+
+Tres decisiones de Carlos del 2026-09-15, tomadas al empezar el bloque:
+
+- **Renombrar no pasa por la marca.** Con la API del bloque 3, cambiar el nombre obligaba a mandar
+  `brand` y `overrides`, y eso recalculaba los tokens: un sistema con otro `engine_version` se habría
+  regenerado entero sin avisar solo por renombrarlo, que es justo lo que H4 prohíbe. El PATCH acepta
+  ahora `name` y `client` sueltos. El handler lee la marca guardada y reescribe `brand.name` y
+  `brand.client` junto a los espejos (`renamePatch`), sin tocar `tokens` ni `engine_version`. El nombre
+  no entra en los tokens, así que no hay nada que recalcular. No se pueden mandar junto a `brand`. La
+  escritura sigue condicionada a `updated_at`: leer antes la marca no abre ninguna carrera.
+- **Exportar desde la galería descarga `tokens.json` y `tokens.css`**, generados desde los tokens
+  **guardados** (`lib/ds/gallery.ts`, `exportFile`). Solo se exige que los tokens estén sanos; la marca
+  puede no compilar. El styleguide necesita pintar los componentes y se añade al mismo modal en 5d.
+- **Filtro por estado en `FilterBar`**, con una prop opcional (`statuses`, `status`, `onStatus`) y el
+  traje de las píldoras. DeckMak_r y FormMak_r no la pasan y no cambian.
+
+Además:
+
+- **`CardActions`** gana dos iconos, `edit` (renombrar) y `download` (exportar), con el mismo trazo.
+  El orden en la tarjeta es renombrar, exportar, duplicar y eliminar.
+- **Tarjeta.** La miniatura es la tira de color del servidor, con el nombre debajo y no encima: sobre
+  un color de cliente arbitrario no se garantiza que se lea. Sin tira, "Tokens dañados" en Burdeos,
+  como "No compila" en FormMak_r. El logo no se pinta.
+- **Crear** pide nombre, cliente, etiquetas y punto de partida: valores por defecto del motor o
+  plantilla Interactius (`lib/ds/template.ts`).
+- **Conflicto al renombrar.** Si otra pestaña guardó entre medias, la galería se recarga y lo dice.
+- **Norma.** El "+" de crear va en Mono 400, no en 300 como en FormGallery, y los estados de carga no
+  llevan puntos suspensivos.
+- **Qué falta para usarla.** La tarjeta abre `/workspace/dsmak_r/[id]`, que no existe hasta 5b y hoy
+  da 404. La galería tampoco está enlazada desde `/workspace` hasta el bloque 6.
+
 ## Hallazgos fuera del alcance (para que consten, no se tocan aquí)
 
 - **Storage sin política de lectura para el equipo.** `storage.objects` tiene políticas de insert,

@@ -130,7 +130,13 @@ export function buildDuplicate(source: unknown, input: { name?: unknown; client?
   };
 }
 
-export function buildPatch(body: unknown, id: string): { ok: true; patch: Obj; expectedUpdatedAt: string } | Fail {
+/* Renombrar desde la galería: nombre y cliente sueltos, sin la marca entera. */
+export type Rename = { name?: string; client?: string | null };
+
+export function buildPatch(
+  body: unknown,
+  id: string,
+): { ok: true; patch: Obj; expectedUpdatedAt: string; rename: Rename | null } | Fail {
   if (!isObject(body)) return fail('El cuerpo de la petición no es válido.');
   const expectedUpdatedAt = body.expectedUpdatedAt;
   if (typeof expectedUpdatedAt !== 'string' || !expectedUpdatedAt) {
@@ -140,6 +146,20 @@ export function buildPatch(body: unknown, id: string): { ok: true; patch: Obj; e
   const patch: Obj = {};
   const hasBrand = 'brand' in body;
   const hasOverrides = 'overrides' in body;
+
+  let rename: Rename | null = null;
+  if ('name' in body || 'client' in body) {
+    if (hasBrand) return fail('Al guardar la marca, el nombre y el cliente van dentro de ella.');
+    rename = {};
+    if ('name' in body) {
+      if (typeof body.name !== 'string' || !body.name.trim()) return fail('El nombre no puede quedar vacío.');
+      rename.name = body.name.trim();
+    }
+    if ('client' in body) {
+      if (body.client !== null && typeof body.client !== 'string') return fail('El cliente tiene que ser un texto.');
+      rename.client = (typeof body.client === 'string' && body.client.trim()) || null;
+    }
+  }
 
   if (hasBrand || hasOverrides) {
     if (!hasBrand || !hasOverrides) return fail('La marca y sus ajustes manuales se guardan siempre juntos.');
@@ -182,8 +202,16 @@ export function buildPatch(body: unknown, id: string): { ok: true; patch: Obj; e
     patch[key] = value;
   }
 
-  if (Object.keys(patch).length === 0) return fail('No hay ningún campo que guardar.');
-  return { ok: true, patch, expectedUpdatedAt };
+  if (Object.keys(patch).length === 0 && !rename) return fail('No hay ningún campo que guardar.');
+  return { ok: true, patch, expectedUpdatedAt, rename };
+}
+
+/* Lo que escribe un renombrado sobre la marca guardada. El nombre y el cliente no entran en los
+   tokens, así que aquí NO se recalcula nada ni se toca `engine_version`: pasar por la marca entera
+   regeneraría en silencio un sistema de otro motor solo por cambiarle el nombre (plan, H4).
+   Con la marca dañada se actualizan los espejos y la marca se deja como está: la repara el editor. */
+export function renamePatch(currentBrand: unknown, rename: Rename): Obj {
+  return isObject(currentBrand) ? { ...rename, brand: { ...currentBrand, ...rename } } : { ...rename };
 }
 
 export type ListRow = Omit<DesignSystemListItem, 'palette' | 'tags'> & { tags: string[] | null; palette: unknown };

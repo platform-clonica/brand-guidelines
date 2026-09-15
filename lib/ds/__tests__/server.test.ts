@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { logoObjectPath } from '../../storage/paths.ts';
 import { composeTokens, ENGINE_VERSION } from '../engine/index.ts';
 import { defaultBrand } from '../engine/presets.ts';
-import { buildDuplicate, buildInsert, buildPatch, isUuid, listItemFrom, ownedLogoPaths } from '../server.ts';
+import { buildDuplicate, buildInsert, buildPatch, isUuid, listItemFrom, ownedLogoPaths, renamePatch } from '../server.ts';
 
 const ID = '11111111-2222-3333-4444-555555555555';
 
@@ -114,6 +114,46 @@ test('guardar: estado, etiquetas y configuración se validan', () => {
   assert.equal(buildPatch({ expectedUpdatedAt: STAMP, tags: 'web' }, ID).ok, false);
   assert.equal(buildPatch({ expectedUpdatedAt: STAMP, configs: { button: { variant: 3 } } }, ID).ok, false);
   assert.equal(buildPatch({ expectedUpdatedAt: STAMP }, ID).ok, false);
+});
+
+// ── Renombrar (galería) ──────────────────────────────────────────────────────
+
+test('renombrar: nombre y cliente sueltos NO recalculan tokens ni tocan la versión del motor', () => {
+  const res = buildPatch({ expectedUpdatedAt: STAMP, name: ' Beta ', client: ' ', tags: ['app'] }, ID);
+  assert.equal(res.ok, true);
+  if (!res.ok) return;
+  assert.deepEqual(res.rename, { name: 'Beta', client: null });
+  assert.deepEqual(res.patch, { tags: ['app'] });
+
+  const merged = renamePatch({ ...defaultBrand(), name: 'Acme', client: 'Acme' }, res.rename!);
+  assert.equal(merged.name, 'Beta');
+  assert.equal(merged.client, null);
+  assert.equal((merged.brand as { name: string }).name, 'Beta');
+  assert.equal((merged.brand as { client: string | null }).client, null);
+  assert.equal((merged.brand as { ratio: number }).ratio, defaultBrand().ratio);
+  assert.equal('tokens' in merged, false);
+  assert.equal('engine_version' in merged, false);
+});
+
+test('renombrar: solo el nombre deja el cliente como estaba', () => {
+  const res = buildPatch({ expectedUpdatedAt: STAMP, name: 'Beta' }, ID);
+  assert.equal(res.ok, true);
+  if (!res.ok) return;
+  const merged = renamePatch({ ...defaultBrand(), client: 'Acme' }, res.rename!);
+  assert.equal('client' in merged, false);
+  assert.equal((merged.brand as { client: string }).client, 'Acme');
+});
+
+test('renombrar: nombre vacío, cliente que no es texto o mezclado con la marca se rechaza', () => {
+  assert.equal(buildPatch({ expectedUpdatedAt: STAMP, name: '  ' }, ID).ok, false);
+  assert.equal(buildPatch({ expectedUpdatedAt: STAMP, client: 3 }, ID).ok, false);
+  const mixed = buildPatch({ expectedUpdatedAt: STAMP, engineVersion: ENGINE_VERSION, brand: defaultBrand(), overrides: {}, name: 'X' }, ID);
+  assert.equal(mixed.ok, false);
+});
+
+test('renombrar: con la marca dañada se actualizan los espejos y la marca no se inventa', () => {
+  const merged = renamePatch('dañada', { name: 'Beta' });
+  assert.deepEqual(merged, { name: 'Beta' });
 });
 
 // ── Listado y Storage ────────────────────────────────────────────────────────
