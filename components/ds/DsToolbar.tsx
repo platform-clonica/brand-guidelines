@@ -1,6 +1,5 @@
 'use client';
 import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
-import { DsLogo } from '@/components/studio/Wordmark';
 import { colors, toolbarBtn } from '@/components/deck/studio/ui';
 import type { SaveState } from '@/lib/hooks/useAutosave';
 import { DS_STEPS, type DsStep } from '@/lib/ds/steps';
@@ -10,9 +9,13 @@ import { ALERT, MONO } from './controls';
 /* Los cuatro pasos están disponibles desde 5d. */
 const AVAILABLE: readonly DsStep[] = [1, 2, 3, 4];
 
-/* Barra del editor. Misma anatomía que FormToolbar: imagotipo (vuelve a la galería), marca de la
-   herramienta, nombre, pasos, estado de guardado y sello borrador/publicado. El nombre no es un
-   botón: se edita en el paso 1, que es donde vive `brand.name`. */
+/* Barra del editor: imagotipo (vuelve a la galería), nombre del sistema, pasos, estado de guardado y
+   sello borrador/publicado. El nombre no es un botón: se edita en el paso 1, que es donde vive
+   `brand.name`.
+
+   Sin el wordmark de la herramienta, a diferencia de FormToolbar y DeckToolbar: decisión de Carlos
+   del 2026-09-16. Dentro del editor ya se sabe dónde se está, y el sitio es para el nombre del
+   sistema. La galería sí lo lleva, que es donde se entra. */
 export function DsToolbar({
   name,
   step,
@@ -66,7 +69,6 @@ export function DsToolbar({
           <BrandMark height={20} />
         </button>
         <MarkDivider />
-        <DsLogo height={20} />
 
         <span
           title={name}
