@@ -892,6 +892,81 @@ Dos decisiones de Carlos del 2026-09-15, al empezar el bloque:
 9. Escribir una nota, recargar y comprobar que sigue ahí. Borrarla entera quita la ● si no había
    nada más tocado.
 
+## Bloque 5d · editor, paso 4
+
+Dos decisiones de Carlos del 2026-09-16, al empezar el bloque:
+
+- **Los semánticos van enteros en `tokens.css`.** Resuelve el pendiente de 5b. La hoja entregaba solo
+  los fondos suaves (50/100/200) y ahora añade la rampa fuerte (300–900) de los cuatro semánticos, con
+  los mismos nombres que ya usaba la previsualización. Sin ellos, con el CSS entregado no se podía
+  pintar un botón de error ni el texto de un aviso. Son 28 variables más y ningún nombre cambia de
+  significado. La previsualización deja de declararlos por su cuenta y los toma de la hoja, así que
+  pantalla y entrega no pueden separarse.
+- **El styleguide se pinta en un modo, con selector.** Un sistema de modo único usa el suyo y no
+  enseña selector; uno de "ambos" se descarga en claro salvo que se pida oscuro. La galería no tiene
+  editor: usa el modo del sistema y claro cuando admite los dos.
+
+### Base
+
+| Fichero | Qué hace |
+|---|---|
+| `lib/ds/delivery.ts` | Nombre, tipo y contenido de los tres ficheros, para el editor y la galería |
+| `components/ds/styleguideHtml.ts` | Pinta los 17 componentes y arma el styleguide |
+| `components/ds/download.ts` | La descarga, compartida |
+| `components/ds/steps/DeliveryStep.tsx` | El paso |
+
+### Decisiones al implementarlo
+
+- **R3 resuelto.** `renderToStaticMarkup` desde un componente cliente compila y funciona en el App
+  Router: no ha hecho falta el plan B de pintar en un contenedor oculto y leer `innerHTML`. El
+  styleguide usa los MISMOS renders del paso 3, así que el documento entregado y la pantalla no pueden
+  divergir.
+- **El módulo del styleguide se carga al pulsar.** Se trae `react-dom/server` y los 17 renders. Con
+  import estático, la galería pasaba de 213 kB a 280 kB de First Load JS solo por tener el botón de
+  exportar. Con import dinámico vuelve a 213 kB y esos 67 kB los paga quien pide el styleguide.
+- **Sin enlace `blob:`.** El "Share Link" del prototipo (línea 6517) se descarta, como decía el §3: la
+  entrega es un archivo, y ese enlace moría con la pestaña.
+- **El JSON se enseña recortado** a 12.000 caracteres, con el resto anotado. El fichero va entero.
+- **El paso 4 no edita nada**, así que no lleva `fieldset`: un sistema de motor antiguo se entrega tal
+  como se guardó, que es lo que pide H4.
+- **La galería ya entrega el styleguide**, la deuda que el bloque 4 dejó apuntada.
+- **Copiar** usa el portapapeles del navegador; si lo bloquea, se dice y queda la descarga.
+
+### Comprobado
+
+- `npm test` 426 en verde, `type-check` limpio, `lint` sin errores (los 16 avisos son previos) y
+  `npm run build` correcto, en un worktree aparte para no pisar el `.next` de `next dev`.
+- Tamaños tras el build: galería 213 kB y editor 229 kB de First Load JS.
+- Un script en node armó el styleguide entero en cuatro casos —motor por defecto en claro y en oscuro,
+  plantilla Interactius, y nombre y nota maliciosos—: 17 componentes en cada uno, ninguna combinación
+  vacía, ningún render fallido, un solo cierre de `<style>`, sin puntos suspensivos y con el script y
+  la nota escapados. Pesa unos 293 KB.
+
+### Pendiente
+
+- El styleguide pesa ~293 KB porque pinta todas las combinaciones de ejes (hasta 120 por componente).
+  Si molesta al enviarlo, el corte está en `MAX_VARIANTS`.
+- No hay previsualización del styleguide antes de descargarlo: se abre el archivo.
+- `tokens.css` crece 28 variables. Es lo que costaba entregar los semánticos completos.
+
+### Verificación manual
+
+1. Paso 4 disponible. Pestaña JSON: se ve el principio del fichero y el aviso de cuántos caracteres
+   faltan. "Descargar .json" baja el fichero entero y abre bien en un editor.
+2. "Copiar" en JSON y en un bloque de CSS dice "Copiado ✓" y pega lo esperado.
+3. Pestaña CSS: "Copiar todo" y "Descargar .css". El fichero trae `--ds-error-600` además de
+   `--ds-error-50`.
+4. Pestaña Styleguide: descargar el HTML, abrirlo sin conexión y comprobar que se ve todo menos las
+   tipografías de Google (comprobación 8 de la definición).
+5. En el styleguide, cambiar variante, tamaño y estado de un componente con sus botones, y buscar por
+   nombre.
+6. Sistema con los dos modos: descargar en claro y en oscuro y comprobar que las superficies cambian.
+7. Sistema de motor antiguo: el paso 4 deja descargar los tres ficheros, con los tokens guardados.
+8. Desde la galería, exportar un sistema y comprobar que salen los tres formatos, el styleguide
+   incluido.
+9. Poner un primario que no llegue a AA y comprobar que el aviso sale también en el styleguide
+   (comprobación 9 de la definición, la parte de la entrega).
+
 ## Hallazgos fuera del alcance (para que consten, no se tocan aquí)
 
 - **Storage sin política de lectura para el equipo.** `storage.objects` tiene políticas de insert,
