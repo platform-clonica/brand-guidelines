@@ -7,8 +7,8 @@ import { DS_STEPS, type DsStep } from '@/lib/ds/steps';
 import type { DsStatus } from '@/lib/ds/types';
 import { ALERT, MONO } from './controls';
 
-/* Pasos que ya existen. El 4 (entrega) llega en 5d y se ve apagado. */
-const AVAILABLE: readonly DsStep[] = [1, 2, 3];
+/* Los cuatro pasos están disponibles desde 5d. */
+const AVAILABLE: readonly DsStep[] = [1, 2, 3, 4];
 
 /* Barra del editor. Misma anatomía que FormToolbar: imagotipo (vuelve a la galería), marca de la
    herramienta, nombre, pasos, estado de guardado y sello borrador/publicado. El nombre no es un

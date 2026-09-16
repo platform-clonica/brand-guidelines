@@ -19,6 +19,7 @@ import { DsToolbar } from './DsToolbar';
 import { Preview } from './preview/Preview';
 import { BrandStep, type LogoKind } from './steps/BrandStep';
 import { ComponentsStep } from './steps/ComponentsStep';
+import { DeliveryStep } from './steps/DeliveryStep';
 import { FoundationsStep } from './steps/FoundationsStep';
 
 const GALLERY = '/workspace/dsmak_r';
@@ -301,8 +302,12 @@ export function DsStudio({ systemId }: { systemId: string }) {
             poder recorrerse aunque sus controles no respondan. */}
         {step === 3 && <ComponentsStep tokens={tokens} configs={configs} readOnly={readOnly} onConfigs={setConfigs} />}
 
+        {/* Paso 4: no edita nada, así que tampoco necesita desactivarse en solo lectura. Un sistema de
+            motor antiguo se entrega tal como se guardó, que es justo lo que pide H4. */}
+        {step === 4 && <DeliveryStep name={name} brand={brand} tokens={tokens} configs={configs} />}
+
         {/* Solo lectura = los controles no responden. `fieldset` los desactiva todos de una vez. */}
-        {step !== 3 && (
+        {step < 3 && (
         <fieldset disabled={readOnly} style={{ border: 0, margin: 0, padding: 0, minWidth: 0, flex: 1, display: 'flex', minHeight: 0 }}>
           {step === 1 && (
             <div style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>

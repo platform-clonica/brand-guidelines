@@ -1,34 +1,32 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Modal } from '@/components/deck/studio/Modal';
 import { btn, btnGhost, colors } from '@/components/deck/studio/ui';
 import { getDesignSystem } from '@/lib/ds/api';
+import { compileSystem } from '@/lib/ds/compile';
 import { exportFile, type ExportFormat } from '@/lib/ds/gallery';
 import type { DesignSystemListItem, DesignSystemRecord } from '@/lib/ds/types';
+import { downloadFile } from './download';
+import { buildStyleguideHtml } from './styleguideHtml';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
 const FORMATS: { format: ExportFormat; label: string }[] = [
   { format: 'json', label: 'tokens.json' },
   { format: 'css', label: 'tokens.css' },
+  { format: 'styleguide', label: 'styleguide.html' },
 ];
 
-function download(name: string, mime: string, content: string) {
-  const url = URL.createObjectURL(new Blob([content], { type: `${mime};charset=utf-8` }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
 /* Exportar desde la galería. El listado no trae los tokens (pesan decenas de KB por fila), así que se
-   pide la fila al abrir. Lo que se descarga sale de los tokens GUARDADOS: ver lib/ds/gallery.ts. */
+   pide la fila al abrir. Lo que se descarga sale de los tokens GUARDADOS: ver lib/ds/gallery.ts.
+
+   El styleguide pinta los 17 componentes con React (./styleguideHtml.ts), que es lo que le faltaba
+   desde el bloque 4. Aquí no hay editor, así que se pinta en el modo del sistema, y en claro cuando
+   admite los dos. */
 export function DsExportModal({ item, onClose }: { item: DesignSystemListItem; onClose: () => void }) {
   const [row, setRow] = useState<DesignSystemRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<ExportFormat | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -40,14 +38,43 @@ export function DsExportModal({ item, onClose }: { item: DesignSystemListItem; o
     };
   }, [item.id]);
 
+  const compiled = useMemo(() => (row ? compileSystem(row) : null), [row]);
+
   const onDownload = (format: ExportFormat) => {
     if (!row) return;
-    const res = exportFile(row, format, new Date().toISOString());
+    setError(null);
+
+    let styleguideHtml: string | undefined;
+    if (format === 'styleguide') {
+      const system = compiled?.system;
+      if (!system?.tokens) {
+        setError('Los tokens guardados están dañados y no se puede pintar el styleguide. Ábrelo en el editor para regenerarlos.');
+        return;
+      }
+      setBusy(format);
+      try {
+        styleguideHtml = buildStyleguideHtml({
+          name: row.name,
+          tokens: system.tokens,
+          configs: system.configs,
+          brand: system.brand,
+          mode: system.tokens.modes === 'dark' ? 'dark' : 'light',
+          generatedAt: new Date().toISOString(),
+        });
+      } catch (e) {
+        setError(e instanceof Error ? `No se ha podido generar el styleguide: ${e.message}` : 'No se ha podido generar el styleguide.');
+        return;
+      } finally {
+        setBusy(null);
+      }
+    }
+
+    const res = exportFile(row, format, new Date().toISOString(), styleguideHtml);
     if (!res.ok) {
       setError(res.error);
       return;
     }
-    download(res.file.name, res.file.mime, res.file.content);
+    downloadFile(res.file);
   };
 
   return (
@@ -62,11 +89,11 @@ export function DsExportModal({ item, onClose }: { item: DesignSystemListItem; o
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
         <button type="button" style={btnGhost} onClick={onClose}>Cerrar</button>
         {FORMATS.map((f) => (
-          <button key={f.format} type="button" style={btn} disabled={!row} onClick={() => onDownload(f.format)}>
-            {row ? f.label : 'Preparando'}
+          <button key={f.format} type="button" style={btn} disabled={!row || busy !== null} onClick={() => onDownload(f.format)}>
+            {!row ? 'Preparando' : busy === f.format ? 'Generando' : f.label}
           </button>
         ))}
       </div>
