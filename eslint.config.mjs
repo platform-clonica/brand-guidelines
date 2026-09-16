@@ -22,6 +22,9 @@ export default [
       'supabase/**',
       'next-env.d.ts',
       'deck-prototype.html',
+      /* Prototipos de referencia: código ajeno, minificado y formateado. No se importa
+         desde ninguna parte del repo — ver docs/features/ds-mak-r.md. */
+      'prototipos/**',
     ],
   },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),

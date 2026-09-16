@@ -18,6 +18,7 @@ import { ImageGallery } from './studio/ImageGallery';
 import { TranslateMenu } from './studio/TranslateMenu';
 import { TranslatingOverlay } from './studio/TranslatingOverlay';
 import { TEMPLATES } from '@/lib/deck/templates';
+import { useAutosave } from '@/lib/hooks/useAutosave';
 
 const SAMPLE = TEMPLATES.comercial;
 
@@ -32,19 +33,8 @@ function b64decode(s: string): string {
 const EMPTY_META: DeckMeta = {
   commercial_id: '', client_id: null, contact_emails: [], logo_path: null, budget_url: null, type: 'comercial', tags: [],
 };
-const snap = (md: string, meta: DeckMeta) => JSON.stringify({ md, meta });
-
-// Autosave lifecycle for the toolbar indicator.
-export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
-// Idle time after the last edit before autosave fires.
-const AUTOSAVE_DELAY = 1400;
-/* Tope de reintentos del autoguardado. `saveState` está en las dependencias del efecto de
-   autosave, así que un fallo lo re-dispara: error → reintento → error, cada 1,4 s, indefinidamente
-   mientras dure la causa. Con la sesión caducada y una pestaña olvidada abierta son ~2.500 PATCH
-   fallidos por hora, justo cuando el servicio ya está degradado. Tres intentos con espera
-   creciente (1,4 s · 2,8 s · 5,6 s) y luego para: el botón "Error · reintentar" de la toolbar es
-   la vía manual para reanudar, y ya existía. */
-const AUTOSAVE_MAX_RETRIES = 3;
+// Autosave lifecycle for the toolbar indicator. Delay, retries and backoff: lib/hooks/autosaveCore.ts.
+export type { SaveState } from '@/lib/hooks/useAutosave';
 // Idle time after the last edit before the live preview recompiles.
 const PREVIEW_DELAY = 250;
 
@@ -122,17 +112,11 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
   const [meta, setMeta] = useState<DeckMeta>(EMPTY_META);
   const [currentDeckId, setCurrentDeckId] = useState<string | null>(null);
   const [deck, setDeck] = useState(() => compileDeck(initialMd, 'comercial'));
-  const [savedSnap, setSavedSnap] = useState(() => snap(initialMd, EMPTY_META));
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [modal, setModal] = useState<ModalState>(null);
   const [guard, setGuard] = useState<{ run: () => void; targetName?: string } | null>(null);
   const [toneOn, setToneOn] = useState(false);
-  const [saveState, setSaveState] = useState<SaveState>('idle');
-  const saving = saveState === 'saving';
-  // Guards against overlapping PATCHes (autosave + manual/share flush racing).
-  const savingRef = useRef(false);
-  const retriesRef = useRef(0);
   /* La carga puede fallar (sesión caducada, incidencia de Supabase). Antes solo se registraba en
      la consola del navegador y el editor se quedaba en blanco en una URL que dice llevar un deck:
      indistinguible de un deck vacío. FormStudio ya lo resolvía bien; esto es lo mismo. */
@@ -154,7 +138,18 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
-  const dirty = useMemo(() => snap(md, meta) !== savedSnap, [md, meta, savedSnap]);
+  /* Autosave (lib/hooks/useAutosave): once the deck has an id, persist md+meta after a short idle
+     window, never two PATCHes at once (autosave + manual/share flush racing), with capped retries and
+     a beforeunload warning. Standalone (no id) it only tracks `dirty` for the navigation guard. */
+  const autosaveValue = useMemo(() => ({ md, meta }), [md, meta]);
+  const { saveState, dirty, retry, markSaved } = useAutosave({
+    enabled: !!currentDeckId,
+    value: autosaveValue,
+    save: async (value) => {
+      if (currentDeckId) await updateDeck(currentDeckId, { ...value.meta, md: value.md });
+    },
+  });
+  const saving = saveState === 'saving';
   /* Uploaded in DeckMetaModal (and defaulted per client): the cover shows it instead of the
      client name. Memoised because resolving the URL builds a Supabase client. */
   const clientLogo = useMemo(() => publicLogoUrl(meta.logo_path) ?? previewClientLogo ?? null, [meta.logo_path, previewClientLogo]);
@@ -295,7 +290,7 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
     setMeta(m);
     setMd(rec.md);
     setDeck(compileDeck(rec.md, rec.type));
-    setSavedSnap(snap(rec.md, m));
+    markSaved({ md: rec.md, meta: m });
   };
 
   const withGuard = (run: () => void, targetName?: string) => {
@@ -306,40 +301,16 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
   // Toolbar actions
   const onNew = () => withGuard(() => setModal({ kind: 'new', initial: { type: 'comercial' }, seedMd: '', template: true }));
 
-  // Persist the current md+meta against the saved deck id. Reused by autosave, the
-  // manual Guardar button and the share/PDF flush. No-ops when there's nothing to save
-  // or another PATCH is already in flight (the trailing dirty state re-triggers autosave).
-  const saveNow = async () => {
-    if (!currentDeckId || savingRef.current) return;
-    savingRef.current = true;
-    setSaveState('saving');
-    try {
-      await updateDeck(currentDeckId, { ...meta, md });
-      setSavedSnap(snap(md, meta));
-      setSaveState('saved');
-      retriesRef.current = 0;
-    } catch (e) {
-      // surface minimally; keep editor state so the user can retry
-      console.error(e);
-      retriesRef.current += 1;
-      setSaveState('error');
-    } finally {
-      savingRef.current = false;
-    }
-  };
-  // Ref so the debounce timer always calls the latest closure without resetting on every keystroke.
-  const saveNowRef = useRef(saveNow);
-  saveNowRef.current = saveNow;
-
+  // Manual Guardar button and the share/PDF flush. No-ops while another PATCH is in flight (the
+  // trailing dirty state re-triggers autosave).
   const onSave = async () => {
-    // Reintento manual: reanuda el autoguardado que se detuvo tras agotar los intentos.
-    retriesRef.current = 0;
     if (!currentDeckId) {
       // Save-as: capture metadata first, keep current md.
       setModal({ kind: 'new', initial: { type: meta.type }, seedMd: md });
       return;
     }
-    await saveNow();
+    // Reintento manual: reanuda el autoguardado que se detuvo tras agotar los intentos.
+    await retry();
   };
 
   // Live preview: recompile the rendered deck shortly after each markdown/type change so edits
@@ -353,35 +324,6 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
     }, PREVIEW_DELAY);
     return () => clearTimeout(t);
   }, [md, meta.type]);
-
-  /* Autosave: once the deck has an id, persist edits after a short idle window.
-     Con tope y espera creciente — ver AUTOSAVE_MAX_RETRIES. Agotados los intentos, el autoguardado
-     se detiene y queda el botón "Error · reintentar" de la toolbar, que llama a `onSave` y pone el
-     contador a cero. */
-  useEffect(() => {
-    if (!currentDeckId || !dirty || savingRef.current) return;
-    if (retriesRef.current >= AUTOSAVE_MAX_RETRIES) return;
-    const t = setTimeout(() => saveNowRef.current(), AUTOSAVE_DELAY * 2 ** retriesRef.current);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [md, meta, currentDeckId, dirty, saveState]);
-
-  // Fade the "Guardado ✓" confirmation back to idle.
-  useEffect(() => {
-    if (saveState !== 'saved') return;
-    const t = setTimeout(() => setSaveState('idle'), 2000);
-    return () => clearTimeout(t);
-  }, [saveState]);
-
-  // Warn on tab close/refresh while a save is still pending or failed. In-app navigation
-  // is already covered by withGuard/ConfirmModal.
-  useEffect(() => {
-    const pending = (dirty && !!currentDeckId) || saveState === 'error';
-    if (!pending) return;
-    const h = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
-    window.addEventListener('beforeunload', h);
-    return () => window.removeEventListener('beforeunload', h);
-  }, [dirty, currentDeckId, saveState]);
 
   const onOpenDeck = (item: DeckListItem) =>
     withGuard(() => router.push(`/workspace/deckmak_r/${item.id}`), item.commercial_id);
@@ -483,7 +425,7 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
       const m: DeckMeta = { ...values };
       setMeta(m);
       setDeck(compileDeck(md, m.type));
-      setSavedSnap(snap(md, m));
+      markSaved({ md, meta: m });
     } else {
       // "Nueva" seeds from the per-type starter template; save-as/duplicate keep their md.
       const seed = modal.template ? TEMPLATES[values.type] : modal.seedMd;

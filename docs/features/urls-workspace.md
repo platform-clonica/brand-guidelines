@@ -18,6 +18,8 @@ se mueve nunca: sus enlaces ya están enviados.
 | `/workspace/formmak_r` | Galería de formularios |
 | `/workspace/formmak_r/[id]` | Editor de un formulario |
 | `/workspace/rewrit_r` | Reescritura de correos y textos con la voz de marca |
+| `/workspace/dsmak_r` | Galería de design systems |
+| `/workspace/dsmak_r/[id]` | Editor de un design system |
 
 Todo `/workspace/*` lo protege [middleware.ts](../../middleware.ts): **sin sesión de equipo**
 —sesión Y cuenta `@interactius.com`, ver [workspace-login-google.md](workspace-login-google.md)—

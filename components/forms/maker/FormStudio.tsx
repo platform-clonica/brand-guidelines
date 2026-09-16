@@ -13,21 +13,16 @@ import { ConfirmModal } from '@/components/deck/studio/ConfirmModal';
 import { ImageGallery } from '@/components/deck/studio/ImageGallery';
 import { TranslatingOverlay } from '@/components/deck/studio/TranslatingOverlay';
 import { colors } from '@/components/deck/studio/ui';
-import { FormToolbar, type SaveState } from './FormToolbar';
+import { useAutosave } from '@/lib/hooks/useAutosave';
+import { FormToolbar } from './FormToolbar';
 import { FormEditorBar } from './FormEditorBar';
 import { FormMetaModal, type FormMetaValues } from './FormMetaModal';
-import { IssuesPanel } from './IssuesPanel';
+import { IssuesPanel } from '@/components/studio/IssuesPanel';
 import '@/components/forms/forms.css';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
 const PREVIEW_DELAY = 250;   // recompilado del visor (igual que DeckStudio)
-const AUTOSAVE_DELAY = 1400; // guardado tras dejar de escribir (igual que DeckStudio)
-/* Tope de reintentos, igual que DeckStudio. `saveState` está en las dependencias del efecto de
-   autosave, así que un fallo lo re-dispara indefinidamente: error → reintento → error cada 1,4 s
-   mientras dure la causa. El arreglo va en las DOS copias a propósito — con el manejo del error de
-   carga ya pasó que se corrigió aquí y no allí, y estuvo meses descuadrado. */
-const AUTOSAVE_MAX_RETRIES = 3;
 
 const ASIDE_STORAGE_KEY = 'form.asideW';
 const ASIDE_DEFAULT = 460;
@@ -44,8 +39,6 @@ const LANG_LABELS: Record<TranslateTarget, string> = {
   en: 'inglés',
 };
 
-const snap = (md: string, tags: string[]) => JSON.stringify({ md, tags });
-
 /* Editor de FormMaker.
 
    Mismo mecanismo y misma disposición que DeckStudio: markdown a la IZQUIERDA, visor a la derecha,
@@ -60,13 +53,11 @@ export function FormStudio({ formId }: { formId: string }) {
 
   const [md, setMd] = useState('');
   const [tags, setTags] = useState<string[]>([]);
-  const [savedSnap, setSavedSnap] = useState('');
 
   const [def, setDef] = useState<FormDraft | null>(null);   // última versión que compiló
   const [issues, setIssues] = useState<FormIssue[]>([]);
   const [compiles, setCompiles] = useState(true);
 
-  const [saveState, setSaveState] = useState<SaveState>('idle');
   const [copied, setCopied] = useState(false);
   const [guard, setGuard] = useState<null | { run: () => void }>(null);
   const [editingMeta, setEditingMeta] = useState(false);
@@ -83,11 +74,19 @@ export function FormStudio({ formId }: { formId: string }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const draggingRef = useRef(false);
-  const savingRef = useRef(false);
-  const retriesRef = useRef(0);
   const pendingSelection = useRef<{ start: number; end: number } | null>(null);
 
-  const dirty = useMemo(() => snap(md, tags) !== savedSnap, [md, tags, savedSnap]);
+  /* ── Guardado: autoguardado por inactividad, con reintentos y aviso al cerrar (lib/hooks/useAutosave).
+        No arranca hasta que el formulario ha cargado. ───────────────────────────── */
+  const autosaveValue = useMemo(() => ({ md, tags }), [md, tags]);
+  const { saveState, dirty, saveNow, retry, markSaved } = useAutosave({
+    enabled: !!record,
+    value: autosaveValue,
+    save: async (value) => {
+      const rec = await updateForm(formId, value);
+      setRecord((prev) => (prev ? { ...prev, ...rec } : prev));
+    },
+  });
 
   /* ── Carga inicial ────────────────────────────────────────────────────────── */
   useEffect(() => {
@@ -98,7 +97,7 @@ export function FormStudio({ formId }: { formId: string }) {
         setRecord(rec);
         setMd(rec.md);
         setTags(rec.tags ?? []);
-        setSavedSnap(snap(rec.md, rec.tags ?? []));
+        markSaved({ md: rec.md, tags: rec.tags ?? [] });
         // Compilado inmediato: el visor no debe ir un debounce por detrás de la carga.
         const res = compileForm(rec.md);
         setCompiles(res.ok);
@@ -109,7 +108,7 @@ export function FormStudio({ formId }: { formId: string }) {
     return () => {
       alive = false;
     };
-  }, [formId]);
+  }, [formId, markSaved]);
 
   /* ── Visor en vivo: recompilado con debounce.
         Si no compila, se conserva el último `def` bueno y los errores van al panel. ─────── */
@@ -133,60 +132,6 @@ export function FormStudio({ formId }: { formId: string }) {
     setIssues(res.issues);
     if (res.ok) setDef(res.def);
   }, []);
-
-  /* ── Guardado ─────────────────────────────────────────────────────────────── */
-  const saveNow = useCallback(
-    async (overrideMd?: string, overrideTags?: string[]) => {
-      if (savingRef.current) return;
-      const nextMd = overrideMd ?? md;
-      const nextTags = overrideTags ?? tags;
-      savingRef.current = true;
-      setSaveState('saving');
-      try {
-        const rec = await updateForm(formId, { md: nextMd, tags: nextTags });
-        setRecord((prev) => (prev ? { ...prev, ...rec } : prev));
-        setSavedSnap(snap(nextMd, nextTags));
-        setSaveState('saved');
-        retriesRef.current = 0;
-      } catch (e) {
-        console.error(e);
-        retriesRef.current += 1;
-        setSaveState('error');
-      } finally {
-        savingRef.current = false;
-      }
-    },
-    [formId, md, tags],
-  );
-
-  // Ref para que el temporizador llame siempre al cierre más reciente sin reiniciarse al teclear.
-  const saveNowRef = useRef(saveNow);
-  saveNowRef.current = saveNow;
-
-  useEffect(() => {
-    if (!record || !dirty || savingRef.current) return;
-    if (retriesRef.current >= AUTOSAVE_MAX_RETRIES) return;
-    const t = setTimeout(() => saveNowRef.current(), AUTOSAVE_DELAY * 2 ** retriesRef.current);
-    return () => clearTimeout(t);
-  }, [md, tags, record, dirty, saveState]);
-
-  useEffect(() => {
-    if (saveState !== 'saved') return;
-    const t = setTimeout(() => setSaveState('idle'), 2000);
-    return () => clearTimeout(t);
-  }, [saveState]);
-
-  // Aviso al cerrar la pestaña con un guardado pendiente o fallido.
-  useEffect(() => {
-    const pending = (dirty && !!record) || saveState === 'error';
-    if (!pending) return;
-    const h = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', h);
-    return () => window.removeEventListener('beforeunload', h);
-  }, [dirty, record, saveState]);
 
   const withGuard = (run: () => void) => (dirty ? setGuard({ run }) : run());
 
@@ -294,7 +239,7 @@ export function FormStudio({ formId }: { formId: string }) {
     const next = setFrontmatterValue(md, 'status', status === 'published' ? 'draft' : 'published');
     setMd(next);
     // Publicar es un acto deliberado: se persiste ya, sin esperar al autoguardado.
-    void saveNow(next);
+    void saveNow({ md: next, tags });
   };
 
   const onSubmitMeta = async (values: FormMetaValues) => {
@@ -302,7 +247,7 @@ export function FormStudio({ formId }: { formId: string }) {
     replaceMd(next);
     setTags(values.tags);
     setEditingMeta(false);
-    await saveNow(next, values.tags);
+    await saveNow({ md: next, tags: values.tags });
   };
 
   /* Imagen de fondo del hero. Misma galería que el DeckMaker (Supabase Storage + tabla `images`),
@@ -368,11 +313,7 @@ export function FormStudio({ formId }: { formId: string }) {
         onEditTitle={() => setEditingMeta(true)}
         onTogglePublish={onTogglePublish}
         onCopyUrl={onCopyUrl}
-        onSaveNow={() => {
-          // Reintento manual: reanuda el autoguardado detenido tras agotar los intentos.
-          retriesRef.current = 0;
-          void saveNow();
-        }}
+        onSaveNow={() => void retry()}
       />
 
       <div ref={rowRef} style={{ flex: 1, display: 'flex', minHeight: 0 }}>
@@ -398,7 +339,12 @@ export function FormStudio({ formId }: { formId: string }) {
             }}
           />
           <div style={{ margin: '0 -20px' }}>
-            <IssuesPanel issues={issues} stale={!compiles} onJump={jumpToLine} />
+            <IssuesPanel
+              issues={issues}
+              stale={!compiles}
+              locate={(issue) => (issue.line ? { label: `L${issue.line}`, title: `Ir a la línea ${issue.line}` } : null)}
+              onJump={(issue) => issue.line && jumpToLine(issue.line)}
+            />
           </div>
         </aside>
 

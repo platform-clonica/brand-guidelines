@@ -64,7 +64,9 @@ test('ningún grupo se queda vacío', () => {
 });
 
 test('appsIn respeta el orden de declaración', () => {
-  // Las deshabilitadas van las últimas: son huecos reservados, no herramientas más.
+  /* El orden es el de la tabla, y la tabla sigue el orden en que se fueron construyendo las
+     herramientas. Hasta DSMak_r coincidía con "las deshabilitadas al final"; ya no: DSMak_r está
+     encendida y va antes que SocialMak_r, que sigue siendo un hueco reservado. */
   assert.deepEqual(appsIn('tools').map((a) => a.id), [
     'deckmakr',
     'formmakr',
@@ -80,7 +82,16 @@ test('las herramientas que ya existen apuntan a sus rutas reales', () => {
   assert.equal(byId.get('deckmakr')?.href, '/workspace/deckmak_r');
   assert.equal(byId.get('formmakr')?.href, '/workspace/formmak_r');
   assert.equal(byId.get('rewritr')?.href, '/workspace/rewrit_r');
+  assert.equal(byId.get('dsmakr')?.href, '/workspace/dsmak_r');
   assert.equal(byId.get('timer')?.href, '/timer');
-  assert.equal(byId.get('dsmakr')?.href, null);
   assert.equal(byId.get('socialmakr')?.href, null);
+});
+
+test('la ruta de cada herramienta replica el guiño de su wordmark', () => {
+  // `/workspace/dsmak_r` como `deckmak_r` y `formmak_r`: ver docs/features/urls-workspace.md.
+  for (const a of APPS) {
+    if (a.group !== 'tools' || !a.href) continue;
+    const slug = a.href.replace('/workspace/', '');
+    assert.equal(slug, `${a.wordmark!.before}_${a.wordmark!.after}`.toLowerCase(), `${a.id}: ruta y wordmark no cuadran`);
+  }
 });

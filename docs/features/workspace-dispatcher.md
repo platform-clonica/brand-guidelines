@@ -29,7 +29,7 @@ herramienta, personalización por usuario, buscador. Nada de eso hace falta con 
 |---|---|---|
 | Ruta | `/workspace` | Fuera de `/workspace/deckmak_r` y de `/forms`: el lanzador no pertenece a ninguna herramienta |
 | Aterrizaje tras login | `/workspace` | Deja de asumirse que el DeckMaker es la única herramienta |
-| DSMak_r | tarjeta deshabilitada, "Próximamente" | Reserva el sitio sin llevar a un 404 |
+| DSMak_r | encendida desde el 2026-09-16, `/workspace/dsmak_r` | Nació deshabilitada, con "Próximamente", para reservar el sitio sin llevar a un 404. Ver [ds-mak-r.md](ds-mak-r.md) |
 | StarMeApp! | `https://star-me.app/`, pestaña nueva | Vive fuera de este dominio |
 | Círculo superior derecho | botón directo de cerrar sesión | Decisión de Carlos, avisado del riesgo de clic accidental |
 | Tarjetas de herramienta | wordmark real + descripción | Reconoces el destino antes de llegar; los wordmarks ya existen |
@@ -64,7 +64,10 @@ export type AppEntry = {
 | `timer` | links | `/timer` | — | — | — |
 | `deckmakr` | tools | `/workspace/deckmak_r` | — | `DeckMak` + `r` | Presentaciones |
 | `formmakr` | tools | `/workspace/formmak_r` | — | `FormMak` + `r` | Formularios |
-| `dsmakr` | tools | `null` | — | `DSMak` + `r` | Próximamente |
+| `dsmakr` | tools | `/workspace/dsmak_r` | — | `DSMak` + `r` | Design systems |
+
+> Esta tabla es la foto del día en que se montó el dispatcher, con la fila de `dsmakr` al día. Faltan
+> `rewritr` y `socialmakr`, que llegaron después: la fuente de verdad es `lib/workspace/catalog.ts`.
 
 Invariantes (verificadas por test): ids únicos; `href` interno empieza por `/`; `external` implica
 `href` absoluto `https://`; `href: null` implica sin `external`; toda entrada de `tools` tiene

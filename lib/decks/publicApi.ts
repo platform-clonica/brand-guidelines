@@ -17,9 +17,11 @@
    función lo necesita, va en `api.ts`. */
 
 import type { DeckSignature, SignInput } from './types';
+/* Los nombres de bucket viven en lib/storage/paths.ts (sin SDK ni 'use client'), para que también los
+   usen los Route Handlers. Se reexportan para no mover a ningún consumidor. */
+import { IMAGE_BUCKET, LOGO_BUCKET } from '@/lib/storage/paths';
 
-export const LOGO_BUCKET = 'deck-assets';
-export const IMAGE_BUCKET = 'deck-images';
+export { IMAGE_BUCKET, LOGO_BUCKET };
 
 export async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {

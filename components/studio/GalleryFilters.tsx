@@ -50,9 +50,12 @@ export function SearchField({
   );
 }
 
-/* ── Fila de filtros: cliente (desplegable) + etiquetas (píldoras) ──
+/* ── Fila de filtros: cliente (desplegable) + estado + etiquetas (píldoras) ──
    El desplegable lleva el mismo traje que las píldoras — mismo borde, misma tipografía, misma
-   inversión al estar activo — porque hace lo mismo que ellas: acotar la rejilla. */
+   inversión al estar activo — porque hace lo mismo que ellas: acotar la rejilla.
+
+   El estado es opcional y de valor único: pulsar el activo lo apaga. Lo pasa DSMak_r; DeckMak_r y
+   FormMak_r no, y no cambian. */
 export function FilterBar({
   clients,
   client,
@@ -61,6 +64,9 @@ export function FilterBar({
   selectedTags,
   onToggleTag,
   allClientsLabel = 'Todos los clientes',
+  statuses = [],
+  status = null,
+  onStatus,
 }: {
   clients: string[];
   client: string | null;
@@ -69,8 +75,11 @@ export function FilterBar({
   selectedTags: string[];
   onToggleTag: (t: string) => void;
   allClientsLabel?: string;
+  statuses?: { value: string; label: string }[];
+  status?: string | null;
+  onStatus?: (s: string | null) => void;
 }) {
-  if (!clients.length && !allTags.length) return null;
+  if (!clients.length && !allTags.length && !statuses.length) return null;
   const on = client !== null;
 
   return (
@@ -85,25 +94,17 @@ export function FilterBar({
         />
       )}
 
-      {allTags.map((t) => {
-        const active = selectedTags.includes(t);
-        return (
-          <button
-            key={t}
-            onClick={() => onToggleTag(t)}
-            aria-pressed={active}
-            style={{
-              ...chip,
-              cursor: 'pointer',
-              borderColor: active ? colors.dark : colors.warmDark,
-              background: active ? colors.dark : colors.white,
-              color: active ? colors.warmLight : colors.ash,
-            }}
-          >
-            {t}
-          </button>
-        );
-      })}
+      {statuses.map((s) => (
+        <Pill key={`status:${s.value}`} active={status === s.value} onClick={() => onStatus?.(status === s.value ? null : s.value)}>
+          {s.label}
+        </Pill>
+      ))}
+
+      {allTags.map((t) => (
+        <Pill key={t} active={selectedTags.includes(t)} onClick={() => onToggleTag(t)}>
+          {t}
+        </Pill>
+      ))}
     </div>
   );
 }
@@ -211,6 +212,24 @@ function ClientDropdown({
         </>
       )}
     </span>
+  );
+}
+
+function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      style={{
+        ...chip,
+        cursor: 'pointer',
+        borderColor: active ? colors.dark : colors.warmDark,
+        background: active ? colors.dark : colors.white,
+        color: active ? colors.warmLight : colors.ash,
+      }}
+    >
+      {children}
+    </button>
   );
 }
 

@@ -1,0 +1,109 @@
+/* DSMak_r — tokens.css (F0 y Af del prototipo), por bloques para copiarlos uno a uno en el paso 4.
+
+   Diferencias con el prototipo:
+   - Un `@import` por familia tipográfica (plan, H10).
+   - Los semánticos entregan además su rampa fuerte (300–900), no solo los fondos suaves
+     (50/100/200). Decidido por Carlos en 5d: sin los escalones fuertes, la hoja entregada no puede
+     pintar un botón de error ni el texto de un aviso, y el editor los declaraba por su cuenta.
+   - Todo el texto libre se sanea antes de entrar en la hoja: familias tipográficas (dentro de un
+     string CSS), nombres de breakpoint y retícula (en comentarios y selectores), y claves de
+     componentes, radios y roles de texto (en nombres de variable). Ver ../escape.ts.
+
+   Las variables salen de `tokenVariables`, que también usa la previsualización del editor
+   (../preview.ts): lo que se ve en pantalla y lo que se entrega declaran los mismos nombres. */
+
+import { SOFT_STEPS } from '../engine/semantic.ts';
+import { radiusCss, shadowCss } from '../engine/resolve.ts';
+import { cssComment, cssString, slug } from '../escape.ts';
+import { fontStylesheets } from '../fonts.ts';
+import type { Tokens } from '../schema.ts';
+
+export type CssBlock = { id: string; title: string; css: string };
+export type CssDecl = [name: string, value: string];
+
+const block = (id: string, title: string, lines: string[]): CssBlock => ({ id, title, css: `/* ${title} */\n${lines.join('\n')}` });
+const declLine = ([name, value]: CssDecl) => `  ${name}: ${value};`;
+const root = (decls: CssDecl[]) => [':root {', ...decls.map(declLine), '}'];
+
+const rampVars = (ramps: Record<string, Record<string, string>>): CssDecl[] =>
+  Object.entries(ramps).flatMap(([family, ramp]) =>
+    Object.entries(ramp).map(([step, hex]): CssDecl => [`--ds-${slug(family)}-${step}`, hex]),
+  );
+
+/* La rampa de los semánticos sin sus tres escalones suaves, que vienen de `semanticScale` y tienen
+   los mismos nombres. */
+const strongRampVars = (ramps: Record<string, Record<string, string>>): CssDecl[] =>
+  Object.entries(ramps).flatMap(([key, ramp]) =>
+    Object.entries(ramp)
+      .filter(([step]) => !(SOFT_STEPS as readonly string[]).includes(step))
+      .map(([step, hex]): CssDecl => [`--ds-${slug(key)}-${step}`, hex]),
+  );
+
+/* Las variables `:root` de la hoja, agrupadas por bloque. */
+export function tokenVariables(tokens: Tokens) {
+  return {
+    palette: rampVars(tokens.palette),
+    semantic: rampVars(tokens.semanticScale),
+    semanticStrong: strongRampVars(tokens.semantic),
+    typography: [
+      ['--ds-font-heading', `"${cssString(tokens.fonts.heading)}", Georgia, serif`],
+      ['--ds-font-body', `"${cssString(tokens.fonts.body)}", system-ui, sans-serif`],
+      ...tokens.typography.flatMap((t): CssDecl[] => [
+        [`--ds-font-size-${slug(t.key)}`, `${t.size}px`],
+        [`--ds-line-height-${slug(t.key)}`, `${t.lineHeight}px`],
+        [`--ds-font-weight-${slug(t.key)}`, `${t.weight}`],
+      ]),
+    ] as CssDecl[],
+    spacing: tokens.spacing.map((s): CssDecl => [`--ds-space-${slug(s.name)}`, `${s.value}px`]),
+    radius: Object.entries(tokens.radius).map(([name, v]): CssDecl => [`--ds-radius-${slug(name)}`, radiusCss(v)]),
+    shadows: tokens.shadows.map((s): CssDecl => [`--ds-shadow-${slug(s.name)}`, shadowCss(s)]),
+  };
+}
+
+export function cssBlocks(tokens: Tokens): CssBlock[] {
+  const vars = tokenVariables(tokens);
+
+  return [
+    block('palette', 'Paleta', root(vars.palette)),
+    block('semantic', 'Semánticos', [
+      ':root {',
+      '  /* Fondos suaves de avisos y estados */',
+      ...vars.semantic.map(declLine),
+      '',
+      '  /* Rampa completa: textos, bordes y botones */',
+      ...vars.semanticStrong.map(declLine),
+      '}',
+    ]),
+    block('typography', 'Tipografía', [
+      ...fontStylesheets(tokens).map((s) => `@import url("${s.url}");`),
+      ...root(vars.typography),
+      ...tokens.typography.map((t) => {
+        const k = slug(t.key);
+        return `.ds-${k} { font-family: var(--ds-font-${t.family}); font-size: var(--ds-font-size-${k}); line-height: var(--ds-line-height-${k}); font-weight: var(--ds-font-weight-${k}); letter-spacing: ${t.letterSpacing}px; }`;
+      }),
+    ]),
+    block('spacing', 'Espaciado', root(vars.spacing)),
+    block('radius', 'Radios', [
+      ...root(vars.radius),
+      ...Object.entries(tokens.radiusMap).map(
+        ([component, name]) => `.ds-${slug(component)} { border-radius: var(--ds-radius-${slug(name)}); }`,
+      ),
+    ]),
+    block('shadows', 'Sombras', root(vars.shadows)),
+    block(
+      'breakpoints',
+      'Breakpoints',
+      tokens.breakpoints.map((b) => `@media (min-width: ${b.min}px) { /* ${cssComment(b.name)} */ }`),
+    ),
+    block(
+      'grid',
+      'Retícula',
+      tokens.grid.map(
+        (g) =>
+          `/* ${cssComment(g.name)} */ .ds-grid-${slug(g.name)} { display: grid; grid-template-columns: repeat(${g.columns}, 1fr); gap: ${g.gutter}px; padding-inline: ${g.margin}px; }`,
+      ),
+    ),
+  ];
+}
+
+export const exportCss = (tokens: Tokens) => cssBlocks(tokens).map((b) => b.css).join('\n\n');
