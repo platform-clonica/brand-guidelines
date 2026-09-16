@@ -15,6 +15,13 @@ test('previsualización: usa las MISMAS variables que el tokens.css que se entre
   for (const [, name, value] of delivered) assert.equal(vars[name], value.trim(), name);
 });
 
+test('previsualización: los escalones fuertes de los semánticos salen de la rampa, no de la escala suave', () => {
+  const t = tokens();
+  const vars = previewVars(t, 'light');
+  assert.equal(vars['--ds-error-600'], t.semantic.error['600']);
+  assert.equal(vars['--ds-error-50'], t.semanticScale.error['50']);
+});
+
 test('previsualización: superficies del modo pedido', () => {
   const t = tokens();
   assert.equal(previewVars(t, 'light')['--ds-canvas'], surfaces(t, 'light').canvas);

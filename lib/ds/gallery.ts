@@ -2,9 +2,7 @@
    filtro y qué fichero descarga "Exportar". */
 
 import { compileSystem } from './compile.ts';
-import { exportCss } from './export/css.ts';
-import { exportJson } from './export/json.ts';
-import { slug } from './escape.ts';
+import { deliveryFile, type DeliveryFormat, type ExportedFile } from './delivery.ts';
 import { tokensSchema } from './schema.ts';
 import type { DesignSystemListItem, DsStatus } from './types.ts';
 
@@ -37,17 +35,19 @@ export function galleryFacets(items: DesignSystemListItem[]): { tags: string[]; 
   return { tags: [...tags].sort(), clients: [...clients].sort((a, b) => a.localeCompare(b, 'es')) };
 }
 
-export type ExportFormat = 'json' | 'css';
-export type ExportedFile = { name: string; mime: string; content: string };
+export type ExportFormat = DeliveryFormat;
+export type { ExportedFile };
 
 /* Descarga desde la galería. Sale de los tokens GUARDADOS, nunca recalculados: un sistema entregado
    con otro motor se exporta tal como se entregó (plan, H4). Por eso no se exige que la marca compile,
-   solo que los tokens estén sanos. El styleguide no está aquí: necesita pintar los componentes y
-   llega con el paso 4 del editor. */
+   solo que los tokens estén sanos.
+
+   El styleguide llega ya pintado desde el modal, que es quien tiene React a mano. */
 export function exportFile(
   row: unknown,
   format: ExportFormat,
   generatedAt: string,
+  styleguideHtml?: string,
 ): { ok: true; file: ExportedFile } | { ok: false; error: string } {
   const src = (typeof row === 'object' && row !== null ? row : {}) as { name?: unknown; tokens?: unknown };
   const tokens = tokensSchema.safeParse(src.tokens);
@@ -56,12 +56,8 @@ export function exportFile(
   }
 
   const name = typeof src.name === 'string' ? src.name : '';
-  const base = /[a-z0-9]/i.test(name.normalize('NFD')) ? slug(name) : 'design-system';
-
-  if (format === 'css') {
-    return { ok: true, file: { name: `${base}-tokens.css`, mime: 'text/css', content: exportCss(tokens.data) } };
-  }
   const configs = compileSystem(row).system?.configs ?? {};
-  const json = exportJson(tokens.data, { name, generatedAt, configs });
-  return { ok: true, file: { name: `${base}-tokens.json`, mime: 'application/json', content: `${JSON.stringify(json, null, 2)}\n` } };
+  const file = deliveryFile(format, { name, tokens: tokens.data, configs, generatedAt, styleguideHtml });
+  if (!file) return { ok: false, error: 'No se ha podido preparar el styleguide.' };
+  return { ok: true, file };
 }

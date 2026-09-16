@@ -65,8 +65,22 @@ test('CSS: una variable por token, ninguna repetida', () => {
     '--ds-radius-full', '--ds-shadow-md', '--ds-font-size-h1', '--ds-line-height-caption', '--ds-font-heading']) {
     assert.ok(vars.includes(v), `falta ${v}`);
   }
-  // 3 familias × 10 + neutros 10 + 4 semánticos × 3 + 11 roles × 3 + 2 familias + 10 espacios + 7 radios + 4 sombras
-  assert.equal(vars.length, 30 + 10 + 12 + 33 + 2 + 10 + 7 + 4);
+  // 3 familias × 10 + neutros 10 + 4 semánticos × (3 suaves + 7 fuertes) + 11 roles × 3 + 2 familias
+  // + 10 espacios + 7 radios + 4 sombras
+  assert.equal(vars.length, 30 + 10 + 12 + 28 + 33 + 2 + 10 + 7 + 4);
+});
+
+test('CSS: los semánticos entregan los fondos suaves y la rampa fuerte', () => {
+  const tokens = tokensFor();
+  const css = exportCss(tokens);
+  for (const step of ['50', '100', '200'] as const) {
+    assert.ok(css.includes(`--ds-error-${step}: ${tokens.semanticScale.error[step]};`), `suave ${step}`);
+  }
+  for (const step of ['300', '500', '900'] as const) {
+    assert.ok(css.includes(`--ds-error-${step}: ${tokens.semantic.error[step]};`), `fuerte ${step}`);
+  }
+  // Un aviso de error se puede pintar entero con la hoja entregada: fondo suave y color de acción.
+  for (const key of ['success', 'warning', 'info']) assert.ok(css.includes(`--ds-${key}-600:`), key);
 });
 
 test('CSS: los valores por defecto se escriben como en el prototipo', () => {
