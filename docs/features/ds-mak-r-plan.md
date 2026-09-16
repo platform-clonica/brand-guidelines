@@ -967,6 +967,30 @@ Dos decisiones de Carlos del 2026-09-16, al empezar el bloque:
 9. Poner un primario que no llegue a AA y comprobar que el aviso sale también en el styleguide
    (comprobación 9 de la definición, la parte de la entrega).
 
+## Bloque 6 · cierre técnico
+
+- **Catálogo.** La entrada `dsmakr` pasa de `href: null` y "Próximamente" a `/workspace/dsmak_r` y
+  "Design systems". La posición no cambia: sigue cuarta entre las tools.
+- **El dispatcher decide por `href`, no por el texto.** `AppTile` pinta un `<div aria-disabled>`
+  cuando no hay destino y `ToolsMenu` enseña "Próximamente" con la misma condición, así que encender
+  la tarjeta basta: el cartel se va solo y el wordmark deja de estar apagado.
+- **Test del catálogo.** Se cambia el caso que afirmaba `href === null` y se reescribe el comentario
+  del orden: "las deshabilitadas van las últimas" dejó de ser cierto con DSMak_r encendida delante de
+  SocialMak_r. Se añade una comprobación nueva: la ruta de cada herramienta replica el guiño de su
+  wordmark (`DSMak` + `r` → `dsmak_r`), que hasta ahora era una convención sin test.
+- **`urls-workspace.md`.** Dos filas nuevas, galería y editor. Nada en la tabla pública: DSMak_r no
+  abre ninguna superficie pública.
+- **Sin cambios en `middleware.ts` ni en `package.json`.** `/api/design-systems` entró en `EDITOR_API`
+  en el bloque 3 y los globs de test en el 1 y el 5a. Comprobado hoy, no había nada que tocar.
+
+### Verificación manual
+
+1. En `/workspace`, la tarjeta DSMak_r aparece encendida, cuarta, con su icono cian y sin el cartel
+   de "Próximamente" (comprobación 3 de la definición).
+2. La tarjeta y la entrada del menú de herramientas llevan a la galería.
+3. Sin sesión, `/workspace/dsmak_r` redirige a `/workspace/login?next=/workspace/dsmak_r`, y con una
+   cuenta que no sea `@interactius.com`, lo mismo (comprobaciones 1 y 2).
+
 ## Hallazgos fuera del alcance (para que consten, no se tocan aquí)
 
 - **Storage sin política de lectura para el equipo.** `storage.objects` tiene políticas de insert,

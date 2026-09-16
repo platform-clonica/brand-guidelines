@@ -67,8 +67,8 @@ export const APPS: AppEntry[] = [
     id: 'dsmakr',
     label: 'DSMakr',
     group: 'tools',
-    href: null,
-    description: 'Próximamente',
+    href: '/workspace/dsmak_r',
+    description: 'Design systems',
     wordmark: { before: 'DSMak', after: 'r' },
   },
   {
