@@ -6,7 +6,12 @@
 > Es la cuarta herramienta del workspace: DeckMak_r vende el proyecto, FormMak_r lo investiga,
 > ReWrit_r escribe, y DSMak_r arranca la interfaz.
 
-Estado: **definido** · pendiente de implementar.
+Estado: **implementado**. Fase 2 cerrada el 2026-09-16 en la rama `feat/dsmakr`, con los seis bloques
+en verde (`test`, `type-check`, `lint` y `build`). Queda la verificación manual y subir la rama.
+
+> **Qué cambió respecto a esta definición.** Lo que se movió está marcado en cada apartado. El detalle
+> bloque a bloque, con los datos que lo justifican, está en [ds-mak-r-plan.md](ds-mak-r-plan.md):
+> los diez hallazgos H1–H10 del análisis y lo que se decidió al implementar cada bloque.
 
 ## Contexto
 
@@ -70,7 +75,7 @@ cuando el cálculo es instantáneo.
 | Decisión | Valor | Por qué |
 |---|---|---|
 | Ruta | `/workspace/dsmak_r` y `/workspace/dsmak_r/[id]` | La convención de `deckmak_r` y `formmak_r` |
-| Entrada en el catálogo | Ya existe: id `dsmakr`, wordmark `{ before: 'DSMak', after: 'r' }`, posición cuarta. Cambia `href: null` por la ruta y `'Próximamente'` por `'Design systems'` | La tarjeta está apagada desde que se montó el dispatcher |
+| Entrada en el catálogo | Hecho en el bloque 6: id `dsmakr`, wordmark `{ before: 'DSMak', after: 'r' }`, posición cuarta, `href: '/workspace/dsmak_r'` y descripción `'Design systems'` | La tarjeta estuvo apagada desde que se montó el dispatcher |
 | Acceso | Sesión de equipo `@interactius.com`, `X-Robots-Tag: noindex, nofollow` | Lo aplica `middleware.ts` a todo `/workspace/*` |
 | Fuente de verdad | `brand` y `overrides` en JSONB, validados con Zod | Un design system no es prosa. Ver el apartado siguiente |
 | Tokens generados | Se guardan, con `engine_version` | Un sistema entregado a un cliente no cambia solo porque se afine el algoritmo |
@@ -86,14 +91,19 @@ cuando el cálculo es instantáneo.
 | Tipografías | Lista curada de Google Fonts más campo libre | Lo que ya hace el prototipo |
 | Permisos | Cualquiera del equipo edita y borra; `created_by` es rastro | Mismo criterio que `decks` y `forms` |
 
-## Decisiones abiertas
+## Decisiones que estaban abiertas · **cerradas**
 
-| Pregunta | Alternativas | Recomendación |
+| Pregunta | Decisión | Cómo quedó |
 |---|---|---|
-| El cliente, ¿texto o relación? | `client text` espejo, como en `forms`; o `client_id uuid` contra la tabla `clients`, como en `decks` | `client text`. La tabla `clients` está vacía y su uso real es el de las presentaciones, con logo y correos de contacto por defecto. Atarse a ella ahora acopla dos herramientas sin ganar nada |
-| Etiquetas | Reutilizar `TagInput` y `GalleryFilters` desde el primer día, o dejar la columna `tags` creada y vacía | Reutilizarlas. El coste es una línea y evita una migración cuando hagan falta |
-| La navegación por pasos | El stepper del prototipo, o el split redimensionable del resto de tools | El stepper, sabiendo que Carlos puede querer cambiarlo al verlo funcionando. Por eso se construye como capa fina sobre el estado: el paso activo es un número en la URL o en el estado local, y ningún componente de paso conoce a los demás |
-| Regeneración tras cambiar el motor | Avisar en la galería de los sistemas con `engine_version` antigua, o no avisar | Avisar en el editor, no en la galería. Enterarse al abrir es suficiente y no ensucia el listado |
+| El cliente, ¿texto o relación? | `client text` | Espejo de `brand.client`, como en `forms`. La tabla `clients` sigue sin tocarse |
+| Etiquetas | Desde el primer día | `TagInput` en el modal de metadatos y `FilterBar` en la galería, con filtro por cliente, etiqueta y estado |
+| La navegación por pasos | Pasos | El paso activo es un número en el estado del editor, no en la URL, y ningún paso importa a otro. Con persistencia, los cuatro están disponibles desde el principio: el botón "Generar" del prototipo desaparece porque el cálculo es en vivo |
+| Regeneración tras cambiar el motor | Avisar en el editor | Se abre en solo lectura con los tokens guardados y un aviso; "Regenerar" enseña antes cuántos valores cambian y cuáles (H4) |
+
+Además, durante la implementación se cerraron siete decisiones que esta definición no había previsto
+—la capa de `overrides`, el bloqueo por familia, el azar de "variar rampa", la versión del motor, los
+pesos y la paleta de la plantilla, la concurrencia entre pestañas y el idioma de los componentes—.
+Están en el plan, en H1–H7 y en los bloques 5b, 5c y 5d.
 
 ## Datos
 
@@ -124,20 +134,25 @@ regenera por su cuenta un sistema ya entregado.
 Qué no se toca: `decks`, `forms`, `responses`, `clients`, `images`, `signatures`, `rate_limits`.
 Del bucket `deck-assets` solo se escribe bajo un prefijo propio, `ds/<id>/`.
 
-RLS:
+RLS — **cambió respecto a esta definición**: las cuatro políticas con `auth.role() = 'authenticated'`
+se sustituyeron por la forma que ya usa el repo (`20260817121000_tighten_rls.sql` y `forms`), una
+política para el equipo más el `revoke`. El efecto es el mismo y evita dos formas para el mismo rol:
 
 ```sql
 alter table public.design_systems enable row level security;
 
--- No hay superficie pública: anon no lee nada. Ninguna policy para anon, a propósito.
-create policy "team reads"   on public.design_systems for select using (auth.role() = 'authenticated');
-create policy "team writes"  on public.design_systems for insert with check (auth.role() = 'authenticated');
-create policy "team updates" on public.design_systems for update using (auth.role() = 'authenticated');
-create policy "team deletes" on public.design_systems for delete using (auth.role() = 'authenticated');
+-- No hay superficie pública: anon no tiene nada que leer.
+create policy design_systems_team on public.design_systems
+  for all to authenticated using (true) with check (true);
+
+-- No es redundante: Supabase concede todos los privilegios a `anon` en cada tabla nueva de `public`,
+-- y esto es lo que decide si la tabla queda abierta si alguien desactiva la RLS un momento.
+revoke all on public.design_systems from anon;
 ```
 
 Las rutas usan `supabaseAuthServer()`, no `supabaseServer()`: sin policy para `anon`, la clave
-pública no lee ni una fila.
+pública no lee ni una fila. Comprobado en producción: con la clave anónima, la petición REST devuelve
+401 `permission denied for table design_systems`.
 
 ## Formato del documento
 
@@ -160,9 +175,16 @@ con la ruta del campo en vez de reventar. Una fila guardada por una versión ant
 igual: lo que no encaje se anota como incidencia y se muestra en el panel del editor, tal como
 DeckStudio muestra las suyas.
 
-Qué detecta la validación que el esquema no puede expresar por tipos: un color bloqueado que ya no
-existe en la paleta, un breakpoint cuyo mínimo pisa al anterior, una retícula con menos columnas
-que las que usa un componente configurado, y un `engine_version` distinto del actual.
+Qué detecta la validación que el esquema no puede expresar por tipos: un ajuste manual que apunta a
+un token que ya no existe, un breakpoint cuyo mínimo pisa al anterior, un nombre de familia reservado
+o que no sirve para CSS, y un `engine_version` distinto del actual.
+
+**Cambió respecto a esta definición.** La comprobación de "una retícula con menos columnas que las
+que usa un componente configurado" se retiró: ninguno de los 17 componentes usa columnas de retícula,
+así que era código muerto (H8). En su lugar se avisa de lo que sí pasa, que el styleguide cruza
+breakpoints y retícula **por nombre** y renombrar uno sin el otro deja la tabla con huecos. Se añadió
+también la reparación de la configuración de componentes contra el catálogo actual: un eje, una
+opción de anatomía o una propiedad que ya no existen se reponen y se anotan con su ruta.
 
 ## Interfaz
 
@@ -170,14 +192,24 @@ que las que usa un componente configurado, y un `engine_version` distinto del ac
   y por etiqueta con `GalleryFilters`. Tarjeta con el nombre, el cliente, la fecha de edición y una
   tira con los colores principales del sistema. Estado vacío con el texto y el botón de crear.
   Acciones con `CardActions`: abrir, renombrar, duplicar, exportar, borrar con confirmación.
-- **Editor** `/workspace/dsmak_r/[id]` — barra superior con el wordmark, el paso activo, el menú de
-  usuario y el aviso de guardado. Cuatro pasos:
-  1. Marca. Formulario a pantalla completa, es el paso con más campos.
+- **Editor** `/workspace/dsmak_r/[id]` — barra superior con el wordmark, el paso activo, el aviso de
+  guardado y el sello borrador/publicado. Cuatro pasos:
+  1. Marca. Formulario a pantalla completa, es el paso con más campos: identidad y logos, modo,
+     familias de color con nombre validado, tipografía con pesos por rol, forma y espacio,
+     breakpoints y retícula.
   2. Fundamentos. Los tokens generados, con la previsualización viva al lado. Cada muestra se abre
-     para editar, bloquear o regenerar la rampa.
-  3. Componentes. Buscador y lista, con los ejes de cada componente y su anatomía.
-  4. Entrega. Pestañas JSON, CSS y styleguide, con copiar y descargar.
-  Panel de incidencias siempre accesible, con lo que devolvió `compileSystem`.
+     para retocarla, y cada familia se puede bloquear o variar su rampa. Lo retocado a mano lleva ●.
+  3. Componentes. Lista con buscador a la izquierda y, a la derecha, el componente elegido:
+     previsualización por su primer eje, ejes, anatomía, propiedades y nota de implementación.
+  4. Entrega. Pestañas JSON, CSS y styleguide, con copiar bloque a bloque y descargar.
+  Panel de incidencias al pie, con lo que devolvió la validación; pulsar una lleva al paso donde está
+  el campo.
+
+  **Cambió respecto a esta definición**: la cabecera lleva `LogoutButton`, no `UserMenu`. La foto de
+  usuario solo está en el dispatcher; si va a llegar a las galerías, es un cambio para las tres
+  herramientas a la vez. Y la regeneración de la rampa "alrededor de lo bloqueado" no se construyó:
+  el bloqueo congela la familia entera (H2), y regenerar alrededor de una muestra fijada es un
+  algoritmo nuevo, no un port.
 - El paso activo no es una pantalla distinta: es un número sobre el mismo estado. Ningún paso
   importa a otro, para que reordenarlos o pasar a un split sea cambiar el contenedor.
 - **Superficie pública**: no hay. Lo que sale de la herramienta sale como archivo.
@@ -197,31 +229,48 @@ Diferencias deliberadas con DeckMak_r y FormMak_r, y su motivo:
 
 ```
 NUEVO
-  lib/ds/engine.ts                          motor portado del prototipo: OKLCH, rampas, contraste,
-                                            escala, espaciado, radios, sombras
+  lib/ds/engine/                            el motor, un módulo por pieza: color, contrast, ramp,
+                                            semantic, derive, presets, generate, overrides, surfaces,
+                                            resolve, warnings, version e index (composeTokens)
   lib/ds/schema.ts                          Zod de brand, overrides, tokens y configs
-  lib/ds/compile.ts                         compileSystem(row) → { ok, system, issues }
-  lib/ds/components.ts                      catálogo de los 17 componentes y sus ejes
-  lib/ds/export.ts                          tokens.json, tokens.css y styleguide HTML
-  lib/ds/fonts.ts                           lista curada y construcción de la URL de Google Fonts
-  lib/ds/api.ts                             cliente de /api/design-systems
-  lib/ds/types.ts
-  lib/ds/__tests__/                         engine, compile, export
-  app/api/design-systems/route.ts           GET lista, POST crea
-  app/api/design-systems/[id]/route.ts      GET, PATCH, DELETE
+  lib/ds/compile.ts                         compileSystem(row) → { ok, system, issues, engineMismatch }
+  lib/ds/components.ts                      catálogo de los 17 componentes, sus ejes y sus props
+  lib/ds/configs.ts                         ediciones del paso 3
+  lib/ds/edit.ts live.ts steps.ts diff.ts preview.ts    lógica del editor, sin React
+  lib/ds/delivery.ts                        nombre y contenido de los tres ficheros de la entrega
+  lib/ds/export/json.ts css.ts styleguide.ts
+  lib/ds/fonts.ts escape.ts template.ts gallery.ts mirror.ts
+  lib/ds/server.ts                          lo que deciden las rutas, testeable en node
+  lib/ds/api.ts types.ts
+  lib/ds/__tests__/                         23 ficheros, uno por módulo, más el fixture golden
+  lib/hooks/useAutosave.ts autosaveCore.ts  el autoguardado compartido, con sus tests
+  lib/storage/logos.ts paths.ts             subida de logos con prefijo y nombres de bucket
+  app/api/design-systems/route.ts           GET lista, POST crea o duplica
+  app/api/design-systems/[id]/route.ts      GET, PATCH (409 si otra pestaña guardó) y DELETE
   app/workspace/dsmak_r/page.tsx            galería
   app/workspace/dsmak_r/[id]/page.tsx       editor
-  components/ds/                            pasos, muestras de color, previsualización, panel de
-                                            incidencias
-  supabase/migrations/<ts>_create_design_systems.sql
-  docs/features/ds-mak-r.md                 este documento
+  components/ds/                            galería (DsGallery, DsCard, DsMetaModal, DsExportModal),
+                                            editor (DsStudio, DsToolbar, controls, labels, Swatch),
+                                            download y styleguideHtml
+  components/ds/steps/                      BrandStep, FoundationsStep, ComponentsStep, DeliveryStep
+  components/ds/preview/Preview.tsx         previsualización viva del paso 2
+  components/ds/previews/                   los 17 renders, agrupados por familia, más shared e index
+  supabase/migrations/20260915212500_create_design_systems.sql
+  docs/features/ds-mak-r-plan.md            el plan de implementación, bloque a bloque
 
 MODIFICADO
   lib/workspace/catalog.ts                  entrada `dsmakr`: href y descripción
-  lib/workspace/__tests__/catalog.test.ts   el caso que hoy afirma href === null
+  lib/workspace/__tests__/catalog.test.ts   la ruta de dsmakr, el orden y el guiño del wordmark
   middleware.ts                             /api/design-systems en EDITOR_API
-  package.json                              el glob de tests incluye lib/ds/__tests__
+  package.json                              globs de test: lib/ds/__tests__ y lib/hooks/__tests__
   docs/features/urls-workspace.md           las dos rutas nuevas
+  components/studio/Wordmark.tsx            + DsLogo
+  components/studio/GalleryFilters.tsx      FilterBar gana el filtro por estado, con prop opcional
+  components/studio/CardActions.tsx         + iconos de renombrar y exportar
+  components/studio/IssuesPanel.tsx         movido desde components/forms/maker y generalizado
+  components/deck/DeckStudio.tsx            pasa a useAutosave
+  components/forms/maker/FormStudio.tsx     pasa a useAutosave y al IssuesPanel compartido
+  lib/decks/api.ts                          reexporta uploadLogo desde lib/storage/logos.ts
 ```
 
 `.env.example`: ninguna variable nueva. No hay modelo, no hay clave, y Storage ya está configurado.
@@ -230,19 +279,27 @@ MODIFICADO
 
 ## Qué se reutiliza en vez de duplicar
 
-Tal cual, sin tocar: `components/studio/Wordmark`, `UserMenu`, `LogoutButton`, `BrandMark`,
-`TagInput`, `GalleryFilters`, `CardActions`; `Modal` y `ConfirmModal`; los estilos de
-`components/deck/studio/ui.ts`; `lib/supabase/server.ts` con `supabaseAuthServer`, `requireUser` y
-`dbFail`; `lib/auth/team.ts`; el trigger `set_updated_at`.
+Tal cual, sin tocar: `BrandMark`, `MarkDivider`, `LogoutButton`, `SearchField`, `TagInput`,
+`Modal` y `ConfirmModal`; los estilos de `components/deck/studio/ui.ts`; `lib/supabase/server.ts` con
+`supabaseAuthServer`, `requireUser` y `dbFail`; `lib/auth/team.ts`; el trigger `set_updated_at`.
 
-A extraer a compartido, porque lo van a usar dos herramientas:
+**Cambió respecto a esta definición**: `UserMenu` no se usa —las galerías llevan `LogoutButton`, y la
+foto solo está en el dispatcher— y tres piezas que se daban por intocables necesitaron un cambio
+pequeño: `Wordmark` gana `DsLogo`, `FilterBar` gana el filtro por estado con una prop opcional (que
+DeckMak_r y FormMak_r no pasan) y `CardActions` gana los iconos de renombrar y exportar.
 
-- **El mecanismo de autoguardado.** Hoy está escrito dos veces, en DeckStudio y en FormStudio, con
-  el mismo debounce, el mismo `savingRef` y el mismo `beforeunload`. Con DSMak_r serían tres.
-  Sale a un hook, `lib/hooks/useAutosave.ts`, y las dos existentes pasan a usarlo. Es el caso de
-  libro de "mismo rol, dos valores".
-- **La subida de logo a Storage.** `lib/decks/api.ts` sube al bucket `deck-assets` con una ruta
-  propia. Se extrae la función de subida, se le pasa el prefijo, y DSMak_r la llama con `ds/<id>/`.
+Las dos extracciones a compartido, **hechas**:
+
+- **El mecanismo de autoguardado.** Estaba escrito dos veces, en DeckStudio y en FormStudio. Ahora
+  vive en `lib/hooks/useAutosave.ts`, con las decisiones puras en `lib/hooks/autosaveCore.ts` y sus
+  tests en node, y las tres herramientas lo usan. Para DSMak_r ganó dos cosas que las otras no
+  activan: `paused`, para no guardar mientras hay errores de validación, y el estado `conflict`.
+- **La subida de logo a Storage.** `lib/storage/logos.ts` recibe el prefijo; `lib/decks/api.ts` la
+  reexporta y DeckMak_r no cambió ni una línea de llamada. DSMak_r la llama con `ds/<id>/`. Los
+  nombres de bucket salieron a `lib/storage/paths.ts`, sin `'use client'`: una constante importada de
+  un módulo cliente no llega como valor a un Route Handler.
+- **Y una tercera que no estaba prevista:** `IssuesPanel` se movió a `components/studio/` y se
+  generalizó. Cada editor dice adónde lleva cada incidencia: FormMak_r a una línea, DSMak_r a un paso.
 
 Se escribe nuevo, con su justificación: el motor, el esquema, los exportadores y la interfaz de los
 cuatro pasos. No hay nada equivalente en el repo.
@@ -280,40 +337,146 @@ marca.
    radios que salen son del cliente. Las normas de este repo mandan sobre el chrome y sobre el
    texto del styleguide, no sobre los valores generados. [supuesto] La plantilla de partida con la
    marca Interactius es la única excepción, y sus valores se leen de `lib/tokens.ts`, no se copian.
+8. **La plantilla Interactius chocaba con dos reglas duras, y por eso se diseñó aparte** (H6). El
+   motor fijaba los pesos por rol a 700 y 600, que con IBM Plex Serif se sale de los `[300, 400]` de
+   `lib/tokens.ts`: `brand` ganó `weights` por rol y la plantilla los lee de ahí. Y como el motor
+   necesita primario y secundario, roles que la marca no tiene, la plantilla usa Dark y Ash Dark, sin
+   Opal ni Esmeralda; el único acento que entra es **Burdeos en `error`**, que es su rol de interfaz
+   declarado. La escala tipográfica de la plantilla es la del motor: **sigue pendiente de Alberto**
+   decidir si se fija a los peldaños de `lib/typeScale.ts`.
+9. **Idioma de los componentes.** Los valores de los ejes (Primary, Hover, Solid) se quedan en
+   inglés: son vocabulario técnico, el que usará quien implemente. Los nombres de eje y la anatomía
+   van en castellano, opciones incluidas; el prototipo mezclaba "Derecha" con "Top".
 
 ## Verificación
 
-**Automática** — `lib/ds/__tests__/`, añadido al glob de `package.json`:
+**Automática** — 427 tests en verde con `npm test`, más `type-check`, `lint` y `build` limpios. En
+`lib/ds/__tests__/`, uno por módulo:
 
-- `engine.test.ts` — determinismo: los mismos parámetros producen exactamente los mismos tokens.
-  Rampas: cada escalón 50→900 es monótono en luminosidad. Contraste: el ratio y el nivel AA/AAA
-  coinciden con la fórmula WCAG para pares conocidos. Bloqueos: regenerar respeta lo bloqueado.
-- `compile.test.ts` — un `brand` válido pasa sin incidencias; uno corrupto devuelve incidencias con
-  la ruta del campo y **no lanza**; una fila con `engine_version` anterior se abre y se señala.
-- `export.test.ts` — el CSS declara una variable por token con el prefijo `--ds-`; el JSON mantiene
-  su forma y sus metadatos; el styleguide escapa el nombre del sistema y las notas del usuario
-  antes de inyectarlos en el HTML.
-- `lib/workspace/__tests__/catalog.test.ts` — la entrada `dsmakr` con su nueva ruta, y el orden de
-  las tarjetas. El caso que hoy afirma `href === null` hay que cambiarlo, no borrarlo.
-- `npm run type-check` y `npm run build` limpios.
+- **Motor** — `color`, `contrast`, `ramp`, `semantic`, `generate`, `overrides`, `warnings` y un
+  `golden` contra un fixture: si el algoritmo cambia sin subir `ENGINE_VERSION`, falla. Determinismo,
+  monotonía de las rampas, el hex de entrada dentro de su rampa, y los niveles WCAG en 3 / 4,5 / 7.
+- **Validación** — `compile`: una fila válida no da incidencias; una corrupta devuelve incidencias
+  con la ruta y **no lanza**; `engine_version` distinto se señala; los componentes se reparan contra
+  el catálogo.
+- **Editor** — `edit`, `configs`, `live`, `steps`, `diff`, `preview`: los ajustes manuales, las
+  familias que se renombran llevándose lo suyo, qué bloquea el guardado y a qué paso lleva cada
+  incidencia.
+- **Entrega** — `export` y `delivery`: una variable `--ds-` por token y ninguna repetida, el JSON con
+  su forma y su fecha inyectada, y el styleguide escapando nombre, notas y familia tipográfica.
+- **Fuera de `lib/ds`** — `autosaveCore` (backoff y conflicto), `gallery`, `server`, `mirror`,
+  `template`, `fonts`, `components` y `catalog`.
 
-**Manual**
+Y dos comprobaciones fuera del repo, en node, que no caben como test unitario: los 17 renders en
+**9.272 combinaciones** sin excepciones, y el styleguide completo en cuatro casos, con los 17
+componentes pintados y todo escapado.
 
-1. Sin sesión, `/workspace/dsmak_r` redirige a `/workspace/login?next=/workspace/dsmak_r`.
-2. Con una cuenta que no sea `@interactius.com`, lo mismo.
-3. La tarjeta aparece encendida en `/workspace`, cuarta, con su icono cian.
-4. Crear un sistema, cerrar la pestaña sin tocar nada más, volver a abrirlo: está guardado.
-5. Cambiar un color con el editor abierto en otra pestaña y comprobar que el autoguardado no pisa
-   lo que la otra escribió sin avisar.
-6. Bloquear un color, regenerar, y comprobar que sigue exactamente donde estaba.
-7. Subir un logo, borrar el sistema, y comprobar que el archivo no se queda huérfano en el bucket.
-8. Descargar el styleguide, abrirlo sin conexión, y comprobar que se ve entero salvo las
-   tipografías de Google.
-9. Poner un primario que no llegue a AA sobre el fondo claro y comprobar que el aviso sale en la
-   muestra y en el styleguide.
-10. Duplicar un sistema y comprobar que el duplicado no comparte ni logo ni `public_id`.
+**Manual** — la lista completa, en orden, está abajo. Incluye las diez de esta definición.
+
+## Verificación manual, paso a paso
+
+Las 36 comprobaciones que quedan, en el orden en el que conviene hacerlas. Las diez de la definición
+original están repartidas por sus apartados y marcadas con **(def N)**.
+
+**A · Acceso y catálogo**
+
+1. En `/workspace`, la tarjeta DSMak_r aparece encendida, cuarta, con su icono cian y sin el cartel
+   de "Próximamente" **(def 3)**.
+2. Sin sesión, `/workspace/dsmak_r` redirige a `/workspace/login?next=/workspace/dsmak_r` **(def 1)**.
+3. Con una cuenta que no sea `@interactius.com`, lo mismo **(def 2)**.
+
+**B · Galería**
+
+4. Crear un sistema desde cero y otro con la plantilla Interactius, con nombre, cliente y etiquetas.
+5. La tarjeta enseña la tira de color, el cliente y la fecha. El buscador y los filtros por cliente,
+   etiqueta y estado dejan lo que toca.
+6. Renombrar un sistema desde la tarjeta: cambia el nombre sin abrirlo y sin tocar sus tokens.
+7. Duplicar uno con logo: la copia nace como borrador, con su propio `public_id` y su propia copia
+   del logo **(def 10)**.
+8. Exportar desde la tarjeta: bajan `tokens.json`, `tokens.css` y el `styleguide.html`.
+9. Borrar un sistema con logo y comprobar en Supabase que el fichero no se queda huérfano en
+   `deck-assets/ds/<id>/` **(def 7)**.
+
+**C · Editor: guardado y concurrencia**
+
+10. Abrir un sistema: se ve el paso 1 con sus valores, y sale "Guardado ✓" tras el primer cambio.
+11. Crear uno, cerrar la pestaña sin tocar nada más y volver a abrirlo: está guardado **(def 4)**.
+12. Abrir el mismo sistema en dos pestañas, cambiar algo en las dos y comprobar el modal de conflicto
+    con sus dos salidas, "Recargar" y "Guardar encima" **(def 5)**.
+13. Cortar la red, editar, y ver tres reintentos y "Error · reintentar". Volver a dar red y reintentar.
+14. Con cambios sin guardar, volver a la galería (sale el modal) y recargar la página (sale el aviso
+    del navegador).
+
+**D · Paso 1, Marca, y paso 2, Fundamentos**
+
+15. Cambiar el color primario y ver el paso 2 y la previsualización al día.
+16. Retocar una muestra (aparece ●), bloquear esa familia, cambiar el primario en el paso 1 y
+    comprobar que la familia bloqueada no se mueve **(def 6)**.
+17. "Variar rampa" en una familia, recargar la página y comprobar que sale la misma rampa.
+18. Solapar dos breakpoints: el panel da error, la barra dice "Sin guardar · corrige los errores" y
+    pulsar la incidencia lleva al paso 1.
+19. Poner un primario muy claro, `#DDDDDD`: el aviso de contraste sale bajo el campo, en el panel y en
+    las muestras afectadas **(def 9, la parte del editor)**.
+20. Subir un logo claro y otro oscuro y verlos en la previsualización en los dos modos.
+21. Renombrar una familia añadida con un nombre inválido (`Mi Color`, `error`) y con uno válido.
+
+**E · Paso 3, Componentes**
+
+22. Buscar "bot", elegir Button y ver la previsualización por variante, con la elegida marcada.
+23. Cambiar la talla a LG: la previsualización crece y sale ● en la lista. Volver a MD quita la ●.
+24. Fijar Padding X a 40, pasar por SM, MD y LG y comprobar que se queda en 40. "Restablecer" lo
+    devuelve al calculado.
+25. Dropdown en estado Open y Search en Typing: el menú y el autocompletado se ven enteros.
+26. Escribir una nota, recargar y comprobar que sigue. Con modo "ambos", el selector claro/oscuro
+    repinta el lienzo.
+
+**F · Paso 4, Entrega**
+
+27. Pestaña JSON: se ve el principio y el aviso de cuántos caracteres faltan. "Copiar" pega lo
+    esperado y "Descargar .json" baja el fichero entero, que abre bien en un editor.
+28. Pestaña CSS: copiar un bloque, copiar todo y descargar. El fichero trae `--ds-error-600` además
+    de `--ds-error-50`.
+29. Descargar el styleguide, abrirlo **sin conexión** y comprobar que se ve entero salvo las
+    tipografías de Google **(def 8)**.
+30. Dentro del styleguide: cambiar variante, tamaño y estado de un componente con sus botones, buscar
+    por nombre, y comprobar que el aviso de contraste del primario aparece arriba **(def 9, la parte
+    de la entrega)**.
+31. Con un sistema de modo "ambos", descargar el styleguide en claro y en oscuro y comparar.
+
+**G · Motor antiguo**
+
+32. En un sistema de prueba, `update design_systems set engine_version = '0' where id = …`. Al abrirlo
+    está en solo lectura; "Regenerar" enseña cuántos valores cambian; al confirmar se guarda y vuelve
+    a `engine_version = '1'`.
+33. Antes de regenerarlo, comprobar que el paso 4 deja descargar los tres ficheros con los tokens
+    guardados, y que el paso 3 deja recorrer la lista sin poder editar.
+
+**H · Que no se haya roto lo que ya estaba** (el autoguardado es ahora compartido)
+
+34. FormMak_r: escribir y ver "Guardado", publicar y editar metadatos, y ver el guardado inmediato.
+35. DeckMak_r: escribir y ver "Guardado", y probar Compartir URL y Descargar PDF con cambios sin
+    guardar.
+36. En las dos, cortar la red y comprobar los tres reintentos y el botón de reintentar.
 
 ## Pendiente
+
+Lo que dejó la implementación, de más a menos concreto:
+
+- **La escala tipográfica de la plantilla Interactius**, pendiente de Alberto: la del motor
+  (modular, base × ratio) o los peldaños de `lib/typeScale.ts` fijados por override (H6).
+- **Logos huérfanos al sustituir.** Cambiar o quitar un logo deja el fichero anterior en
+  `deck-assets/ds/<id>/`. Borrar el sistema sí limpia la ruta vigente. Haría falta borrar el anterior
+  tras un guardado confirmado.
+- **Una incidencia de `configs.<componente>` lleva al paso 3, pero no abre ese componente.**
+- **El styleguide pesa ~293 KB** porque pinta todas las combinaciones de ejes, hasta 120 por
+  componente. El corte está en `MAX_VARIANTS`.
+- **No hay previsualización del styleguide** antes de descargarlo.
+- **Etiquetas con anglicismos** en la anatomía y en las propiedades ("Layout", "Footer fijo",
+  "Padding X"). Se dejaron como vocabulario técnico.
+- **Regenerar la rampa alrededor de una muestra bloqueada** (lo que la definición pedía en el paso 2).
+  Hoy el bloqueo congela la familia entera.
+
+Y lo que ya estaba previsto aquí:
 
 - **URL pública del styleguide.** La señal: un cliente pidiendo un enlace vivo en vez de un
   archivo. El `public_id` ya está guardado para eso.
