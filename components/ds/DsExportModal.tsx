@@ -7,7 +7,6 @@ import { compileSystem } from '@/lib/ds/compile';
 import { exportFile, type ExportFormat } from '@/lib/ds/gallery';
 import type { DesignSystemListItem, DesignSystemRecord } from '@/lib/ds/types';
 import { downloadFile } from './download';
-import { buildStyleguideHtml } from './styleguideHtml';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
@@ -22,7 +21,10 @@ const FORMATS: { format: ExportFormat; label: string }[] = [
 
    El styleguide pinta los 17 componentes con React (./styleguideHtml.ts), que es lo que le faltaba
    desde el bloque 4. Aquí no hay editor, así que se pinta en el modo del sistema, y en claro cuando
-   admite los dos. */
+   admite los dos.
+
+   Ese módulo se carga al pulsar, no al abrir la galería: se trae `react-dom/server` y los 17 renders,
+   y son 67 kB que no tiene por qué pagar quien solo viene a ver sus sistemas. */
 export function DsExportModal({ item, onClose }: { item: DesignSystemListItem; onClose: () => void }) {
   const [row, setRow] = useState<DesignSystemRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export function DsExportModal({ item, onClose }: { item: DesignSystemListItem; o
 
   const compiled = useMemo(() => (row ? compileSystem(row) : null), [row]);
 
-  const onDownload = (format: ExportFormat) => {
+  const onDownload = async (format: ExportFormat) => {
     if (!row) return;
     setError(null);
 
@@ -53,6 +55,7 @@ export function DsExportModal({ item, onClose }: { item: DesignSystemListItem; o
       }
       setBusy(format);
       try {
+        const { buildStyleguideHtml } = await import('./styleguideHtml');
         styleguideHtml = buildStyleguideHtml({
           name: row.name,
           tokens: system.tokens,
@@ -92,7 +95,7 @@ export function DsExportModal({ item, onClose }: { item: DesignSystemListItem; o
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
         <button type="button" style={btnGhost} onClick={onClose}>Cerrar</button>
         {FORMATS.map((f) => (
-          <button key={f.format} type="button" style={btn} disabled={!row || busy !== null} onClick={() => onDownload(f.format)}>
+          <button key={f.format} type="button" style={btn} disabled={!row || busy !== null} onClick={() => void onDownload(f.format)}>
             {!row ? 'Preparando' : busy === f.format ? 'Generando' : f.label}
           </button>
         ))}

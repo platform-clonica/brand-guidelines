@@ -7,7 +7,6 @@ import { cssBlocks } from '@/lib/ds/export/css';
 import type { Brand, Configs, Tokens } from '@/lib/ds/schema';
 import { ALERT, MONO, Section, Segmented, hintText } from '../controls';
 import { downloadFile } from '../download';
-import { buildStyleguideHtml } from '../styleguideHtml';
 
 type Props = {
   name: string;
@@ -36,7 +35,7 @@ const code = {
    un sistema de motor antiguo son los guardados, que es justo lo que se entregó (plan, H4).
 
    El styleguide se arma al pulsar, no al abrir el paso: pinta los 17 componentes en todas sus
-   combinaciones y es el único trabajo caro de esta pantalla. */
+   combinaciones, y su módulo se trae `react-dom/server`, que no hace falta hasta que alguien lo pide. */
 export function DeliveryStep({ name, brand, tokens, configs }: Props) {
   const [tab, setTab] = useState<Tab>('json');
   const [copied, setCopied] = useState<string | null>(null);
@@ -62,27 +61,25 @@ export function DeliveryStep({ name, brand, tokens, configs }: Props) {
     }
   };
 
-  const download = (format: 'json' | 'css', styleguideHtml?: string) => {
-    const file = deliveryFile(format, { name, tokens, configs, generatedAt: new Date().toISOString(), styleguideHtml });
+  const download = (format: 'json' | 'css') => {
+    const file = deliveryFile(format, { name, tokens, configs, generatedAt: new Date().toISOString() });
     if (file) downloadFile(file);
   };
 
-  /* Un tick antes de pintar los componentes, para que el botón llegue a decir "Preparando". */
-  const downloadStyleguide = () => {
+  const downloadStyleguide = async () => {
     setError(null);
     setBusy(true);
-    window.setTimeout(() => {
-      try {
-        const generatedAt = new Date().toISOString();
-        const html = buildStyleguideHtml({ name, tokens, configs, brand, mode, generatedAt });
-        const file = deliveryFile('styleguide', { name, tokens, configs, generatedAt, styleguideHtml: html });
-        if (file) downloadFile(file);
-      } catch (e) {
-        setError(e instanceof Error ? `No se ha podido generar el styleguide: ${e.message}` : 'No se ha podido generar el styleguide.');
-      } finally {
-        setBusy(false);
-      }
-    }, 0);
+    try {
+      const { buildStyleguideHtml } = await import('../styleguideHtml');
+      const generatedAt = new Date().toISOString();
+      const html = buildStyleguideHtml({ name, tokens, configs, brand, mode, generatedAt });
+      const file = deliveryFile('styleguide', { name, tokens, configs, generatedAt, styleguideHtml: html });
+      if (file) downloadFile(file);
+    } catch (e) {
+      setError(e instanceof Error ? `No se ha podido generar el styleguide: ${e.message}` : 'No se ha podido generar el styleguide.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const copyLabel = (id: string, label = 'Copiar') => (copied === id ? 'Copiado ✓' : label);
@@ -170,7 +167,7 @@ export function DeliveryStep({ name, brand, tokens, configs }: Props) {
           title="Styleguide"
           description="Un HTML autocontenido para el cliente: color con su contraste medido, tipografía, espaciado, radios, sombras, breakpoints, retícula y los 17 componentes con sus ejes. Las tipografías se piden a Google Fonts, así que sin conexión se ve todo menos las fuentes."
           actions={
-            <button type="button" style={btn} disabled={busy} onClick={downloadStyleguide}>
+            <button type="button" style={btn} disabled={busy} onClick={() => void downloadStyleguide()}>
               {busy ? 'Preparando' : 'Descargar .html'}
             </button>
           }
