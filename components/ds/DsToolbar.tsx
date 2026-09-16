@@ -42,6 +42,13 @@ export function DsToolbar({
 }) {
   const published = status === 'published';
 
+  /* Los pasos van centrados y NO se mueven cuando cambia lo que hay a los lados: el indicador de
+     guardado aparece y desaparece, y el nombre gana un • al haber cambios sin guardar. Con
+     `margin: 0 auto` el hueco sobrante se repartía según el ancho de cada lado, así que el menú
+     bailaba en cuanto salía "Guardando". Los dos lados son ahora `flex: 1 1 0`: reparten el sobrante
+     a partes iguales, el centro cae siempre en el mismo sitio y lo que crece lo hace hacia fuera. */
+  const side = { flex: '1 1 0', minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 } as const;
+
   return (
     <header
       style={{
@@ -49,29 +56,31 @@ export function DsToolbar({
         borderBottom: `1px solid ${colors.warmDark}`, background: colors.warmLight,
       }}
     >
-      <button
-        onClick={onHome}
-        title="Volver a la galería"
-        aria-label="Volver a la galería"
-        style={{ appearance: 'none', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, display: 'inline-flex', flexShrink: 0 }}
-      >
-        <BrandMark height={20} />
-      </button>
-      <MarkDivider />
-      <DsLogo height={20} />
+      <div style={side}>
+        <button
+          onClick={onHome}
+          title="Volver a la galería"
+          aria-label="Volver a la galería"
+          style={{ appearance: 'none', border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, display: 'inline-flex', flexShrink: 0 }}
+        >
+          <BrandMark height={20} />
+        </button>
+        <MarkDivider />
+        <DsLogo height={20} />
 
-      <span
-        title={name}
-        style={{
-          marginLeft: 8, minWidth: 0, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          font: `500 13px/1 ${MONO}`, letterSpacing: '.02em', textTransform: 'uppercase', color: colors.dark,
-        }}
-      >
-        {name}
-        {dirty && !readOnly ? ' •' : ''}
-      </span>
+        <span
+          title={name}
+          style={{
+            minWidth: 0, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            font: `500 13px/1 ${MONO}`, letterSpacing: '.02em', textTransform: 'uppercase', color: colors.dark,
+          }}
+        >
+          {name}
+          {dirty && !readOnly ? ' •' : ''}
+        </span>
+      </div>
 
-      <nav aria-label="Pasos" style={{ display: 'flex', gap: 4, margin: '0 auto', flexShrink: 0 }}>
+      <nav aria-label="Pasos" style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
         {DS_STEPS.map((s) => {
           const available = AVAILABLE.includes(s.n);
           const on = s.n === step;
@@ -100,23 +109,25 @@ export function DsToolbar({
         })}
       </nav>
 
-      <SaveIndicator state={saveState} dirty={dirty} paused={paused} readOnly={readOnly} onRetry={onRetry} onConflict={onConflict} />
+      <div style={{ ...side, justifyContent: 'flex-end' }}>
+        <SaveIndicator state={saveState} dirty={dirty} paused={paused} readOnly={readOnly} onRetry={onRetry} onConflict={onConflict} />
 
-      <button
-        type="button"
-        onClick={onToggleStatus}
-        disabled={readOnly}
-        title={published ? 'Pasar a borrador' : 'Marcar como publicado'}
-        style={{
-          appearance: 'none', flexShrink: 0, padding: '5px 8px', cursor: readOnly ? 'default' : 'pointer',
-          font: `500 9px/1 ${MONO}`, letterSpacing: '.08em', textTransform: 'uppercase',
-          background: published ? colors.dark : 'transparent',
-          color: published ? colors.warmLight : colors.ash,
-          border: `1px solid ${published ? colors.dark : colors.ash}`,
-        }}
-      >
-        {published ? 'Publicado' : 'Borrador'}
-      </button>
+        <button
+          type="button"
+          onClick={onToggleStatus}
+          disabled={readOnly}
+          title={published ? 'Pasar a borrador' : 'Marcar como publicado'}
+          style={{
+            appearance: 'none', flexShrink: 0, padding: '5px 8px', cursor: readOnly ? 'default' : 'pointer',
+            font: `500 9px/1 ${MONO}`, letterSpacing: '.08em', textTransform: 'uppercase',
+            background: published ? colors.dark : 'transparent',
+            color: published ? colors.warmLight : colors.ash,
+            border: `1px solid ${published ? colors.dark : colors.ash}`,
+          }}
+        >
+          {published ? 'Publicado' : 'Borrador'}
+        </button>
+      </div>
     </header>
   );
 }
