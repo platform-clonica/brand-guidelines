@@ -334,4 +334,14 @@ export function LinkButton({
 }
 
 export const cell: CSSProperties = { padding: '8px 12px 8px 0', verticalAlign: 'middle', font: `400 12px/1.4 ${MONO}`, color: colors.dark };
-export const headCell: CSSProperties = { ...labelStyle, textAlign: 'left', padding: '0 12px 8px 0', marginBottom: 0 };
+
+/* `labelStyle` es el traje de las etiquetas de formulario y trae `display: block`, que en un `<th>`
+   lo saca de la tabla: las cabeceras se apilaban una debajo de otra en vez de ir en fila. Se hereda
+   la tipografía y se devuelve el display que le toca a una celda. */
+export const headCell: CSSProperties = {
+  ...labelStyle,
+  display: 'table-cell',
+  textAlign: 'left',
+  padding: '0 12px 8px 0',
+  marginBottom: 0,
+};
