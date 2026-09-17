@@ -1,0 +1,248 @@
+/* Clock_r — «Mi jornada». Scoped a .ix-clock.
+
+   POR QUÉ UNA HOJA Y NO ESTILOS EN LÍNEA. El resto del chrome del workspace (galerías, editores) va
+   con los estilos en línea de components/deck/studio/ui.ts, y se adapta solo por `flex-wrap` y
+   `minmax`. Aquí no basta: esta pantalla se diseña para móvil desde el principio —es la primera
+   decisión abierta de la definición— y una semana con sus tramos no se arregla envolviendo, hace
+   falta otra maqueta. Y un estilo en línea NO PUEDE expresar una media query. Así que va donde el
+   repo ya pone lo que necesita puntos de ruptura: una hoja propia, como timer.css y workspace.css.
+
+   Los colores son los --c-* de app/globals.css, que reflejan lib/tokens.ts: un cambio de color de
+   marca sí llega a este fichero. Burdeos es el color de alerta por su `uiRole` declarado, y aquí se
+   reserva para lo crítico de verdad —cadena rota, jornada que lleva días abierta—; las incidencias
+   corrientes se distinguen por jerarquía y posición, no por color.
+
+   TIPOGRAFÍA: todos los tamaños son peldaños verificados de lib/typeScale.ts. A diferencia de
+   timer.css, aquí NO hay ningún peldaño fuera de escala: la tentación era inventarse un intermedio
+   para las tablas densas de horas, y la respuesta es que si no cabe con los peldaños que hay, eso se
+   habla con Alberto en vez de añadir un tamaño suelto.
+
+   Marca: IBM Plex Mono 400/500 y IBM Plex Serif 300/400. Cursiva prohibida en ambas. */
+
+.ix-clock {
+  --mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  --serif: var(--font-ibm-plex-serif), Georgia, serif;
+
+  /* Peldaños de lib/typeScale.ts, verificados uno a uno */
+  --fs-display: clamp(3rem, 2rem + 5vw, 6rem);          /* display  (serif 300/400) */
+  --fs-title-sm: clamp(1.25rem, 1rem + 1.25vw, 2rem);   /* title-sm (serif 400)     */
+  --fs-body-sm: clamp(0.75rem, 0.7rem + 0.25vw, 1rem);  /* body-sm  (mono)          */
+  --fs-caption: 0.625rem;                               /* caption  (mono)          */
+
+  min-height: 100dvh;
+  background: var(--c-warm-light);
+  color: var(--c-dark);
+  font-family: var(--mono);
+  font-size: var(--fs-body-sm);
+  line-height: 1.5;
+}
+
+/* ── Cabecera ──
+   Mismas medidas que las landings de las otras herramientas y que el dispatcher, a propósito: las
+   cuatro tienen que leerse como la misma barra. */
+.ixc-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--c-warm-dark);
+  background: var(--c-warm-light);
+}
+.ixc-header__logout { margin-left: auto; }
+
+.ixc-main {
+  max-width: 1120px; /* el mismo contenedor que las galerías y el dispatcher */
+  margin: 0 auto;
+  padding: 40px 32px 80px;
+}
+
+/* ── El bloque de hoy ── */
+
+.ixc-hoy {
+  border: 1px solid var(--c-warm-dark);
+  background: var(--c-white);
+  padding: 28px;
+}
+
+.ixc-eyebrow {
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-ash);
+  margin: 0;
+}
+
+/* El total del día. Serif 300, cifras tabulares para que no baile al contar. */
+.ixc-total {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: var(--fs-display);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  margin: 10px 0 0;
+}
+.ixc-total small {
+  font-family: var(--mono);
+  font-size: var(--fs-body-sm);
+  font-weight: 400;
+  color: var(--c-ash);
+  margin-left: 10px;
+}
+
+.ixc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-top: 14px;
+  color: var(--c-ash);
+}
+
+/* ── Acciones ──
+   El botón de fichar es el único con relleno de toda la pantalla, y es deliberado: hereda el
+   precedente de `btn` en components/deck/studio/ui.ts, que ya rompía la norma del CTA subrayado
+   para todo el chrome del workspace. De todos los botones del repo, este es el que más pide ser un
+   botón de verdad. No se reabre aquí: si se cierra, se cierra en lib/tokens.ts para las cinco
+   herramientas a la vez. */
+.ixc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.ixc-btn {
+  appearance: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: var(--fs-body-sm);
+  letter-spacing: 0.04em;
+  padding: 16px 28px;
+  border: 1px solid var(--c-dark);
+  background: var(--c-dark);
+  color: var(--c-warm-light);
+  transition: opacity 150ms var(--ease, ease);
+  /* Objetivo táctil cómodo: esta pantalla se usa de pie, cruzando una puerta. */
+  min-height: 52px;
+}
+.ixc-btn:hover { opacity: 0.88; }
+.ixc-btn[disabled] { cursor: default; opacity: 0.45; }
+
+.ixc-btn--ghost {
+  background: transparent;
+  color: var(--c-dark);
+  border-color: var(--c-warm-dark);
+}
+.ixc-btn--ghost:hover { border-color: var(--c-dark); opacity: 1; }
+
+/* ── Modalidad ──
+   Presencial o a distancia, POR TRAMO: se elige antes de fichar y viaja con el asiento. No es una
+   preferencia guardada, porque cambia de un día a otro y hasta dentro del mismo día. */
+.ixc-modo {
+  display: flex;
+  gap: 0;
+  margin-top: 20px;
+  border: 1px solid var(--c-warm-dark);
+  width: fit-content;
+}
+.ixc-modo button {
+  appearance: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--c-ash);
+  min-height: 40px;
+}
+.ixc-modo button[aria-pressed='true'] {
+  background: var(--c-dark);
+  color: var(--c-warm-light);
+}
+
+/* ── Saldo ──
+   El defecto NO va en burdeos. Deber horas es lo más corriente del mundo a media mañana, y pintarlo
+   de rojo cada día convierte el color de alerta en decoración — que es justo lo que hace que el día
+   que salga algo crítico nadie lo mire. Se distingue por el signo. */
+.ixc-saldo { font-variant-numeric: tabular-nums; }
+.ixc-saldo--defecto { color: var(--c-ash-dark); }
+.ixc-saldo--exceso { color: var(--c-dark); }
+
+/* Lo crítico de verdad: cadena rota, jornada que lleva días sin cerrar. */
+.ixc-alerta {
+  border-left: 2px solid var(--c-bordeaux);
+  background: rgba(153, 51, 95, 0.05);
+  color: var(--c-bordeaux);
+  padding: 12px 14px;
+  margin-top: 20px;
+  font-size: var(--fs-body-sm);
+}
+
+/* ── La semana ── */
+
+.ixc-seccion { margin-top: 48px; }
+
+.ixc-seccion__titulo {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: var(--fs-title-sm);
+  margin: 0 0 16px;
+}
+
+.ixc-semana {
+  border: 1px solid var(--c-warm-dark);
+  background: var(--c-white);
+}
+
+.ixc-dia {
+  display: grid;
+  grid-template-columns: 10ch 1fr 9ch 9ch;
+  gap: 16px;
+  align-items: baseline;
+  padding: 14px 18px;
+}
+.ixc-dia + .ixc-dia { border-top: 1px solid var(--c-warm-dark); }
+.ixc-dia--hoy { background: var(--c-warm-light); }
+
+.ixc-dia__fecha { font-weight: 500; }
+.ixc-dia__tramos { color: var(--c-ash); font-variant-numeric: tabular-nums; }
+.ixc-dia__horas,
+.ixc-dia__saldo { text-align: right; font-variant-numeric: tabular-nums; }
+
+.ixc-vacio {
+  color: var(--c-ash);
+  padding: 18px;
+}
+
+/* ── Móvil ──
+   Mismo punto de ruptura que timer.css (720px), para no tener dos criterios de «móvil» en el mismo
+   repo. La semana deja de ser una rejilla de cuatro columnas y pasa a apilarse: cuatro columnas en
+   360px no se encogen, se rompen. */
+
+@media (max-width: 720px) {
+  .ixc-main { padding: 24px 16px 56px; }
+  .ixc-hoy { padding: 20px 16px; }
+
+  /* El botón de fichar ocupa el ancho: es la acción de la pantalla y se pulsa con el pulgar. */
+  .ixc-actions { gap: 10px; }
+  .ixc-actions .ixc-btn { flex: 1 1 100%; }
+
+  .ixc-dia {
+    grid-template-columns: 1fr auto;
+    gap: 4px 12px;
+    padding: 14px 16px;
+  }
+  .ixc-dia__tramos { grid-column: 1 / -1; order: 3; }
+  .ixc-dia__horas { order: 2; }
+  .ixc-dia__saldo { grid-column: 1 / -1; order: 4; text-align: left; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ixc-btn { transition: none; }
+}
