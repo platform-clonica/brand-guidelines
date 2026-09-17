@@ -1,0 +1,180 @@
+{
+  "_comment": [
+    "Vectores dorados del hash de asiento de Clock_r. GENERADOS DESDE POSTGRES, no a mano:",
+    "scripts/clock-hash-vectors.ts los regenera. Ver docs/features/clock-r-plan.md H4 y H5.",
+    "Son la única prueba de que la función de TypeScript y la de Postgres calculan lo mismo,",
+    "porque ningún test de este repo habla con la base de datos. Si cambias la función de",
+    "Postgres, hay que regenerar este fichero o el test deja de significar nada.",
+    "Generados el 2026-09-17 contra el proyecto gcvzzpggpsnlwqnotfqv (Postgres 17.6)."
+  ],
+  "vectors": [
+    {
+      "label": "primero",
+      "why": "Primer asiento de una persona: prev_hash vacío.",
+      "fields": {
+        "prevHash": "",
+        "personId": "11111111-1111-4111-8111-111111111111",
+        "personEmail": "ana@interactius.com",
+        "personName": "Ana Ruiz",
+        "op": "record",
+        "corrects": "",
+        "reason": "",
+        "kind": "in",
+        "occurredAtMicros": "1789624991123456",
+        "workDate": "2026-09-17",
+        "mode": "onsite",
+        "source": "home_card",
+        "authorPersonId": "11111111-1111-4111-8111-111111111111"
+      },
+      "payload": "0:36:11111111-1111-4111-8111-11111111111119:ana@interactius.com8:Ana Ruiz6:record0:0:2:in16:178962499112345610:2026-09-176:onsite9:home_card36:11111111-1111-4111-8111-111111111111",
+      "hash": "da876f4938764da8d68158158a8dddac23e74ae0f8c0cf6028e809d9946ffaa2"
+    },
+    {
+      "label": "segundo-encadenado",
+      "why": "Asiento que apunta al anterior: prev_hash de 64 caracteres.",
+      "fields": {
+        "prevHash": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+        "personId": "11111111-1111-4111-8111-111111111111",
+        "personEmail": "ana@interactius.com",
+        "personName": "Ana Ruiz",
+        "op": "record",
+        "corrects": "",
+        "reason": "",
+        "kind": "out",
+        "occurredAtMicros": "1789659000000000",
+        "workDate": "2026-09-17",
+        "mode": "onsite",
+        "source": "app",
+        "authorPersonId": "11111111-1111-4111-8111-111111111111"
+      },
+      "payload": "64:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad36:11111111-1111-4111-8111-11111111111119:ana@interactius.com8:Ana Ruiz6:record0:0:3:out16:178965900000000010:2026-09-176:onsite3:app36:11111111-1111-4111-8111-111111111111",
+      "hash": "f8502da7863f1baac61e27365f98271fa19702165cd343831d70e7e609580b23"
+    },
+    {
+      "label": "correccion-con-motivo",
+      "why": "op = amend: corrects y reason dejan de estar vacíos.",
+      "fields": {
+        "prevHash": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+        "personId": "11111111-1111-4111-8111-111111111111",
+        "personEmail": "ana@interactius.com",
+        "personName": "Ana Ruiz",
+        "op": "amend",
+        "corrects": "22222222-2222-4222-8222-222222222222",
+        "reason": "Olvide fichar la salida",
+        "kind": "out",
+        "occurredAtMicros": "1789659000000000",
+        "workDate": "2026-09-17",
+        "mode": "onsite",
+        "source": "app",
+        "authorPersonId": "11111111-1111-4111-8111-111111111111"
+      },
+      "payload": "64:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad36:11111111-1111-4111-8111-11111111111119:ana@interactius.com8:Ana Ruiz5:amend36:22222222-2222-4222-8222-22222222222223:Olvide fichar la salida3:out16:178965900000000010:2026-09-176:onsite3:app36:11111111-1111-4111-8111-111111111111",
+      "hash": "61e477c672fadb2d42b62fd853991453bf06085335a84f2fe3f8c74d3f5801a3"
+    },
+    {
+      "label": "motivo-multibyte",
+      "why": "«José Muñoz» son 10 caracteres y 12 bytes; el guión largo del motivo son 3 bytes. Si el prefijo midiera caracteres, este vector no cuadraría.",
+      "fields": {
+        "prevHash": "",
+        "personId": "33333333-3333-4333-8333-333333333333",
+        "personEmail": "jose@interactius.com",
+        "personName": "José Muñoz",
+        "op": "amend",
+        "corrects": "22222222-2222-4222-8222-222222222222",
+        "reason": "Reunión en cliente — cambió la hora",
+        "kind": "in",
+        "occurredAtMicros": "1789628400000000",
+        "workDate": "2026-09-17",
+        "mode": "remote",
+        "source": "app",
+        "authorPersonId": "33333333-3333-4333-8333-333333333333"
+      },
+      "payload": "0:36:33333333-3333-4333-8333-33333333333320:jose@interactius.com12:José Muñoz5:amend36:22222222-2222-4222-8222-22222222222239:Reunión en cliente — cambió la hora2:in16:178962840000000010:2026-09-176:remote3:app36:33333333-3333-4333-8333-333333333333",
+      "hash": "2544c5459bba445d720e6bb6361b01d04d65c6c31bc41367ee85b10aca6154eb"
+    },
+    {
+      "label": "motivo-con-dos-puntos",
+      "why": "El motivo lleva el mismo carácter que separa el prefijo de su valor. Con prefijo de longitud da igual; con un separador, no.",
+      "fields": {
+        "prevHash": "",
+        "personId": "33333333-3333-4333-8333-333333333333",
+        "personEmail": "jose@interactius.com",
+        "personName": "José Muñoz",
+        "op": "amend",
+        "corrects": "22222222-2222-4222-8222-222222222222",
+        "reason": "12:34 no era la hora",
+        "kind": "in",
+        "occurredAtMicros": "1789628400000000",
+        "workDate": "2026-09-17",
+        "mode": "remote",
+        "source": "app",
+        "authorPersonId": "33333333-3333-4333-8333-333333333333"
+      },
+      "payload": "0:36:33333333-3333-4333-8333-33333333333320:jose@interactius.com12:José Muñoz5:amend36:22222222-2222-4222-8222-22222222222220:12:34 no era la hora2:in16:178962840000000010:2026-09-176:remote3:app36:33333333-3333-4333-8333-333333333333",
+      "hash": "d38f6845051c87de86f1a54d70f29c659bf710427efd6d457ea4337924f5da3f"
+    },
+    {
+      "label": "anulacion",
+      "why": "op = annul sobre un fichaje duplicado.",
+      "fields": {
+        "prevHash": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+        "personId": "11111111-1111-4111-8111-111111111111",
+        "personEmail": "ana@interactius.com",
+        "personName": "Ana Ruiz",
+        "op": "annul",
+        "corrects": "22222222-2222-4222-8222-222222222222",
+        "reason": "Fichaje duplicado por doble clic",
+        "kind": "in",
+        "occurredAtMicros": "1789624991123456",
+        "workDate": "2026-09-17",
+        "mode": "onsite",
+        "source": "home_card",
+        "authorPersonId": "11111111-1111-4111-8111-111111111111"
+      },
+      "payload": "64:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad36:11111111-1111-4111-8111-11111111111119:ana@interactius.com8:Ana Ruiz5:annul36:22222222-2222-4222-8222-22222222222232:Fichaje duplicado por doble clic2:in16:178962499112345610:2026-09-176:onsite9:home_card36:11111111-1111-4111-8111-111111111111",
+      "hash": "648b39f365bbe382935c3152121d669427cdc93022fd9cfaf740abac073a364f"
+    },
+    {
+      "label": "adversario-a",
+      "why": "Par adversario con «adversario-b»: los mismos bytes repartidos distinto entre dos campos. Un concatenado sin prefijo les daría la misma carga útil y, por tanto, el mismo hash.",
+      "fields": {
+        "prevHash": "ab",
+        "personId": "c",
+        "personEmail": "",
+        "personName": "",
+        "op": "record",
+        "corrects": "",
+        "reason": "",
+        "kind": "in",
+        "occurredAtMicros": "0",
+        "workDate": "2026-09-17",
+        "mode": "onsite",
+        "source": "app",
+        "authorPersonId": ""
+      },
+      "payload": "2:ab1:c0:0:6:record0:0:2:in1:010:2026-09-176:onsite3:app0:",
+      "hash": "d8324c57729b2de729231509f9f1c23cc7be83899f9fc34daef60e3cfd553774"
+    },
+    {
+      "label": "adversario-b",
+      "why": "Ver «adversario-a». Su hash tiene que ser distinto.",
+      "fields": {
+        "prevHash": "a",
+        "personId": "bc",
+        "personEmail": "",
+        "personName": "",
+        "op": "record",
+        "corrects": "",
+        "reason": "",
+        "kind": "in",
+        "occurredAtMicros": "0",
+        "workDate": "2026-09-17",
+        "mode": "onsite",
+        "source": "app",
+        "authorPersonId": ""
+      },
+      "payload": "1:a2:bc0:0:6:record0:0:2:in1:010:2026-09-176:onsite3:app0:",
+      "hash": "c47303fdacec95e824e8c2dde2bf4c8400229ce0ff3112bdeeb4aa8f876d1cd1"
+    }
+  ]
+}
