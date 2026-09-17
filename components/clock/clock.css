@@ -282,6 +282,17 @@
 }
 .ixc-asiento:hover { border-color: var(--c-dark); }
 
+/* ── El mes ──
+   Plegado por defecto: lo que se mira a diario es hoy y la semana. El mes es para cuadrar a fin de
+   mes, y desplegado de serie empujaría la semana fuera de la pantalla en un móvil. */
+.ixc-mes-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 20px;
+  margin-bottom: 16px;
+}
+
 /* ── Móvil ──
    Mismo punto de ruptura que timer.css (720px), para no tener dos criterios de «móvil» en el mismo
    repo. La semana deja de ser una rejilla de cuatro columnas y pasa a apilarse: cuatro columnas en

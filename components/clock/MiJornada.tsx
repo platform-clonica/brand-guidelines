@@ -26,40 +26,14 @@ import { amendEntry, ChainBusyError, listAbsences, listCalendar, listEntries, re
 import { availableActions, correctableEntries, type ClockAction } from '@/lib/clock/actions';
 import type { EntryRow } from '@/lib/clock/schema';
 import { CorregirModal, type CorreccionInput } from './CorregirModal';
+import { DiaFila } from './DiaFila';
+import { etiquetaDia, formatMinutes } from './formato';
 import { compileRange, type CompileResult } from '@/lib/clock/compile';
 import type { ScheduleTramo } from '@/lib/clock/calendar';
 import { monthRange, todayIn, weekRange } from '@/lib/clock/dates';
 import type { ClockMode, ClockPersonRow } from '@/lib/clock/types';
 import { FicharButton } from './FicharButton';
 import './clock.css';
-
-/* Minutos a «7 h 45 min». Se queda aquí y no en lib/clock porque es presentación pura: no decide
-   nada del registro, solo cómo se lee. */
-function formatMinutes(total: number): string {
-  const signo = total < 0 ? '−' : '';
-  const abs = Math.abs(total);
-  const h = Math.floor(abs / 60);
-  const m = abs % 60;
-  if (h === 0) return `${signo}${m} min`;
-  return m === 0 ? `${signo}${h} h` : `${signo}${h} h ${m} min`;
-}
-
-const DIA_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-
-const ASIENTO: Record<string, string> = {
-  in: 'Entrada',
-  out: 'Salida',
-  break_start: 'Inicio de pausa',
-  break_end: 'Fin de pausa',
-};
-
-function etiquetaDia(fecha: string): string {
-  const d = new Date(`${fecha}T00:00:00Z`);
-  return `${DIA_SEMANA[d.getUTCDay()]} ${fecha.slice(8)}`;
-}
-
-const horaDe = (iso: string) =>
-  new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Madrid' });
 
 export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
   const [entries, setEntries] = useState<unknown[]>([]);
@@ -73,6 +47,9 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
      sin querer dentro de un registro legal. */
   const [corrigiendo, setCorrigiendo] = useState(false);
   const [aCorregir, setACorregir] = useState<EntryRow | null>(null);
+  /* Plegado por defecto: lo que se mira a diario es hoy y la semana. El mes es para cuadrar a fin
+     de mes, y desplegado de serie empujaría la semana fuera de la pantalla en un móvil. */
+  const [mesAbierto, setMesAbierto] = useState(false);
 
   const hoy = todayIn();
   const mes = useMemo(() => monthRange(hoy), [hoy]);
@@ -144,11 +121,13 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
      pintar y otra para saber si está vacía—. */
   const corregiblesPorDia = useMemo(() => {
     const mapa = new Map<string, EntryRow[]>();
-    for (const d of diasSemana) {
+    /* Todo el mes y no solo la semana: el mes desplegado también ofrece corregir, y el caso que lo
+       justifica es cuadrar a fin de mes encontrando un día mal fichado de hace tres semanas. */
+    for (const d of rango.days) {
       mapa.set(d.day.workDate, correctableEntries(asientosPorDia.get(d.day.workDate) ?? [], d.day));
     }
     return mapa;
-  }, [diasSemana, asientosPorDia]);
+  }, [rango, asientosPorDia]);
 
   const corregir = async (input: CorreccionInput) => {
     if (!aCorregir) return;
@@ -298,45 +277,53 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
                 {cargando && <p className="ixc-vacio">Cargando</p>}
                 {!cargando &&
                   diasSemana.map((d) => (
-                    <div
+                    <DiaFila
                       key={d.day.workDate}
-                      className={`ixc-dia ${d.day.workDate === hoy ? 'ixc-dia--hoy' : ''}`}
-                    >
-                      <span className="ixc-dia__fecha">{etiquetaDia(d.day.workDate)}</span>
-                      <span className="ixc-dia__tramos">
-                        {d.day.segments.length === 0
-                          ? '—'
-                          : d.day.segments
-                              .map((s) => `${horaDe(s.from)}–${s.to ? horaDe(s.to) : ''}`)
-                              .join('  ')}
-                      </span>
-                      <span className="ixc-dia__horas">{formatMinutes(d.day.workedMinutes)}</span>
-                      <span
-                        className={`ixc-dia__saldo ixc-saldo ${d.day.balanceMinutes < 0 ? 'ixc-saldo--defecto' : 'ixc-saldo--exceso'}`}
-                      >
-                        {formatMinutes(d.day.balanceMinutes)}
-                      </span>
-
-                      {corrigiendo && (
-                        <div className="ixc-asientos">
-                          {(corregiblesPorDia.get(d.day.workDate) ?? []).map((e) => (
-                            <button
-                              key={e.id}
-                              type="button"
-                              className="ixc-asiento"
-                              onClick={() => setACorregir(e)}
-                            >
-                              {ASIENTO[e.kind] ?? e.kind} {horaDe(e.occurred_at)}
-                            </button>
-                          ))}
-                          {(corregiblesPorDia.get(d.day.workDate) ?? []).length === 0 && (
-                            <span className="ixc-aviso-correccion">Sin asientos que corregir</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                      resultado={d}
+                      esHoy={d.day.workDate === hoy}
+                      corrigiendo={corrigiendo}
+                      corregibles={corregiblesPorDia.get(d.day.workDate) ?? []}
+                      onCorregir={setACorregir}
+                    />
                   ))}
               </div>
+            </section>
+
+            <section className="ixc-seccion" aria-label="Este mes">
+              <h2 className="ixc-seccion__titulo">Este mes</h2>
+
+              <div className="ixc-mes-resumen">
+                <span>Trabajado: {formatMinutes(rango.workedMinutes)}</span>
+                <span>Jornada: {formatMinutes(rango.theoreticalMinutes)}</span>
+                <span
+                  className={`ixc-saldo ${rango.balanceMinutes < 0 ? 'ixc-saldo--defecto' : 'ixc-saldo--exceso'}`}
+                >
+                  Saldo: {formatMinutes(rango.balanceMinutes)}
+                </span>
+                <button
+                  type="button"
+                  className="ixc-toggle"
+                  aria-expanded={mesAbierto}
+                  onClick={() => setMesAbierto((v) => !v)}
+                >
+                  {mesAbierto ? 'Plegar el mes' : 'Ver el mes'}
+                </button>
+              </div>
+
+              {mesAbierto && (
+                <div className="ixc-semana">
+                  {rango.days.map((d) => (
+                    <DiaFila
+                      key={d.day.workDate}
+                      resultado={d}
+                      esHoy={d.day.workDate === hoy}
+                      corrigiendo={corrigiendo}
+                      corregibles={corregiblesPorDia.get(d.day.workDate) ?? []}
+                      onCorregir={setACorregir}
+                    />
+                  ))}
+                </div>
+              )}
             </section>
           </>
         )}
