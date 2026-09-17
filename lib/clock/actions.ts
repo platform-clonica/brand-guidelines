@@ -9,6 +9,7 @@
    anulaciones ya están aplicadas, y lo que se mira son los tramos que quedan abiertos de verdad. */
 
 import type { ClockDay } from './compile.ts';
+import { entryRowSchema, type EntryRow } from './schema.ts';
 import type { ClockKind } from './types.ts';
 
 /** La primera es la PRINCIPAL: la que la tarjeta de la home pone como botón grande. */
@@ -32,4 +33,35 @@ export function availableActions(day: ClockDay): ClockAction[] {
      hubiera que corregir antes el error de ayer, alguien se quedaría sin registrar su jornada por un
      fallo pasado. El registro que más falla es el que no se puede rellenar. */
   return ['in'];
+}
+
+/* Qué asientos puede ofrecer el modo corrección.
+
+   LA REGLA QUE LO SOSTIENE: un asiento ya corregido no se vuelve a corregir. Sin ella, dos
+   correcciones del mismo original compiten por sustituirlo y el resultado del día pasa a depender
+   del orden en que se escribieron. Se corrige el último de la cadena, no el primero.
+
+   Nada de esto borra: corregir escribe un asiento nuevo que apunta al viejo, y el viejo se queda a
+   la vista. Lo que cambia es a cuál se puede apuntar.
+
+   El original anulado y la propia anulación salen los dos por la misma vía, sin caso especial:
+   `resolveCorrections` añade a `supersededIds` tanto el asiento que una anulación tumba como la
+   anulación misma, porque una anulación no aporta hora y se retira también del cálculo.
+
+   Se filtra con el ESQUEMA y no comprobando que la fila no sea nula: una fila con la hora rota es
+   tan ilegible como un `null`, y ofrecerla sería una trampa —`compileDay` la descarta del cálculo,
+   así que corregirla devolvería «corrige un asiento que no está en este día», un error que quien
+   ficha no puede resolver. */
+export function correctableEntries(rows: unknown[], day: ClockDay): EntryRow[] {
+  const superseded = new Set(day.supersededIds);
+  const corregibles: EntryRow[] = [];
+
+  for (const row of rows) {
+    const parsed = entryRowSchema.safeParse(row);
+    if (!parsed.success) continue;
+    if (superseded.has(parsed.data.id)) continue;
+    corregibles.push(parsed.data);
+  }
+
+  return corregibles;
 }
