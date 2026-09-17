@@ -272,6 +272,57 @@ test('una pausa fuera de todo tramo de trabajo es un error', () => {
   );
 });
 
+/* ─── Lo que hoy desaparece en silencio ───
+
+   Los dos primeros son huecos en código que ya está escrito y en verde, que es peor que un caso sin
+   cubrir: no es que falte la comprobación, es que el dato se pierde sin dejar rastro y el día sale
+   cuadrado. */
+
+test('una salida sin entrada es un error y no se traga', () => {
+  /* Hoy el emparejador descarta un cierre que no abre nada y sigue como si no hubiera pasado. En un
+     libro de asientos, un fichaje que se evapora del cálculo sin decirlo es exactamente lo que no
+     puede ocurrir. */
+  const resultado = compileDay([asiento(1, 'out', '18:00')], opciones);
+
+  assert.equal(resultado.ok, false);
+  assert.ok(
+    resultado.issues.some((i) => i.level === 'error' && i.path === 'asiento.1'),
+    'debería señalar la salida que no cierra nada',
+  );
+});
+
+test('una persona sin tramo de jornada vigente lo dice en vez de suponer cero', () => {
+  /* Cuando no hay tramo vigente, poner los teóricos a 0 en silencio da un saldo calculado contra
+     una jornada que nadie decidió. Es la misma razón por la que scheduleAt devuelve null y no 0:
+     un hueco declarado vale más que un número inventado. */
+  const resultado = compileDay([asiento(1, 'in', '09:00'), asiento(2, 'out', '17:00')], {
+    ...opciones,
+    schedules: [{ ...completa, validFrom: '2027-01-01' }],
+  });
+
+  assert.equal(resultado.ok, false);
+  assert.ok(
+    resultado.issues.some((i) => i.level === 'error' && i.path === 'jornada'),
+    'debería decir que no hay jornada teórica contra la que comparar',
+  );
+});
+
+test('fichar dentro de una ausencia declarada es un aviso, no un error', () => {
+  /* Las horas trabajadas son reales; lo que está en duda es la ausencia. Por eso avisa y `ok` sigue
+     siendo true: alguien tiene que mirar si sobra la ausencia o sobran los fichajes, pero el total
+     del día no es ambiguo. */
+  const resultado = compileDay([asiento(1, 'in', '09:00'), asiento(2, 'out', '17:00')], {
+    ...opciones,
+    absences: [{ fromDate: '2026-07-06', toDate: '2026-07-17' }],
+  });
+
+  assert.equal(resultado.ok, true, 'las horas trabajadas son reales: no es un error');
+  assert.ok(
+    resultado.issues.some((i) => i.level === 'warning' && i.path === 'ausencia'),
+    'debería avisar de que ese día constaba como ausencia',
+  );
+});
+
 test('una serie incoherente devuelve incidencias y no lanza', () => {
   /* La invariante que sostiene toda la herramienta. Una salida sin entrada, una pausa que cierra
      sin haber abierto y un orden imposible: nada de esto puede tumbar el visor de nadie. */

@@ -63,12 +63,17 @@ type Pairing = { intervals: Paired[]; unclosedSeq: number | null };
 
 const toInterval = ({ from, to }: Paired): Interval => ({ from, to });
 
+/* Los dos mensajes van en un objeto y no como parámetros sueltos: dos `string` seguidos en una
+   firma es un error de orden esperando a ocurrir, y aquí se traduciría en una incidencia que dice
+   lo contrario de lo que pasó. */
+type PairMessages = { duplicate: string; orphan: string };
+
 function pair(
   entries: { seq: number; kind: string; occurred_at: string }[],
   open: string,
   close: string,
   issues: ClockIssue[],
-  duplicateMessage: string,
+  messages: PairMessages,
 ): Pairing {
   const intervals: Paired[] = [];
   let pending: { at: string; seq: number } | null = null;
@@ -79,14 +84,22 @@ function pair(
         /* Dos aperturas seguidas: el doble clic, o dos pestañas. Se señala la SEGUNDA y se conserva
            la primera. Machacarla —que es lo que hacía antes— hacía desaparecer un fichaje sin que
            nadie se enterase, y el día salía cuadrado con una hora que nadie fichó. */
-        issues.push({ level: 'error', path: `asiento.${entry.seq}`, message: duplicateMessage });
+        issues.push({ level: 'error', path: `asiento.${entry.seq}`, message: messages.duplicate });
         continue;
       }
       pending = { at: entry.occurred_at, seq: entry.seq };
       continue;
     }
 
-    if (entry.kind !== close || pending === null) continue;
+    if (entry.kind !== close) continue;
+
+    if (pending === null) {
+      /* Un cierre que no abre nada. Antes se descartaba en silencio: el fichaje desaparecía del
+         cálculo sin dejar rastro y el día salía cuadrado, que en un libro de asientos es justo lo
+         único que no puede pasar. */
+      issues.push({ level: 'error', path: `asiento.${entry.seq}`, message: messages.orphan });
+      continue;
+    }
 
     if (Date.parse(entry.occurred_at) < Date.parse(pending.at)) {
       issues.push({
@@ -199,8 +212,14 @@ export function compileDay(rows: unknown[], options: CompileOptions): CompileRes
   const superseded = resolveCorrections(all, issues);
   const entries = all.filter((e) => !superseded.has(e.id));
 
-  const jornada = pair(entries, 'in', 'out', issues, 'Hay otra entrada sin haber fichado la salida de la anterior.');
-  const pausas = pair(entries, 'break_start', 'break_end', issues, 'Hay otra pausa sin haber cerrado la anterior.');
+  const jornada = pair(entries, 'in', 'out', issues, {
+    duplicate: 'Hay otra entrada sin haber fichado la salida de la anterior.',
+    orphan: 'Hay una salida sin ninguna entrada que cerrar.',
+  });
+  const pausas = pair(entries, 'break_start', 'break_end', issues, {
+    duplicate: 'Hay otra pausa sin haber cerrado la anterior.',
+    orphan: 'Hay un fin de pausa sin ninguna pausa empezada.',
+  });
   const segments = jornada.intervals;
   const breaks = pausas.intervals;
 
@@ -234,6 +253,18 @@ export function compileDay(rows: unknown[], options: CompileOptions): CompileRes
   }
 
   const tramo = scheduleAt(options.schedules, options.workDate);
+
+  if (tramo === null) {
+    /* Sin tramo vigente no hay contra qué comparar. Dejarlo en 0 en silencio daría un saldo
+       calculado sobre una jornada que nadie decidió, que es la misma razón por la que `scheduleAt`
+       devuelve null y no 0: un hueco declarado vale más que un número inventado. */
+    issues.push({
+      level: 'error',
+      path: 'jornada',
+      message: 'No hay ninguna jornada teórica vigente ese día: el saldo no se puede calcular.',
+    });
+  }
+
   const teoricos =
     tramo === null
       ? 0
@@ -241,6 +272,17 @@ export function compileDay(rows: unknown[], options: CompileOptions): CompileRes
           holidays: options.holidays,
           absences: options.absences,
         });
+
+  /* Fichajes en un día que constaba como ausencia. Es AVISO y no error: las horas trabajadas son
+     reales y el total no es ambiguo. Lo que hay que mirar es si sobra la ausencia o sobran los
+     fichajes, y eso lo decide una persona, no el compilador. */
+  if (entries.length > 0 && options.absences.some((a) => a.fromDate <= options.workDate && options.workDate <= a.toDate)) {
+    issues.push({
+      level: 'warning',
+      path: 'ausencia',
+      message: 'Ese día constaba como ausencia y tiene fichajes.',
+    });
+  }
 
   const breakMinutes = spanOf(breaks);
   const workedMinutes = spanOf(segments) - breakMinutes;
