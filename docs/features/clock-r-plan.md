@@ -661,6 +661,51 @@ Migración `20260917140000_create_clock.sql`, aplicada a mano por Carlos en el S
   comprobaciones se hacen desde la aplicación, con una sesión real, en el bloque 3. Hasta entonces
   no están verificadas y no se dan por buenas.
 
+## El primer administrador · un hueco de arranque
+
+**Guardé la salida y dejé abierta la entrada.** `buildRolePatch` y `buildStatusPatch` impiden quitar
+el último administrador —sin ninguno, nadie puede nombrar a otro, porque escribir en `clock_people`
+exige serlo— pero **nunca hubo un primero**: el alta automática crea a todo el mundo como `member`,
+y no existe ninguna vía en la aplicación para promocionar al primero. Solo se podía a mano.
+
+Se vio al mirar los datos después de la primera prueba real, no leyendo el código.
+
+**Decisión de Carlos, 2026-09-17: un `update` suelto.** Aplicado ese día sobre
+`carlos.ruiz@interactius.com`, que pasa a `admin`. Funciona **precisamente porque la conexión de
+administración se salta la RLS**, que es la puerta que todo el diseño prohíbe a las rutas de la
+aplicación: aquí es el uso legítimo de esa puerta, arrancar el sistema, y es la razón de que no
+pueda existir en ningún handler.
+
+**Pendiente, y no puede depender de que alguien se acuerde:** Josep todavía no tiene ficha, porque
+no ha entrado nunca. Hay que repetir el `update` **después de su primer acceso**. Mientras solo haya
+un administrador, la aplicación le impedirá degradarse o darse de baja a sí mismo —responderá 409—,
+que es la guarda funcionando, no un fallo.
+
+Las otras dos opciones que se descartaron, por si vuelve a hacer falta: una lista de correos dentro
+de `clock_ensure_person` (se cura sola, pero cambiar la lista pide migración) y «el primero que entra
+es admin si no hay ninguno» (sin correos en el código, pero es una regla débil para decidir quién
+manda en el registro horario).
+
+## La verificación de extremo a extremo · 2026-09-17
+
+Lo que los bloques 1, 2 y 3 dejaron aplazado porque exigía `auth.uid()`, hecho con la pantalla ya
+en marcha y **comprobado sobre los datos, no de palabra**:
+
+- La ficha se crea sola al cargar la página, con su tramo de jornada por defecto.
+- Fichar entrada y salida escribe dos asientos, con la hora puesta por `now()` en el servidor. Esto
+  confirma el fallo que se cazó en la frontera entre la función pura y la llamada real: omitir
+  `p_occurred_at` en vez de mandarlo nulo era lo correcto, y mandarlo nulo habría reventado el primer
+  fichaje.
+- **La cadena verifica.** Recalculada desde fuera con `clock_entry_hash` en una consulta aparte, no
+  llamando a `clock_verify_chain` —que habría estado de acuerdo consigo misma—: `prev_hash` y `hash`
+  cuadran en los dos asientos.
+- Que un `update` directo sobre `clock_entries` no es posible ya estaba probado antes por otra vía:
+  a `authenticated` solo le queda `select`, así que se deniega por privilegio antes de llegar a la
+  RLS.
+
+Queda anotado para el piloto: **no hay ningún festivo cargado**, así que hasta que se metan, un día
+festivo cuenta como laborable en el saldo.
+
 ## Bloque 2 · qué cambió al implementarlo
 
 - **H8 se retira: el canal informativo que proponía no hace falta, y la premisa era falsa.** El plan
