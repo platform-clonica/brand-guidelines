@@ -60,7 +60,10 @@ export function scheduleAt(schedules: ScheduleTramo[], date: string): ScheduleTr
   return vigente;
 }
 
-const WEEKDAYS: Weekday[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+/* En el orden de `getUTCDay()`, que es como se usa aquí abajo. Se exporta porque `server.ts` valida
+   contra esta misma lista: dos listas de días en dos ficheros es una divergencia esperando a
+   ocurrir, y divergir aquí significa aceptar una jornada que luego el cálculo no sabe leer. */
+export const WEEKDAYS: Weekday[] = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
 /* El día de la semana de una fecha, leída SIEMPRE en UTC. No porque el calendario laboral sea UTC
    —no lo es, es Europe/Madrid— sino porque aquí solo entran fechas sin hora: `2026-07-10` no es un
