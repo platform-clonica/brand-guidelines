@@ -73,3 +73,9 @@ export function FormLogo({ height = 30, title = 'FormMakr' }: { height?: number;
 export function DsLogo({ height = 30, title = 'DSMakr' }: { height?: number; title?: string }) {
   return <Wordmark before="DSMak" after="r" height={height} title={title} />;
 }
+
+/* Clock_r. La convención no es el `Mak`: es que el `_r` elide la terminación -er, así que
+   `DeckMak_r` es DeckMaker y `Clock_r` es Clocker. ReWrit_r ya demostró que `Mak` no era la regla. */
+export function ClockLogo({ height = 30, title = 'Clockr' }: { height?: number; title?: string }) {
+  return <Wordmark before="Clock" after="r" height={height} title={title} />;
+}
