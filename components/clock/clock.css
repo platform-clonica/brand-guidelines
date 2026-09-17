@@ -91,6 +91,16 @@
   margin-left: 10px;
 }
 
+/* El nombre de una persona en su historial. Clase propia y no la del número grande del día: eran
+   dos cosas distintas con el mismo traje, y el atajo se notaba en el tamaño sobrescrito en línea. */
+.ixc-nombre {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: var(--fs-title-sm);
+  line-height: 1.15;
+  margin: 8px 0 0;
+}
+
 .ixc-meta {
   display: flex;
   flex-wrap: wrap;
