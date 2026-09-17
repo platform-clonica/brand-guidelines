@@ -22,13 +22,15 @@ const completa: ScheduleTramo = {
 
 /* Un asiento tal y como sale de la tabla. Solo se escriben los campos que el cálculo mira; los
    demás (hash, prev_hash, person_email) existen en la fila pero no entran aquí. */
+const idOf = (seq: number) => `00000000-0000-4000-8000-${String(seq).padStart(12, '0')}`;
+
 const asiento = (
   seq: number,
   kind: string,
   hora: string,
   extra: Record<string, unknown> = {},
 ) => ({
-  id: `00000000-0000-4000-8000-${String(seq).padStart(12, '0')}`,
+  id: idOf(seq),
   seq,
   op: 'record',
   corrects: null,
@@ -112,6 +114,105 @@ test('una pausa sin cerrar también queda abierta y lo dice', () => {
   assert.equal(resultado.day.breaks[0].to, null);
   assert.equal(resultado.issues.length, 1, 'la pausa sin cerrar es la única incidencia');
   assert.equal(resultado.issues[0].path, 'asiento.2');
+});
+
+/* ─── Correcciones y anulaciones ───
+
+   Aquí está el motivo de que la tabla solo admita inserciones. Corregir una hora NO reescribe el
+   asiento: escribe uno nuevo que apunta al viejo con su motivo, y el cálculo usa el nuevo mientras
+   el viejo sigue existiendo. Es lo que permite a la vez que las cuentas cuadren y que se pueda
+   reconstruir quién cambió qué y por qué. */
+
+test('una corrección sustituye al asiento original en el cálculo', () => {
+  /* Entra a las 9 y ficha la salida a las 18, pero la salida real eran las 17 y lo corrige. El
+     cálculo tiene que usar las 17: 480 minutos, justo la jornada, saldo cero. */
+  const resultado = compileDay(
+    [
+      asiento(1, 'in', '09:00'),
+      asiento(2, 'out', '18:00'),
+      asiento(3, 'out', '17:00', {
+        op: 'amend',
+        corrects: idOf(2),
+        reason: 'La salida real fueron las cinco',
+      }),
+    ],
+    opciones,
+  );
+
+  assert.equal(resultado.day.workedMinutes, 480, 'debería contar hasta las 17, no hasta las 18');
+  assert.equal(resultado.day.balanceMinutes, 0);
+});
+
+test('el asiento corregido sigue estando, aunque no cuente', () => {
+  // Si desapareciera, el registro dejaría de poder explicar por qué cambió una hora.
+  const resultado = compileDay(
+    [
+      asiento(1, 'in', '09:00'),
+      asiento(2, 'out', '18:00'),
+      asiento(3, 'out', '17:00', { op: 'amend', corrects: idOf(2), reason: 'Corrijo la salida' }),
+    ],
+    opciones,
+  );
+
+  assert.deepEqual(resultado.day.supersededIds, [idOf(2)]);
+});
+
+test('un asiento anulado desaparece del cálculo', () => {
+  /* Doble clic al entrar: dos `in` seguidos. Se anula el segundo y el día queda como si no se
+     hubiera escrito: 09:00 a 18:00, 540 minutos, y sin tramo abierto. */
+  const resultado = compileDay(
+    [
+      asiento(1, 'in', '09:00'),
+      asiento(2, 'out', '18:00'),
+      asiento(3, 'in', '09:05'),
+      asiento(4, 'in', '09:05', {
+        op: 'annul',
+        corrects: idOf(3),
+        reason: 'Fichaje duplicado por doble clic',
+      }),
+    ],
+    opciones,
+  );
+
+  assert.equal(resultado.day.workedMinutes, 540);
+  assert.equal(resultado.day.open, false, 'el `in` duplicado estaba anulado: no deja nada abierto');
+});
+
+test('una corrección que se apunta a sí misma no cuelga', () => {
+  /* De todos los casos raros, este es el único que no lanza sino que se queda dando vueltas, y
+     colgar la pantalla de alguien es peor que reventarla: al menos un error se ve. */
+  assert.doesNotThrow(() => {
+    const resultado = compileDay(
+      [
+        asiento(1, 'in', '09:00'),
+        asiento(2, 'out', '17:00', { op: 'amend', corrects: idOf(2), reason: 'Se apunta a sí mismo' }),
+      ],
+      opciones,
+    );
+    assert.ok(
+      resultado.issues.some((i) => i.level === 'error'),
+      'una corrección circular tiene que salir como error',
+    );
+  });
+});
+
+test('una corrección que apunta a un asiento que no existe lo dice', () => {
+  const resultado = compileDay(
+    [
+      asiento(1, 'in', '09:00'),
+      asiento(2, 'out', '17:00', {
+        op: 'amend',
+        corrects: idOf(99),
+        reason: 'Apunta a un asiento de otro día',
+      }),
+    ],
+    opciones,
+  );
+
+  assert.ok(
+    resultado.issues.some((i) => i.level === 'error' && i.path === 'asiento.2'),
+    'debería señalar el asiento que corrige a nadie',
+  );
 });
 
 test('una serie incoherente devuelve incidencias y no lanza', () => {

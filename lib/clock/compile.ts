@@ -24,6 +24,9 @@ export type ClockDay = {
   workDate: string;
   segments: Interval[];
   breaks: Interval[];
+  /* Asientos que ya no cuentan porque otro los corrigió o los anuló. No se borran de la lista: el
+     registro tiene que poder explicar por qué cambió una hora, y para eso el original sigue ahí. */
+  supersededIds: string[];
   workedMinutes: number;
   breakMinutes: number;
   theoreticalMinutes: number;
@@ -82,12 +85,77 @@ function pair(
 const spanOf = (intervals: Interval[]): number =>
   intervals.reduce((total, i) => (i.to === null ? total : total + minutesBetween(i.from, i.to)), 0);
 
+type RawEntry = {
+  id: string;
+  seq: number;
+  op: string;
+  corrects: string | null;
+  kind: string;
+  occurred_at: string;
+};
+
+/* Qué asientos quedan fuera del cálculo, y por qué.
+
+   Una corrección (`amend`) sustituye al que corrige; una anulación (`annul`) lo saca y se saca a sí
+   misma. Se puede corregir una corrección, así que esto es una cadena, y una cadena que sale de
+   datos es una cadena que puede venir mal: un asiento que se apunta a sí mismo, o dos que se
+   apuntan en círculo.
+
+   POR ESO EL RECORRIDO VA ACOTADO POR CONSTRUCCIÓN y no con una guarda añadida después. Cada
+   asiento se visita una vez: no se sigue la cadena paso a paso, se marca de golpe a quién tumba
+   cada corrección. Un ciclo no puede dar vueltas porque no hay vueltas que dar. La invariante de
+   esta herramienta es que la compilación no lanza, pero colgarse sería peor que lanzar: un error
+   se ve y una pantalla congelada no. */
+function resolveCorrections(entries: RawEntry[], issues: ClockIssue[]): Set<string> {
+  const byId = new Map(entries.map((e) => [e.id, e]));
+  const superseded = new Set<string>();
+
+  for (const entry of entries) {
+    if (entry.op === 'record') continue;
+
+    if (entry.corrects === null) {
+      issues.push({
+        level: 'error',
+        path: `asiento.${entry.seq}`,
+        message: 'Es una corrección pero no dice a qué asiento corrige.',
+      });
+      continue;
+    }
+
+    if (entry.corrects === entry.id) {
+      issues.push({
+        level: 'error',
+        path: `asiento.${entry.seq}`,
+        message: 'La corrección se apunta a sí misma.',
+      });
+      continue;
+    }
+
+    if (!byId.has(entry.corrects)) {
+      /* Puede ser de otro día, o de otra persona, o haberse escrito mal. Sea lo que sea, aquí no
+         hay nada que corregir y el asiento nuevo tampoco se puede dar por bueno. */
+      issues.push({
+        level: 'error',
+        path: `asiento.${entry.seq}`,
+        message: 'Corrige un asiento que no está en este día.',
+      });
+      continue;
+    }
+
+    superseded.add(entry.corrects);
+    // Una anulación no aporta hora: se retira ella también del cálculo.
+    if (entry.op === 'annul') superseded.add(entry.id);
+  }
+
+  return superseded;
+}
+
 export function compileDay(rows: unknown[], options: CompileOptions): CompileResult {
   const issues: ClockIssue[] = [];
 
-  const entries = (rows as { seq: number; kind: string; occurred_at: string }[])
-    .slice()
-    .sort(bySeq);
+  const all = (rows as RawEntry[]).slice().sort(bySeq);
+  const superseded = resolveCorrections(all, issues);
+  const entries = all.filter((e) => !superseded.has(e.id));
 
   const jornada = pair(entries, 'in', 'out');
   const pausas = pair(entries, 'break_start', 'break_end');
@@ -132,6 +200,7 @@ export function compileDay(rows: unknown[], options: CompileOptions): CompileRes
       workDate: options.workDate,
       segments,
       breaks,
+      supersededIds: [...superseded],
       workedMinutes,
       breakMinutes,
       theoreticalMinutes: teoricos,
