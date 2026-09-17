@@ -40,8 +40,13 @@ const send = (method: string, payload: unknown): RequestInit => ({
   body: JSON.stringify(payload),
 });
 
-const rango = (from: string, to: string, personId?: string) =>
-  `from=${from}&to=${to}${personId ? `&personId=${personId}` : ''}`;
+/** `scope: 'team'` pide el equipo entero en una petición; sin él, la persona de la sesión. */
+export type Alcance = { personId?: string; scope?: 'team' };
+
+const rango = (from: string, to: string, a: Alcance = {}) =>
+  `from=${from}&to=${to}` +
+  (a.personId ? `&personId=${a.personId}` : '') +
+  (a.scope === 'team' ? '&scope=team' : '');
 
 /* ─── Fichar ───
 
@@ -66,13 +71,13 @@ export const amendEntry = (input: {
   personId?: string;
 }) => request<ClockEntryRow>('/api/clock/entries', send('POST', input));
 
-export const listEntries = (from: string, to: string, personId?: string) =>
-  request<ClockEntryRow[]>(`/api/clock/entries?${rango(from, to, personId)}`);
+export const listEntries = (from: string, to: string, alcance?: Alcance) =>
+  request<ClockEntryRow[]>(`/api/clock/entries?${rango(from, to, alcance)}`);
 
 /* ─── Calendario y equipo ─── */
 
-export const listAbsences = (from: string, to: string, personId?: string) =>
-  request<ClockAbsenceRow[]>(`/api/clock/absences?${rango(from, to, personId)}`);
+export const listAbsences = (from: string, to: string, alcance?: Alcance) =>
+  request<ClockAbsenceRow[]>(`/api/clock/absences?${rango(from, to, alcance)}`);
 
 export const listCalendar = (year: number) =>
   request<ClockCalendarDayRow[]>(`/api/clock/calendar?year=${year}`);

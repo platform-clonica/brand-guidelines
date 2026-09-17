@@ -26,6 +26,23 @@ export async function GET(req: Request) {
 
   const sb = await supabaseAuthServer();
 
+  /* `scope=team` para el panel de administración, igual que en los asientos: sin esto, un panel de
+     ocho personas haría ocho peticiones. Y sin las ausencias del equipo, quien está de vacaciones
+     aparecería con un defecto enorme en vez de con su día justificado.
+
+     Quién ve qué lo sigue decidiendo la RLS, no este handler. */
+  if (url.searchParams.get('scope') === 'team') {
+    const { data, error } = await sb
+      .from('clock_absences')
+      .select('*')
+      .lte('from_date', range.to)
+      .gte('to_date', range.from)
+      .order('from_date');
+    if (error) return dbFail('clock/absences', error);
+
+    return NextResponse.json(data ?? [], { headers: { 'Cache-Control': 'no-store' } });
+  }
+
   let personId = url.searchParams.get('personId');
   if (personId && !isUuid(personId)) {
     return NextResponse.json({ error: 'La persona pedida no es válida.' }, { status: 400 });

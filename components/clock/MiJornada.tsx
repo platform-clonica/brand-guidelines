@@ -58,6 +58,7 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
   const cargar = useCallback(async () => {
     setError(null);
     try {
+      /* Sin alcance: los de la sesión. El panel de equipo es quien pide `scope: 'team'`. */
       const [e, a, c] = await Promise.all([
         listEntries(mes.from, mes.to),
         listAbsences(mes.from, mes.to),
