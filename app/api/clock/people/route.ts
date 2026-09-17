@@ -9,7 +9,7 @@
 import { NextResponse } from 'next/server';
 import { dbFail, requireUser, supabaseAuthServer } from '@/lib/supabase/server';
 import { currentPerson, isClockAdmin } from '@/lib/auth/role';
-import { buildRolePatch, buildSchedulesPatch, isUuid } from '@/lib/clock/server';
+import { buildRolePatch, buildSchedulesPatch, buildStatusPatch, isUuid } from '@/lib/clock/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,14 +47,6 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Falta la persona a la que cambiar la jornada o el rol.' }, { status: 400 });
   }
 
-  /* La baja de una persona NO entra todavía. Desactivar al último administrador deja el equipo sin
-     ninguno igual que degradarlo, y la guarda que tengo probada solo cubre el rol: meter aquí el
-     `status` sería escribir lógica de permisos sin un test que la haya visto fallar, justo en la
-     ruta que decide quién manda. Va en su propio ciclo. */
-  if (input.status !== undefined) {
-    return NextResponse.json({ error: 'Dar de baja a una persona todavía no está disponible.' }, { status: 400 });
-  }
-
   const sb = await supabaseAuthServer();
   if (!(await isClockAdmin(sb))) {
     return NextResponse.json({ error: 'Solo administración puede cambiar la jornada o el rol.' }, { status: 403 });
@@ -68,9 +60,10 @@ export async function PATCH(req: Request) {
     patch.schedules = schedules.schedules;
   }
 
-  if (input.role !== undefined) {
-    /* Cuántos administradores activos hay y si esta persona es uno: se cuenta aquí y se pasa, para
-       que la decisión viva en una función pura con su test en vez de enterrada en el handler. */
+  /* El rol y la baja comparten guarda: las dos pueden dejar al equipo sin ningún administrador. Se
+     cuenta UNA vez y se pasa a las dos funciones puras, que son las que tienen los tests; el handler
+     no decide nada. */
+  if (input.role !== undefined || input.status !== undefined) {
     const { data: admins, error: countErr } = await sb
       .from('clock_people')
       .select('id')
@@ -78,15 +71,22 @@ export async function PATCH(req: Request) {
       .eq('status', 'active');
     if (countErr) return dbFail('clock/people', countErr);
 
-    const role = buildRolePatch(
-      { role: input.role },
-      {
-        adminsActivos: admins?.length ?? 0,
-        eraAdmin: (admins ?? []).some((a) => a.id === input.personId),
-      },
-    );
-    if (!role.ok) return NextResponse.json({ error: role.error }, { status: role.status });
-    patch.role = role.role;
+    const context = {
+      adminsActivos: admins?.length ?? 0,
+      eraAdmin: (admins ?? []).some((a) => a.id === input.personId),
+    };
+
+    if (input.role !== undefined) {
+      const role = buildRolePatch({ role: input.role }, context);
+      if (!role.ok) return NextResponse.json({ error: role.error }, { status: role.status });
+      patch.role = role.role;
+    }
+
+    if (input.status !== undefined) {
+      const status = buildStatusPatch({ status: input.status }, context);
+      if (!status.ok) return NextResponse.json({ error: status.error }, { status: status.status });
+      patch.status = status.nextStatus;
+    }
   }
 
   if (Object.keys(patch).length === 0) {

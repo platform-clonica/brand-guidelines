@@ -6,7 +6,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildAbsence, buildCalendarDay, buildRolePatch } from '../server.ts';
+import { buildAbsence, buildCalendarDay, buildRolePatch, buildStatusPatch } from '../server.ts';
 
 const PERSONA = '11111111-1111-4111-8111-111111111111';
 
@@ -117,4 +117,46 @@ test('quitar el último administrador se rechaza', () => {
 
 test('un rol que no existe se rechaza', () => {
   assert.equal(falla(buildRolePatch({ role: 'jefe' }, { adminsActivos: 2, eraAdmin: false })).status, 400);
+});
+
+/* ─── La baja de una persona ───
+
+   Tiene EXACTAMENTE el mismo agujero que degradar a alguien, y por eso se escribe aparte en vez de
+   dejarlo a la intuición de quien escriba el handler: desactivar al último administrador deja el
+   equipo sin ninguno, y sin ninguno nadie puede volver a nombrar uno desde la aplicación.
+
+   Dar de baja no borra nada. La persona pasa a `inactive` y su registro sigue entero y exportable:
+   el asiento guarda copia de su nombre y su correo, así que sobrevive incluso a que se borre su
+   cuenta de Google. */
+
+/* El campo de salida se llama `nextStatus` y no `status` a propósito: en el tipo `Fail`, `status` ya
+   es el código HTTP, así que un éxito con `status: 'inactive'` y un fallo con `status: 409`
+   compartirían nombre para dos cosas que no tienen nada que ver. */
+
+test('dar de baja a alguien que no es administrador se acepta', () => {
+  const r = ok(buildStatusPatch({ status: 'inactive' }, { adminsActivos: 2, eraAdmin: false }));
+  assert.equal(r.nextStatus, 'inactive');
+});
+
+test('dar de baja a un administrador cuando quedan otros se acepta', () => {
+  const r = ok(buildStatusPatch({ status: 'inactive' }, { adminsActivos: 2, eraAdmin: true }));
+  assert.equal(r.nextStatus, 'inactive');
+});
+
+test('dar de baja al último administrador se rechaza', () => {
+  const r = falla(buildStatusPatch({ status: 'inactive' }, { adminsActivos: 1, eraAdmin: true }));
+  assert.equal(r.status, 409);
+});
+
+test('volver a dar de alta al último administrador se acepta', () => {
+  // Reactivar nunca deja al equipo sin administradores: la guarda solo mira hacia la baja.
+  const r = ok(buildStatusPatch({ status: 'active' }, { adminsActivos: 1, eraAdmin: true }));
+  assert.equal(r.nextStatus, 'active');
+});
+
+test('un estado que no existe se rechaza', () => {
+  assert.equal(
+    falla(buildStatusPatch({ status: 'excedencia' }, { adminsActivos: 2, eraAdmin: false })).status,
+    400,
+  );
 });

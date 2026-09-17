@@ -229,6 +229,11 @@ export const CALENDAR_SCOPES = ['nacional', 'cataluna', 'barcelona'] as const;
 
 export const ROLES = ['member', 'admin'] as const;
 
+/* Dar de baja no borra a nadie: la persona pasa a `inactive` y su registro sigue entero y
+   exportable. Los asientos guardan copia de su nombre y su correo, así que sobreviven incluso a que
+   se borre su cuenta de Google. */
+export const STATUSES = ['active', 'inactive'] as const;
+
 export type AbsenceRow = {
   person_id: string;
   from_date: string;
@@ -302,6 +307,27 @@ export function buildRolePatch(
   }
 
   return { ok: true, role: body.role };
+}
+
+/* La baja tiene EL MISMO agujero que la degradación: desactivar al último administrador deja al
+   equipo sin ninguno, y sin ninguno nadie puede volver a nombrar uno desde la aplicación.
+
+   Comparte `RoleContext` con `buildRolePatch` a propósito. Son la misma invariante expresada sobre
+   dos campos distintos, y compartir el contexto es lo que impide que una de las dos se quede coja el
+   día que alguien toque solo una. Reactivar nunca deja al equipo sin administradores, así que la
+   guarda solo mira hacia la baja. */
+export function buildStatusPatch(
+  body: unknown,
+  context: RoleContext,
+): { ok: true; nextStatus: (typeof STATUSES)[number] } | Fail {
+  if (!isObject(body)) return fail('El cuerpo de la petición no es válido.');
+  if (!oneOf(STATUSES, body.status)) return fail('Ese estado no existe.');
+
+  if (context.eraAdmin && body.status === 'inactive' && context.adminsActivos <= 1) {
+    return fail('No se puede dar de baja al último administrador: el equipo se quedaría sin ninguno.', 409);
+  }
+
+  return { ok: true, nextStatus: body.status };
 }
 
 /* Solo se valida la FORMA. Quién puede escribir sobre otra persona lo decide `clock_record`
