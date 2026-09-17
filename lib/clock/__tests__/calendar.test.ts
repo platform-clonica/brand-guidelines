@@ -7,7 +7,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { scheduleAt, type ScheduleTramo } from '../calendar.ts';
+import { scheduleAt, theoreticalMinutes, type ScheduleTramo } from '../calendar.ts';
 
 const completa: ScheduleTramo = {
   validFrom: '2000-01-01',
@@ -47,4 +47,82 @@ test('los tramos desordenados dan el mismo resultado que ordenados', () => {
 
 test('sin tramos no hay jornada, y no lanza', () => {
   assert.equal(scheduleAt([], '2026-07-10'), null);
+});
+
+/* ─── Minutos teóricos de un día concreto ───
+
+   Lo que `scheduleAt` devuelve es una semana tipo; esto la baja a un día, aplicando lo que lo
+   vacía: el fin de semana, el festivo y la ausencia. Los tres dan 0 por motivos distintos, y esa
+   distinción importa fuera de aquí — un festivo no es lo mismo que una ausencia en el informe que
+   se exporta— pero el saldo del día es el mismo: no se debe nada. */
+
+const intensiva: ScheduleTramo = {
+  validFrom: '2000-01-01',
+  weekly: { mon: 480, tue: 480, wed: 480, thu: 480, fri: 480, sat: 0, sun: 0 },
+  intensive: {
+    from: '06-15',
+    to: '09-15',
+    weekly: { mon: 420, tue: 420, wed: 420, thu: 420, fri: 300, sat: 0, sun: 0 },
+  },
+};
+
+test('un día laborable debe los minutos de su día de la semana', () => {
+  // 2026-07-10 es viernes.
+  assert.equal(theoreticalMinutes(completa, '2026-07-10', { holidays: [], absences: [] }), 480);
+});
+
+test('un sábado no debe nada', () => {
+  // 2026-07-11 es sábado.
+  assert.equal(theoreticalMinutes(completa, '2026-07-11', { holidays: [], absences: [] }), 0);
+});
+
+test('un festivo no debe nada aunque caiga en día laborable', () => {
+  // 2026-08-15 es sábado, así que se usa uno que cae entre semana: el 12 de octubre de 2026 es lunes.
+  assert.equal(
+    theoreticalMinutes(completa, '2026-10-12', { holidays: ['2026-10-12'], absences: [] }),
+    0,
+  );
+});
+
+test('un día dentro de una ausencia no debe nada', () => {
+  assert.equal(
+    theoreticalMinutes(completa, '2026-07-10', {
+      holidays: [],
+      absences: [{ fromDate: '2026-07-06', toDate: '2026-07-17' }],
+    }),
+    0,
+  );
+});
+
+test('los extremos de una ausencia entran dentro', () => {
+  // Si `toDate` no contara, el último día de vacaciones de todo el mundo saldría como incidencia.
+  const ausencia = { holidays: [], absences: [{ fromDate: '2026-07-06', toDate: '2026-07-10' }] };
+  assert.equal(theoreticalMinutes(completa, '2026-07-06', ausencia), 0);
+  assert.equal(theoreticalMinutes(completa, '2026-07-10', ausencia), 0);
+});
+
+test('el día siguiente al final de una ausencia vuelve a deber jornada', () => {
+  assert.equal(
+    theoreticalMinutes(completa, '2026-07-13', {
+      holidays: [],
+      absences: [{ fromDate: '2026-07-06', toDate: '2026-07-10' }],
+    }),
+    480,
+  );
+});
+
+test('la jornada intensiva manda dentro de su periodo', () => {
+  // 2026-07-10, viernes de julio: dentro del 15/06–15/09.
+  assert.equal(theoreticalMinutes(intensiva, '2026-07-10', { holidays: [], absences: [] }), 300);
+});
+
+test('fuera del periodo intensivo vuelve la jornada normal', () => {
+  // 2026-10-09 es viernes, ya fuera del periodo.
+  assert.equal(theoreticalMinutes(intensiva, '2026-10-09', { holidays: [], absences: [] }), 480);
+});
+
+test('los extremos del periodo intensivo entran dentro', () => {
+  // 2026-06-15 es lunes y 2026-09-15 es martes: los dos son días laborables.
+  assert.equal(theoreticalMinutes(intensiva, '2026-06-15', { holidays: [], absences: [] }), 420);
+  assert.equal(theoreticalMinutes(intensiva, '2026-09-15', { holidays: [], absences: [] }), 420);
 });
