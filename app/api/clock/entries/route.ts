@@ -61,6 +61,26 @@ export async function GET(req: Request) {
 
   const sb = await supabaseAuthServer();
 
+  /* `scope=team` no filtra por persona: lo alimenta el panel de administración, que necesita a todo
+     el equipo en una sola petición en vez de una por cabeza.
+
+     NO lleva comprobación de rol, y es deliberado: la política de lectura ya deja ver lo propio, o
+     todo si es administración, así que un miembro que pida `scope=team` recibe exactamente sus
+     filas. Devolver un 403 aquí significaría definir en dos sitios quién puede mirar, y el día que
+     discreparan ganaría el más flojo. La comprobación vive donde protege los datos. */
+  if (url.searchParams.get('scope') === 'team') {
+    const { data, error } = await sb
+      .from('clock_entries')
+      .select('*')
+      .gte('work_date', range.from)
+      .lte('work_date', range.to)
+      .order('person_id')
+      .order('seq', { ascending: true });
+    if (error) return dbFail('clock/entries', error);
+
+    return NextResponse.json(data ?? [], { headers: { 'Cache-Control': 'no-store' } });
+  }
+
   /* Sin `personId` se leen los propios. Con él, quien decide si se puede es la RLS: la política de
      lectura deja ver lo propio o todo si es administración, así que una persona ajena no devuelve
      403 sino cero filas. Es deliberado: la comprobación vive donde protege los datos. */
