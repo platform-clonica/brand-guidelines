@@ -46,6 +46,25 @@ export type CompileOptions = {
 
 export type CompileResult = { ok: boolean; day: ClockDay; issues: ClockIssue[] };
 
+export type RangeOptions = {
+  /** `YYYY-MM-DD`, incluido. */
+  from: string;
+  /** `YYYY-MM-DD`, incluido. */
+  to: string;
+  schedules: ScheduleTramo[];
+  absences: Absence[];
+  holidays: string[];
+};
+
+export type RangeResult = {
+  /** Un resultado por CADA día del rango, tenga fichajes o no. */
+  days: CompileResult[];
+  workedMinutes: number;
+  theoreticalMinutes: number;
+  balanceMinutes: number;
+  issues: ClockIssue[];
+};
+
 const MINUTE = 60_000;
 
 /* Los asientos se ordenan por `seq`, que es el orden de escritura, y no por `occurred_at`: la hora
@@ -197,6 +216,91 @@ function resolveCorrections(entries: RawEntry[], issues: ClockIssue[]): Set<stri
   }
 
   return superseded;
+}
+
+const DAY_MS = 86_400_000;
+
+/* Poco más de un año. Un rango mayor no es un caso de uso, es un error de quien llama, y sin tope
+   una fecha disparatada convierte esto en una espera muy larga. */
+const MAX_DAYS = 400;
+
+/* Las fechas del rango, una por día, en UTC.
+
+   En UTC A PROPÓSITO: sumar 24 horas en hora local se tuerce los dos días del año en que existe el
+   cambio de hora —uno dura 23 y otro 25— y el recorrido se saltaría un día o repetiría otro. Aquí
+   las fechas son días de calendario, no instantes, así que UTC es la aritmética correcta.
+
+   Devuelve `null` si alguna fecha no se puede leer. Sin esa salida, `Date.parse` daría NaN, la
+   comparación del bucle sería siempre falsa o siempre cierta y esto GIRARÍA PARA SIEMPRE. Es la
+   misma lección que la cadena de correcciones: colgarse es peor que lanzar, porque un error se ve
+   y una pantalla congelada no. */
+function eachDate(from: string, to: string): string[] | null {
+  const start = Date.parse(`${from}T00:00:00Z`);
+  const end = Date.parse(`${to}T00:00:00Z`);
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
+
+  const dates: string[] = [];
+  for (let t = start; t <= end && dates.length < MAX_DAYS; t += DAY_MS) {
+    dates.push(new Date(t).toISOString().slice(0, 10));
+  }
+  return dates;
+}
+
+/* El día, la semana o el mes. Suma varios días y su saldo.
+
+   EL RANGO SE ENUMERA POR FECHAS, NO POR LOS DATOS QUE HAY. Un día laborable sin ningún fichaje
+   aparece igual y cuenta como defecto: si solo se recorrieran los días con asientos, un mes con una
+   semana sin fichar saldría con saldo cero en vez de con cuarenta horas de menos, y el error caería
+   a favor de quien no fichó y en contra de la fiabilidad del registro. */
+export function compileRange(rows: unknown[], options: RangeOptions): RangeResult {
+  const issues: ClockIssue[] = [];
+  const dates = eachDate(options.from, options.to);
+
+  if (dates === null) {
+    issues.push({
+      level: 'error',
+      path: 'rango',
+      message: 'Las fechas del periodo no se pueden leer.',
+    });
+    return { days: [], workedMinutes: 0, theoreticalMinutes: 0, balanceMinutes: 0, issues };
+  }
+
+  const byDate = new Map<string, unknown[]>();
+  rows.forEach((row, index) => {
+    const date = (row as { work_date?: unknown } | null)?.work_date;
+    if (typeof date !== 'string') {
+      /* Sin día no se puede asignar a ninguno, pero tampoco se calla: descartar filas en silencio
+         es el hueco que ya ha habido que tapar dos veces en este módulo. */
+      issues.push({
+        level: 'error',
+        path: `fila.${index}`,
+        message: 'La fila no dice a qué día de jornada pertenece y se ha quedado fuera del periodo.',
+      });
+      return;
+    }
+    const delDia = byDate.get(date) ?? [];
+    delDia.push(row);
+    byDate.set(date, delDia);
+  });
+
+  const days = dates.map((date) =>
+    compileDay(byDate.get(date) ?? [], {
+      workDate: date,
+      schedules: options.schedules,
+      absences: options.absences,
+      holidays: options.holidays,
+    }),
+  );
+
+  const sum = (pick: (day: ClockDay) => number) => days.reduce((total, d) => total + pick(d.day), 0);
+
+  return {
+    days,
+    workedMinutes: sum((d) => d.workedMinutes),
+    theoreticalMinutes: sum((d) => d.theoreticalMinutes),
+    balanceMinutes: sum((d) => d.balanceMinutes),
+    issues: [...issues, ...days.flatMap((d) => d.issues)],
+  };
 }
 
 export function compileDay(rows: unknown[], options: CompileOptions): CompileResult {

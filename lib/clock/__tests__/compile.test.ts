@@ -12,7 +12,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compileDay } from '../compile.ts';
+import { compileDay, compileRange } from '../compile.ts';
 import type { ScheduleTramo } from '../calendar.ts';
 
 const completa: ScheduleTramo = {
@@ -464,6 +464,85 @@ test('un turno que cruza el cambio de hora cuenta las horas reales, no las del r
   );
 
   assert.equal(resultado.day.workedMinutes, 540, 'de 22:00 a 06:00 cruzando el cambio son 9 horas');
+});
+
+/* ─── La semana y el mes ───
+
+   «Mi jornada» enseña el día, la semana y el mes con su saldo, así que hace falta sumar varios días
+   y no solo resolver uno.
+
+   La decisión que fija esta tanda, y que no es obvia: EL RANGO SE ENUMERA POR FECHAS, NO POR LOS
+   DATOS QUE HAY. Un día laborable sin ningún fichaje tiene que aparecer y contar como defecto. Si
+   solo se recorrieran los días con asientos, un mes con una semana sin fichar saldría con saldo
+   cero en vez de con cuarenta horas de menos: el error caería a favor de quien no fichó y en contra
+   de la fiabilidad del registro, que es la única cosa que esta herramienta no puede permitirse. */
+
+const asientoEn = (fecha: string, seq: number, kind: string, hora: string) => ({
+  id: idOf(seq),
+  seq,
+  op: 'record',
+  corrects: null,
+  reason: null,
+  kind,
+  occurred_at: `${fecha}T${hora}:00+02:00`,
+  recorded_at: `${fecha}T${hora}:00+02:00`,
+  work_date: fecha,
+});
+
+const rango = { schedules: [completa], absences: [], holidays: [] };
+
+test('un rango suma las horas de sus días', () => {
+  // Lunes 2026-07-06 de 9 a 17 son 480, y martes 07 de 9 a 18 son 540. Teóricos, 480 cada uno.
+  const resultado = compileRange(
+    [
+      asientoEn('2026-07-06', 1, 'in', '09:00'),
+      asientoEn('2026-07-06', 2, 'out', '17:00'),
+      asientoEn('2026-07-07', 3, 'in', '09:00'),
+      asientoEn('2026-07-07', 4, 'out', '18:00'),
+    ],
+    { ...rango, from: '2026-07-06', to: '2026-07-07' },
+  );
+
+  assert.equal(resultado.days.length, 2);
+  assert.equal(resultado.workedMinutes, 1020);
+  assert.equal(resultado.theoreticalMinutes, 960);
+  assert.equal(resultado.balanceMinutes, 60);
+});
+
+test('un día laborable sin fichajes cuenta como defecto y no desaparece', () => {
+  const resultado = compileRange(
+    [asientoEn('2026-07-06', 1, 'in', '09:00'), asientoEn('2026-07-06', 2, 'out', '17:00')],
+    { ...rango, from: '2026-07-06', to: '2026-07-07' },
+  );
+
+  assert.equal(resultado.days.length, 2, 'el martes sin fichajes sigue siendo un día del rango');
+  assert.equal(resultado.workedMinutes, 480);
+  assert.equal(resultado.theoreticalMinutes, 960);
+  assert.equal(resultado.balanceMinutes, -480, 'el día sin fichar es un defecto de jornada entera');
+});
+
+test('un fin de semana sin fichajes no resta nada', () => {
+  // Sábado 2026-07-11 y domingo 12: cero teóricos, así que el saldo no se mueve.
+  const resultado = compileRange([], { ...rango, from: '2026-07-11', to: '2026-07-12' });
+
+  assert.equal(resultado.days.length, 2);
+  assert.equal(resultado.theoreticalMinutes, 0);
+  assert.equal(resultado.balanceMinutes, 0);
+});
+
+test('un asiento fuera del rango no entra en el total', () => {
+  const resultado = compileRange(
+    [
+      asientoEn('2026-07-06', 1, 'in', '09:00'),
+      asientoEn('2026-07-06', 2, 'out', '17:00'),
+      asientoEn('2026-07-08', 3, 'in', '09:00'),
+      asientoEn('2026-07-08', 4, 'out', '17:00'),
+    ],
+    { ...rango, from: '2026-07-06', to: '2026-07-07' },
+  );
+
+  assert.equal(resultado.days.length, 2);
+  assert.equal(resultado.workedMinutes, 480, 'el miércoles queda fuera del rango pedido');
 });
 
 test('una serie incoherente devuelve incidencias y no lanza', () => {
