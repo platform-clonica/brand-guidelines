@@ -57,6 +57,14 @@ export const toolIconAccents: { app: string; hex: string; note: string }[] = [
   /* DSMak_r comparte el cian de ReWrit_r a propósito — confirmado por Alberto en agosto de 2026.
      El acento no es un identificador único por herramienta: dos pueden compartirlo. */
   { app: 'dsmakr',   hex: '#00D1FF', note: 'Cian — tokens de diseño y componente maestro' },
+  /* Clock_r, septiembre de 2026. Decisión de CARLOS, que delegó la elección al no estar Alberto;
+     queda anotada así para que él pueda revocarla sin tener que reconstruir el porqué.
+     Por qué ámbar: los tres acentos en uso son cian, coral y verde, y el ámbar es el hueco cálido
+     que queda entre el coral y el verde sin confundirse con ninguno a 72 px. Es además el color con
+     el que se lee el paso del tiempo —latón, arena, hora— que es de lo que va la herramienta.
+     No colisiona con el Burdeos de alerta: son familias de tono distintas, y de todos modos el
+     alcance de este acento sigue siendo AppIcon.tsx y nada más. */
+  { app: 'clockr',   hex: '#F59E0B', note: 'Ámbar — el tiempo que corre y la jornada' },
 ];
 
 export const typography = {
