@@ -210,7 +210,33 @@ export function compileDay(rows: unknown[], options: CompileOptions): CompileRes
   rows.forEach((row, index) => {
     const parsed = entryRowSchema.safeParse(row);
     if (parsed.success) {
-      all.push(parsed.data);
+      const entry = parsed.data;
+
+      /* compileDay resuelve UN día. Un asiento de otro significa que la consulta trajo de más o que
+         se escribió mal, y en los dos casos el total de este día saldría inflado sin que nadie lo
+         supiera. Se excluye: no es de aquí. */
+      if (entry.work_date !== options.workDate) {
+        issues.push({
+          level: 'error',
+          path: `asiento.${entry.seq}`,
+          message: 'Pertenece a otro día de jornada y no cuenta en este.',
+        });
+        return;
+      }
+
+      /* El servidor escribe `recorded_at` con now(), así que una hora fichada posterior solo sale
+         de un reloj desajustado o de alguien apuntando algo que aún no ha pasado. El asiento se
+         deja VISIBLE —hay que poder verlo para corregirlo— pero el día queda marcado como no
+         fiable, igual que con un intervalo imposible. */
+      if (Date.parse(entry.occurred_at) > Date.parse(entry.recorded_at)) {
+        issues.push({
+          level: 'error',
+          path: `asiento.${entry.seq}`,
+          message: 'La hora fichada es posterior al momento en que se escribió el asiento.',
+        });
+      }
+
+      all.push(entry);
       return;
     }
     /* Se señala por `seq` cuando se puede leer, porque es lo que identifica al asiento para quien

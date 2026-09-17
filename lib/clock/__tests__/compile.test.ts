@@ -37,6 +37,9 @@ const asiento = (
   reason: null,
   kind,
   occurred_at: `2026-07-10T${hora}:00+02:00`,
+  /* En un fichaje normal coinciden: se escribe en el momento en que ocurre. Solo una corrección los
+     separa, porque se escribe después de lo que corrige. */
+  recorded_at: `2026-07-10T${hora}:00+02:00`,
   work_date: '2026-07-10',
   mode: 'onsite',
   source: 'app',
@@ -381,6 +384,86 @@ test('un tipo de fichaje desconocido se descarta y se dice', () => {
     resultado.issues.some((i) => i.level === 'error' && i.path === 'asiento.2'),
     'debería señalar el tipo que no existe',
   );
+});
+
+/* ─── Asientos que contradicen su propio contexto ───
+
+   Los tres primeros no son series mal emparejadas: son asientos que, por sí solos, dicen algo
+   imposible. Un fichaje que ocurre después de haberse escrito, uno que pertenece a otro día, o dos
+   que son el mismo. */
+
+test('un fichaje que ocurre después de haberse escrito es un error', () => {
+  /* El servidor pone `recorded_at` con now(), así que esto solo sale de un reloj desajustado o de
+     alguien escribiendo una hora que aún no ha pasado. En un registro que puede acabar delante de
+     un inspector, una hora futura no se deja pasar. */
+  const resultado = compileDay(
+    [
+      asiento(1, 'in', '09:00'),
+      asiento(2, 'out', '20:00', { recorded_at: '2026-07-10T09:00:00+02:00' }),
+    ],
+    opciones,
+  );
+
+  assert.equal(resultado.ok, false);
+  assert.ok(
+    resultado.issues.some((i) => i.level === 'error' && i.path === 'asiento.2'),
+    'debería señalar el asiento con hora futura',
+  );
+});
+
+test('un asiento de otro día no cuenta en este', () => {
+  /* compileDay recibe los asientos de UN work_date. Uno de otro día aquí significa que la consulta
+     trajo de más o que el asiento se escribió mal, y en los dos casos el total de este día saldría
+     inflado sin que nadie lo supiera. */
+  const resultado = compileDay(
+    [
+      asiento(1, 'in', '09:00'),
+      asiento(2, 'out', '17:00'),
+      asiento(3, 'in', '22:00', { work_date: '2026-07-11' }),
+    ],
+    opciones,
+  );
+
+  assert.ok(
+    resultado.issues.some((i) => i.level === 'error' && i.path === 'asiento.3'),
+    'debería señalar el asiento que no es de este día',
+  );
+  assert.equal(resultado.day.workedMinutes, 480, 'el asiento de otro día no puede sumar aquí');
+});
+
+test('dos asientos idénticos no pasan por buenos', () => {
+  // Guardia: el doble clic que escribe dos veces lo mismo ya lo cazan las otras comprobaciones.
+  const resultado = compileDay(
+    [asiento(1, 'in', '09:00'), asiento(2, 'in', '09:00'), asiento(3, 'out', '17:00')],
+    opciones,
+  );
+
+  assert.equal(resultado.ok, false);
+});
+
+test('un turno que cruza el cambio de hora cuenta las horas reales, no las del reloj', () => {
+  /* 2026-10-25 es el domingo en que España atrasa el reloj: el desfase pasa de +02:00 a +01:00 y
+     la madrugada dura una hora más. De 22:00 a 06:00 el reloj marca 8 horas, pero se han trabajado
+     9. El cálculo sale de instantes y no de reloj de pared, así que tiene que dar 540.
+
+     Fechas y desfases comprobados contra Europe/Madrid, no supuestos. */
+  const resultado = compileDay(
+    [
+      {
+        id: idOf(1), seq: 1, op: 'record', corrects: null, reason: null, kind: 'in',
+        occurred_at: '2026-10-24T22:00:00+02:00', recorded_at: '2026-10-24T22:00:00+02:00',
+        work_date: '2026-10-24',
+      },
+      {
+        id: idOf(2), seq: 2, op: 'record', corrects: null, reason: null, kind: 'out',
+        occurred_at: '2026-10-25T06:00:00+01:00', recorded_at: '2026-10-25T06:00:00+01:00',
+        work_date: '2026-10-24',
+      },
+    ],
+    { ...opciones, workDate: '2026-10-24' },
+  );
+
+  assert.equal(resultado.day.workedMinutes, 540, 'de 22:00 a 06:00 cruzando el cambio son 9 horas');
 });
 
 test('una serie incoherente devuelve incidencias y no lanza', () => {

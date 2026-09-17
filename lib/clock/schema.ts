@@ -29,6 +29,10 @@ export const entryRowSchema = z.object({
   reason: z.string().nullable().default(null),
   kind: z.enum(ENTRY_KINDS),
   occurred_at: instant,
+  /* Obligatorio, como en la tabla (`not null default now()`). Una fila sin él no es un caso a
+     tolerar: es una fila malformada, y sin ella no se puede saber si una hora se fichó o se
+     inventó después. */
+  recorded_at: instant,
   work_date: z.string(),
 });
 
