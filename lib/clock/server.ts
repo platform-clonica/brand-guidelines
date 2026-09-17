@@ -212,6 +212,98 @@ export function parseRange(query: unknown): { ok: true; from: string; to: string
   return { ok: true, from: query.from, to: query.to };
 }
 
+/* ─────────────────────────── Las escrituras de administración ───────────────────────────
+
+   La RLS ya impide que las toque quien no es administrador. Lo que la RLS no mira es si lo que se
+   escribe tiene sentido, y de eso va esto. Las claves de las filas van en snake_case porque se
+   insertan tal cual, igual que hace `mirrorFrom` en lib/ds. */
+
+/* Lista corta a propósito: NO hay tipo médico. El motivo de una baja es dato de salud y no tiene
+   por qué vivir en una herramienta que administración consulta a diario; que conste el día no
+   trabajado basta para el registro. */
+export const ABSENCE_KINDS = ['vacaciones', 'ausencia_justificada', 'ausencia'] as const;
+
+/* Identificadores en ASCII y minúscula, etiqueta bonita en la interfaz: `cataluna` es lo que
+   declara el `check` de la migración. */
+export const CALENDAR_SCOPES = ['nacional', 'cataluna', 'barcelona'] as const;
+
+export const ROLES = ['member', 'admin'] as const;
+
+export type AbsenceRow = {
+  person_id: string;
+  from_date: string;
+  to_date: string;
+  kind: (typeof ABSENCE_KINDS)[number];
+  note: string | null;
+};
+
+export function buildAbsence(body: unknown): { ok: true; row: AbsenceRow } | Fail {
+  if (!isObject(body)) return fail('El cuerpo de la petición no es válido.');
+  if (typeof body.personId !== 'string' || !isUuid(body.personId)) {
+    return fail('Falta la persona a la que corresponde la ausencia.');
+  }
+  if (!isIsoDate(body.fromDate) || !isIsoDate(body.toDate)) {
+    return fail('La ausencia necesita fecha de inicio y de fin en formato AAAA-MM-DD.');
+  }
+  // Los dos extremos entran dentro, así que un día suelto es una ausencia con las dos fechas iguales.
+  if (body.fromDate > body.toDate) return fail('La ausencia acaba antes de empezar.');
+  if (!oneOf(ABSENCE_KINDS, body.kind)) return fail('Ese tipo de ausencia no existe.');
+
+  const note = typeof body.note === 'string' ? body.note.trim() : '';
+
+  return {
+    ok: true,
+    row: {
+      person_id: body.personId,
+      from_date: body.fromDate,
+      to_date: body.toDate,
+      kind: body.kind,
+      // Vacía se guarda como nula: una cadena vacía es un dato que dice que hay nota y no la hay.
+      note: note || null,
+    },
+  };
+}
+
+export type CalendarDayRow = {
+  day: string;
+  name: string;
+  scope: (typeof CALENDAR_SCOPES)[number];
+};
+
+export function buildCalendarDay(body: unknown): { ok: true; row: CalendarDayRow } | Fail {
+  if (!isObject(body)) return fail('El cuerpo de la petición no es válido.');
+  if (!isIsoDate(body.day)) return fail('El festivo necesita su fecha en formato AAAA-MM-DD.');
+
+  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  if (!name) return fail('El festivo necesita un nombre.');
+
+  if (!oneOf(CALENDAR_SCOPES, body.scope)) return fail('Ese ámbito de festivo no existe.');
+
+  return { ok: true, row: { day: body.day, name, scope: body.scope } };
+}
+
+/* Cuántos administradores activos hay AHORA y si la persona que se edita es uno de ellos. Entra
+   como dato y no se consulta aquí dentro para que la decisión sea pura y se pueda probar sin base
+   de datos; quien llama lo cuenta y lo pasa. */
+export type RoleContext = { adminsActivos: number; eraAdmin: boolean };
+
+export function buildRolePatch(
+  body: unknown,
+  context: RoleContext,
+): { ok: true; role: (typeof ROLES)[number] } | Fail {
+  if (!isObject(body)) return fail('El cuerpo de la petición no es válido.');
+  if (!oneOf(ROLES, body.role)) return fail('Ese rol no existe.');
+
+  /* Sin ningún administrador, NADIE puede volver a nombrar uno desde la aplicación: la política de
+     escritura sobre `clock_people` exige ser admin, así que haría falta entrar a mano en el SQL
+     Editor. Es un choque con el estado actual y no una petición malformada, de ahí el 409. */
+  if (context.eraAdmin && body.role === 'member' && context.adminsActivos <= 1) {
+    return fail('No se puede quitar el último administrador: el equipo se quedaría sin ninguno.', 409);
+  }
+
+  return { ok: true, role: body.role };
+}
+
 /* Solo se valida la FORMA. Quién puede escribir sobre otra persona lo decide `clock_record`
    comprobando `clock_is_admin()` en servidor: repetir aquí esa decisión crearía dos sitios donde se
    define quién es administrador, y el día que discrepen ganaría el más flojo. */
