@@ -323,6 +323,66 @@ test('fichar dentro de una ausencia declarada es un aviso, no un error', () => {
   );
 });
 
+/* ─── Filas que no son asientos ───
+
+   La cabecera de compile.ts dice que lo que sale de Postgres no está validado y que quien lo abre
+   tiene que pasar por aquí. Hasta ahora eso era una declaración de intenciones: `compileDay` hace
+   un cast y confía. Estos tests son los que la convierten en algo comprobado.
+
+   No es un caso hipotético. Las filas pueden venir de un día antiguo, de una columna que cambió, o
+   de alguien mirando la tabla a mano. Y la invariante de este módulo no es que calcule bien: es que
+   NO LANCE NUNCA, porque un registro horario que revienta al abrirlo no se puede ni consultar ni
+   corregir. */
+
+test('una fila que no es un asiento no revienta el cálculo', () => {
+  assert.doesNotThrow(() => {
+    compileDay([null, 'vaya', 42, { sin: 'nada' }], opciones);
+  });
+});
+
+test('las filas que no son asientos se descartan y se dicen', () => {
+  const resultado = compileDay([null, asiento(1, 'in', '09:00'), asiento(2, 'out', '17:00')], opciones);
+
+  assert.ok(
+    resultado.issues.some((i) => i.level === 'error'),
+    'una fila ilegible tiene que salir como error',
+  );
+  // Y los asientos buenos de esa misma lista se siguen calculando.
+  assert.equal(resultado.day.workedMinutes, 480);
+});
+
+test('una fila sin hora no produce minutos imposibles', () => {
+  /* `Date.parse(undefined)` es NaN, y un NaN se propaga callado hasta el saldo. Un número imposible
+     presentado como bueno es peor que un error: nadie lo mira dos veces. */
+  const resultado = compileDay(
+    [
+      { id: idOf(1), seq: 1, op: 'record', corrects: null, kind: 'in', work_date: '2026-07-10' },
+      asiento(2, 'out', '17:00'),
+    ],
+    opciones,
+  );
+
+  assert.ok(Number.isFinite(resultado.day.workedMinutes), 'los minutos no pueden ser NaN');
+  assert.ok(Number.isFinite(resultado.day.balanceMinutes), 'el saldo no puede ser NaN');
+  assert.ok(
+    resultado.issues.some((i) => i.level === 'error' && i.path === 'asiento.1'),
+    'debería señalar el asiento sin hora',
+  );
+});
+
+test('un tipo de fichaje desconocido se descarta y se dice', () => {
+  const resultado = compileDay(
+    [asiento(1, 'in', '09:00'), asiento(2, 'almuerzo', '14:00'), asiento(3, 'out', '17:00')],
+    opciones,
+  );
+
+  assert.equal(resultado.day.workedMinutes, 480, 'el asiento raro no debería alterar el total');
+  assert.ok(
+    resultado.issues.some((i) => i.level === 'error' && i.path === 'asiento.2'),
+    'debería señalar el tipo que no existe',
+  );
+});
+
 test('una serie incoherente devuelve incidencias y no lanza', () => {
   /* La invariante que sostiene toda la herramienta. Una salida sin entrada, una pausa que cierra
      sin haber abierto y un orden imposible: nada de esto puede tumbar el visor de nadie. */

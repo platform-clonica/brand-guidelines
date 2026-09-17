@@ -13,6 +13,7 @@
    Sin React y sin alias `@/`, con imports relativos y extensión `.ts`, como el resto de lib/clock. */
 
 import { scheduleAt, theoreticalMinutes, type Absence, type ScheduleTramo } from './calendar.ts';
+import { entryRowSchema, type EntryRow } from './schema.ts';
 
 /** Misma forma que consume components/studio/IssuesPanel, para poder reutilizarlo tal cual. */
 export type ClockIssue = { level: 'error' | 'warning'; path: string; message: string };
@@ -140,14 +141,7 @@ function within(segment: Interval, brk: Interval): boolean {
   return end <= Date.parse(segment.to);
 }
 
-type RawEntry = {
-  id: string;
-  seq: number;
-  op: string;
-  corrects: string | null;
-  kind: string;
-  occurred_at: string;
-};
+type RawEntry = EntryRow;
 
 /* Qué asientos quedan fuera del cálculo, y por qué.
 
@@ -208,7 +202,27 @@ function resolveCorrections(entries: RawEntry[], issues: ClockIssue[]): Set<stri
 export function compileDay(rows: unknown[], options: CompileOptions): CompileResult {
   const issues: ClockIssue[] = [];
 
-  const all = (rows as RawEntry[]).slice().sort(bySeq);
+  /* Nada entra al cálculo sin pasar por el esquema. Antes esto era un cast, o sea una promesa: una
+     fila `null` tumbaba el comparador de orden con un TypeError y la invariante de este módulo
+     —que no lanza nunca— era falsa. Una hora ilegible se descarta AQUÍ y no se convierte en un NaN
+     que viaja callado hasta el saldo del mes. */
+  const all: RawEntry[] = [];
+  rows.forEach((row, index) => {
+    const parsed = entryRowSchema.safeParse(row);
+    if (parsed.success) {
+      all.push(parsed.data);
+      return;
+    }
+    /* Se señala por `seq` cuando se puede leer, porque es lo que identifica al asiento para quien
+       lo va a corregir. Si la fila no es ni un objeto, queda su posición en la lista. */
+    const seq = (row as { seq?: unknown } | null)?.seq;
+    issues.push({
+      level: 'error',
+      path: typeof seq === 'number' && Number.isFinite(seq) ? `asiento.${seq}` : `fila.${index}`,
+      message: 'La fila no se puede leer como un asiento y se ha descartado del cálculo.',
+    });
+  });
+  all.sort(bySeq);
   const superseded = resolveCorrections(all, issues);
   const entries = all.filter((e) => !superseded.has(e.id));
 
