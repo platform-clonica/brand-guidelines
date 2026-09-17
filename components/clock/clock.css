@@ -220,6 +220,68 @@
   padding: 18px;
 }
 
+/* ── Modo corrección ──
+   APAGADO POR DEFECTO, y esa es la condición no negociable: con la edición siempre activa, la
+   comodidad se paga en asientos tocados sin querer dentro de un registro legal. Hay que entrar
+   a propósito. */
+.ixc-modo-correccion {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ixc-toggle {
+  appearance: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 9px 14px;
+  border: 1px solid var(--c-warm-dark);
+  background: var(--c-white);
+  color: var(--c-ash);
+  min-height: 40px;
+}
+.ixc-toggle[aria-pressed='true'] {
+  border-color: var(--c-dark);
+  background: var(--c-dark);
+  color: var(--c-warm-light);
+}
+
+.ixc-aviso-correccion {
+  font-size: var(--fs-caption);
+  letter-spacing: 0.04em;
+  color: var(--c-ash);
+}
+
+/* Los asientos de un día, visibles solo en modo corrección. */
+.ixc-asientos {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--c-warm-dark);
+}
+
+.ixc-asiento {
+  appearance: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.04em;
+  padding: 7px 10px;
+  border: 1px solid var(--c-warm-dark);
+  background: var(--c-white);
+  color: var(--c-dark);
+  min-height: 34px;
+}
+.ixc-asiento:hover { border-color: var(--c-dark); }
+
 /* ── Móvil ──
    Mismo punto de ruptura que timer.css (720px), para no tener dos criterios de «móvil» en el mismo
    repo. La semana deja de ser una rejilla de cuatro columnas y pasa a apilarse: cuatro columnas en

@@ -34,6 +34,14 @@ export const entryRowSchema = z.object({
      inventó después. */
   recorded_at: instant,
   work_date: z.string(),
+  /* OPCIONAL, y la excepción tiene motivo. En la tabla es `not null`, pero este esquema es una
+     PROYECCIÓN de la fila —solo lo que se mira—, no un espejo, y el cálculo de horas no usa la
+     modalidad para nada. Se declara porque la interfaz sí la necesita: una corrección hereda la
+     modalidad del asiento que corrige.
+
+     Exigirla rompería `compileDay`, que hoy acepta filas sin ella —sus propios tests las construyen
+     así— y pasaría a descartar como ilegibles filas perfectamente válidas. */
+  mode: z.enum(['onsite', 'remote']).optional(),
 });
 
 export type EntryRow = z.infer<typeof entryRowSchema>;

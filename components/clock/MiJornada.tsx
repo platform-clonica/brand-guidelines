@@ -22,8 +22,10 @@ import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
 import { ClockLogo } from '@/components/studio/Wordmark';
 import { LogoutButton } from '@/components/studio/LogoutButton';
 import { IssuesPanel } from '@/components/studio/IssuesPanel';
-import { ChainBusyError, listAbsences, listCalendar, listEntries, recordEntry } from '@/lib/clock/api';
-import { availableActions, type ClockAction } from '@/lib/clock/actions';
+import { amendEntry, ChainBusyError, listAbsences, listCalendar, listEntries, recordEntry } from '@/lib/clock/api';
+import { availableActions, correctableEntries, type ClockAction } from '@/lib/clock/actions';
+import type { EntryRow } from '@/lib/clock/schema';
+import { CorregirModal, type CorreccionInput } from './CorregirModal';
 import { compileRange, type CompileResult } from '@/lib/clock/compile';
 import type { ScheduleTramo } from '@/lib/clock/calendar';
 import { monthRange, todayIn, weekRange } from '@/lib/clock/dates';
@@ -44,6 +46,13 @@ function formatMinutes(total: number): string {
 
 const DIA_SEMANA = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 
+const ASIENTO: Record<string, string> = {
+  in: 'Entrada',
+  out: 'Salida',
+  break_start: 'Inicio de pausa',
+  break_end: 'Fin de pausa',
+};
+
 function etiquetaDia(fecha: string): string {
   const d = new Date(`${fecha}T00:00:00Z`);
   return `${DIA_SEMANA[d.getUTCDay()]} ${fecha.slice(8)}`;
@@ -60,6 +69,10 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<ClockMode>('onsite');
+  /* Apagado por defecto: con la edición siempre activa, la comodidad se paga en asientos tocados
+     sin querer dentro de un registro legal. */
+  const [corrigiendo, setCorrigiendo] = useState(false);
+  const [aCorregir, setACorregir] = useState<EntryRow | null>(null);
 
   const hoy = todayIn();
   const mes = useMemo(() => monthRange(hoy), [hoy]);
@@ -112,6 +125,51 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
     () => rango.days.filter((d) => d.day.workDate >= semana.from && d.day.workDate <= semana.to),
     [rango, semana.from, semana.to],
   );
+
+  /* Los asientos crudos de cada día, para el modo corrección. Se corrige cualquier día de la
+     semana y no solo hoy: el caso típico es «ayer olvidé fichar la salida», y restringirlo a hoy
+     dejaría eso sin arreglo desde la interfaz. */
+  const asientosPorDia = useMemo(() => {
+    const mapa = new Map<string, unknown[]>();
+    for (const fila of entries) {
+      const fecha = (fila as { work_date?: unknown } | null)?.work_date;
+      if (typeof fecha !== 'string') continue;
+      mapa.set(fecha, [...(mapa.get(fecha) ?? []), fila]);
+    }
+    return mapa;
+  }, [entries]);
+
+  /* Se calcula una vez y no dentro del JSX: llamarlo al pintar recorrería y validaría con Zod los
+     asientos de cada día en cada repintado, y haría falta llamarlo dos veces por fila —una para
+     pintar y otra para saber si está vacía—. */
+  const corregiblesPorDia = useMemo(() => {
+    const mapa = new Map<string, EntryRow[]>();
+    for (const d of diasSemana) {
+      mapa.set(d.day.workDate, correctableEntries(asientosPorDia.get(d.day.workDate) ?? [], d.day));
+    }
+    return mapa;
+  }, [diasSemana, asientosPorDia]);
+
+  const corregir = async (input: CorreccionInput) => {
+    if (!aCorregir) return;
+
+    /* La corrección hereda la modalidad del asiento que corrige: si aquel fue a distancia, el
+       asiento nuevo también lo es. Solo se cae al selector de la pantalla si la fila no la trae,
+       que es el caso de una fila antigua o tocada a mano. */
+    const modalidad = aCorregir.mode ?? mode;
+
+    await amendEntry({
+      kind: aCorregir.kind,
+      mode: modalidad,
+      source: 'app',
+      op: input.op,
+      corrects: aCorregir.id,
+      reason: input.reason,
+      occurredAt: input.occurredAt,
+    });
+    setACorregir(null);
+    await cargar();
+  };
 
   const saldoSemana = diasSemana.reduce((t, d) => t + d.day.balanceMinutes, 0);
 
@@ -218,6 +276,24 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
                 </span>
               </h2>
 
+              {/* El interruptor va aquí y no en la cabecera: es donde están los asientos que
+                  enciende. Un interruptor lejos de lo que activa se pulsa sin saber qué hace. */}
+              <div className="ixc-modo-correccion">
+                <button
+                  type="button"
+                  className="ixc-toggle"
+                  aria-pressed={corrigiendo}
+                  onClick={() => setCorrigiendo((v) => !v)}
+                >
+                  Modo corrección
+                </button>
+                {corrigiendo && (
+                  <span className="ixc-aviso-correccion">
+                    Corregir escribe un asiento nuevo. El original no se borra.
+                  </span>
+                )}
+              </div>
+
               <div className="ixc-semana">
                 {cargando && <p className="ixc-vacio">Cargando</p>}
                 {!cargando &&
@@ -240,6 +316,24 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
                       >
                         {formatMinutes(d.day.balanceMinutes)}
                       </span>
+
+                      {corrigiendo && (
+                        <div className="ixc-asientos">
+                          {(corregiblesPorDia.get(d.day.workDate) ?? []).map((e) => (
+                            <button
+                              key={e.id}
+                              type="button"
+                              className="ixc-asiento"
+                              onClick={() => setACorregir(e)}
+                            >
+                              {ASIENTO[e.kind] ?? e.kind} {horaDe(e.occurred_at)}
+                            </button>
+                          ))}
+                          {(corregiblesPorDia.get(d.day.workDate) ?? []).length === 0 && (
+                            <span className="ixc-aviso-correccion">Sin asientos que corregir</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
               </div>
@@ -247,6 +341,10 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
           </>
         )}
       </main>
+
+      {aCorregir && (
+        <CorregirModal entry={aCorregir} onClose={() => setACorregir(null)} onSubmit={corregir} />
+      )}
     </div>
   );
 }
