@@ -660,3 +660,36 @@ Migración `20260917140000_create_clock.sql`, aplicada a mano por Carlos en el S
   necesitan `auth.uid()`, y las consultas de administración corren sin sesión. Esas tres
   comprobaciones se hacen desde la aplicación, con una sesión real, en el bloque 3. Hasta entonces
   no están verificadas y no se dan por buenas.
+
+## Bloque 2 · qué cambió al implementarlo
+
+- **H8 se retira: el canal informativo que proponía no hace falta, y la premisa era falsa.** El plan
+  decía que los días de 23 y 25 horas descuadran el saldo y que había que marcarlos con una nota
+  aparte. Al mirar el calendario —en vez de razonar sobre él— resulta que en España **el cambio de
+  hora cae siempre en domingo** (comprobado: 2026-03-29 pasa de +01:00 a +02:00 y 2026-10-25 de
+  +02:00 a +01:00), y con una jornada de lunes a viernes el domingo debe 0 minutos por los dos
+  lados. Lo que sí importaba —un turno que **cruza** el cambio— ya funcionaba: el cálculo se hace
+  sobre instantes, así que de 22:00 a 06:00 cuenta 540 minutos aunque el reloj marque 480. Queda un
+  test que lo fija. Inventar una estructura para un caso que no existe habría sido peor que no
+  haberlo pensado.
+- **La firma de `compileDay` pasa a un objeto de opciones** en vez de los cuatro parámetros
+  posicionales del plan: cinco cosas en fila se equivocan de orden solas.
+- **`schema.ts` declara y `compile.ts` repara**, el mismo reparto que `lib/ds`. Antes de eso
+  `compileDay` hacía un cast y confiaba: una fila `null` lo tumbaba con un `TypeError`, o sea que la
+  invariante titular del módulo —que no lanza nunca— era **falsa**, y lo fue hasta que un test lo
+  demostró.
+- **Dos huecos que se tragaban datos en silencio**, los dos en código que ya estaba en verde: una
+  salida sin entrada la descartaba el emparejador sin decir nada, y sin tramo de jornada vigente los
+  teóricos se ponían a 0, o sea un saldo calculado contra una jornada que nadie decidió. Un hueco en
+  código verde es peor que un caso sin cubrir: nada avisa de que está ahí.
+- **El `NaN` que no era.** Predije que una fila sin hora propagaría un `NaN` hasta el saldo. No lo
+  hacía, pero por accidente: la guarda `minutes > 0`, escrita para los intervalos negativos, también
+  se lo tragaba porque toda comparación con `NaN` es falsa. Funcionaba sin que nadie lo hubiera
+  decidido. Ahora la hora ilegible se rechaza en el esquema, que es donde se ve.
+- **Criterio de nivel.** `error` cuando el número de horas del día deja de ser fiable —serie
+  ambigua, asiento de otro día, hora futura, corrección circular—; `warning` cuando falta algo pero
+  el total no miente: jornada abierta, o fichajes en un día declarado como ausencia. `ok` significa
+  «no hay errores», no «no hay incidencias», como en `compileSystem`.
+- **Lo que falta del bloque 2:** `calendar.ts` no calcula todavía el saldo de una semana ni de un
+  mes, y no hay `lib/clock/types.ts`. Los 13 casos límite del §2 están cubiertos salvo los que no
+  aplican (ver H8).
