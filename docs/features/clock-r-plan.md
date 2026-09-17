@@ -569,7 +569,7 @@ bloque. **No hay tests de handler HTTP en el repo y aquí tampoco los habrá**: 
 | **Formato de exportación** | **Preguntar a la asesoría antes de escribir el exportador.** Diez minutos que ahorran reescribirlo. Es además el momento de contrastar todo el marco normativo del §"Contexto", que está sobre fuentes secundarias |
 | **Alcance de la cadena** | **Por persona.** La global obliga a serializar cada inserción del equipo entero; la de persona solo bloquea una fila (H6) |
 | **Baja médica** | **Solo la ausencia.** El motivo médico es dato de salud y no tiene por qué vivir en una herramienta que administración consulta a diario |
-| **Acento de icono** | **Decisión de Alberto.** Propongo, no elijo (§7) |
+| **Acento de icono** | **Cerrada por Carlos el 2026-09-17**, que delegó la elección al no estar Alberto: **ámbar `#F59E0B`**, declarado en `toolIconAccents`. Queda anotado como decisión suya, no del sistema, para que Alberto pueda revocarla. El porqué, en `lib/tokens.ts` |
 
 ### Las nuevas
 
@@ -612,3 +612,40 @@ cerrarlo con la migración **ya aplicada** y la cadena verificada a mano contra 
 Parada para revisión entre bloques, con `test`, `type-check`, `lint` y `build` limpios en cada uno.
 El desglose en tareas TDD de cada bloque se hace **al empezarlo**, no aquí: depende de lo que se
 decida en H1–H10.
+
+## Bloque 1 · qué cambió al implementarlo
+
+Migración `20260917140000_create_clock.sql`, aplicada a mano por Carlos en el SQL Editor el
+2026-09-17, por el mismo motivo que en DSMak_r: el clasificador de permisos bloquea
+`apply_migration` contra producción.
+
+- **Cinco funciones, no tres.** El plan preveía `clock_is_admin`, `clock_record` y
+  `clock_verify_chain`. Al escribirlo salieron dos más, y las dos por un motivo:
+  - `clock_entry_hash(...)` se separa de `clock_record` para que **el script que regenera los
+    vectores dorados llame exactamente a la función que escribe en producción**. Si el hash viviera
+    dentro de `clock_record`, los vectores se generarían con una copia de la expresión, y una copia
+    es justo lo que H4 quería evitar.
+  - `clock_ensure_person()` no estaba y hacía falta: sin política de `insert` sobre `clock_people`,
+    el alta automática del primer acceso no tenía por dónde ocurrir. Recupera por correo la ficha de
+    quien ya existiera sin `user_id`, para que un cambio de cuenta no parta su registro en dos
+    cadenas.
+- **`work_date` de una corrección lo hereda del asiento que corrige**, que es más preciso que
+  derivarlo de su propia hora: una corrección escrita hoy sobre el martes pertenece al martes.
+- **El agujero del `TRUNCATE`** (corregido en `20260917150000_clock_revoke_truncate.sql`). La
+  migración revocaba `insert, update, delete` sobre las tablas de solo-inserción y daba la escritura
+  por cerrada. No lo estaba: Supabase concede **todos** los privilegios a `authenticated`, y
+  `TRUNCATE` **no pasa por la RLS** — vacía la tabla entera sin tocar filas una a una, así que
+  ninguna política lo detiene. La frase que sostiene toda la herramienta —"no hay política de update
+  ni de delete, y esa ausencia es la garantía"— era falsa mientras ese privilegio estuviera puesto.
+  No era explotable por PostgREST, que no expone truncate, pero **la garantía no puede depender de
+  qué expone hoy la capa de encima**. Se revoca en las cinco tablas, junto con `TRIGGER` y
+  `REFERENCES`, que tampoco pintan nada sobre un libro de asientos.
+  Lo encontró la verificación posterior a aplicar, no la revisión del fichero: es el argumento de
+  que el bloque de "Comprobación posterior" de cada migración se ejecute y no solo se escriba.
+- **La paridad del hash está probada de verdad.** `clock_entry_hash` ya desplegada reproduce los
+  cuatro vectores del fixture. Ya no es "la misma expresión escrita dos veces": es la función de
+  producción devolviendo los valores que espera el test de node.
+- **Lo que el bloque 1 NO deja probado.** Fichar, que un `update` falle y que la cadena se verifique
+  necesitan `auth.uid()`, y las consultas de administración corren sin sesión. Esas tres
+  comprobaciones se hacen desde la aplicación, con una sesión real, en el bloque 3. Hasta entonces
+  no están verificadas y no se dan por buenas.
