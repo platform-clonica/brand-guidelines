@@ -749,3 +749,32 @@ festivo cuenta como laborable en el saldo.
 - **Lo que el bloque 2 NO deja probado.** Todo esto son funciones puras probadas contra datos
   escritos a mano. Que los asientos REALES de Postgres tengan la forma que `schema.ts` declara no lo
   demuestra ningún test de aquí, y no se sabrá hasta que el bloque 3 lea filas de verdad.
+
+## Bloque 4 · qué cambió al implementarlo
+
+- **«Mi jornada» va con hoja de estilos propia, no con los estilos en línea del resto del chrome**, y
+  el motivo no es de gusto: la pantalla se diseña para móvil desde el principio —primera decisión
+  abierta de la definición— y **un estilo en línea no puede expresar una media query**. Iba a escribir
+  una maqueta móvil en un sitio donde el concepto no existe. El repo ya tenía la respuesta: lo que
+  necesita puntos de ruptura vive en su `.css` (`timer.css`, `workspace.css`, `forms.css`) y lo que se
+  adapta solo va en línea con `flex-wrap` y `minmax`. `clock.css` sigue ese patrón, con los colores
+  desde los `--c-*` y **sin un solo peldaño fuera de escala**: la tentación era inventarse un
+  intermedio para las tablas de horas, y eso se habla con Alberto.
+- **Quién soy llega como prop desde un server component.** El cliente no puede saberlo:
+  `/api/clock/people` devuelve una ficha a un miembro y todas a administración, así que de esa lista
+  no se deduce cuál soy. La página lo resuelve con `currentPerson`, igual que `app/workspace/page.tsx`
+  con la sesión. Se evitó inventar un `/api/clock/me`, y de paso el alta automática ocurre al cargar.
+- **`instantAt`: de hora de reloj a instante.** Lo necesita el modo corrección, y la vía obvia está
+  mal —`new Date('2026-07-10T17:00')` se interpreta en el huso del navegador—. Se resuelve sondeando
+  el desfase real de la zona. **Los tests se ejecutan con `TZ` forzado a Madrid, Nueva York y Tokio**,
+  porque esta máquina está en Madrid y una implementación ingenua habría pasado aquí. No cubre
+  desfases de media hora.
+- **El campo de modalidad entra en `entryRowSchema` como OPCIONAL.** En la tabla es `not null`, pero
+  el esquema es una PROYECCIÓN —solo lo que se mira— y el cálculo de horas no usa la modalidad;
+  la interfaz sí. Exigirla habría roto `compileDay`, que acepta filas sin ella.
+- **El defecto de horas no va en Burdeos.** Deber horas a media mañana es lo más corriente del
+  mundo, y pintarlo de rojo a diario convierte el color de alerta en decoración — que es lo que hace
+  que el día que salga algo crítico nadie lo mire.
+- **Lo que el bloque 4 NO deja resuelto.** El panel de incidencias solo muestra las de HOY, porque
+  `compileRange` aplana las del mes sin decir de qué día es cada una; y sus filas no son pulsables
+  porque no hay adónde saltar. Las dos cosas están escritas en el código, no disimuladas.
