@@ -51,26 +51,32 @@ const bySeq = (a: { seq: number }, b: { seq: number }) => a.seq - b.seq;
 const minutesBetween = (from: string, to: string): number =>
   Math.round((Date.parse(to) - Date.parse(from)) / MINUTE);
 
-/* Empareja aperturas con cierres. Devuelve los intervalos cerrados y, si quedó una apertura
-   suelta, un último intervalo con `to` en null: un hueco declarado, nunca una hora inventada. */
+/* Empareja aperturas con cierres. Devuelve los intervalos y, aparte, el `seq` de la apertura que se
+   quedó sin cerrar, para poder señalar el asiento exacto en la incidencia.
+
+   Un intervalo abierto sale con `to` en null: un hueco declarado, nunca una hora inventada. */
+type Pairing = { intervals: Interval[]; unclosedSeq: number | null };
+
 function pair(
-  entries: { kind: string; occurred_at: string }[],
+  entries: { seq: number; kind: string; occurred_at: string }[],
   open: string,
   close: string,
-): Interval[] {
-  const out: Interval[] = [];
-  let pending: string | null = null;
+): Pairing {
+  const intervals: Interval[] = [];
+  let pending: { at: string; seq: number } | null = null;
 
   for (const entry of entries) {
-    if (entry.kind === open) pending = entry.occurred_at;
+    if (entry.kind === open) pending = { at: entry.occurred_at, seq: entry.seq };
     else if (entry.kind === close && pending !== null) {
-      out.push({ from: pending, to: entry.occurred_at });
+      intervals.push({ from: pending.at, to: entry.occurred_at });
       pending = null;
     }
   }
 
-  if (pending !== null) out.push({ from: pending, to: null });
-  return out;
+  if (pending === null) return { intervals, unclosedSeq: null };
+
+  intervals.push({ from: pending.at, to: null });
+  return { intervals, unclosedSeq: pending.seq };
 }
 
 const spanOf = (intervals: Interval[]): number =>
@@ -83,8 +89,27 @@ export function compileDay(rows: unknown[], options: CompileOptions): CompileRes
     .slice()
     .sort(bySeq);
 
-  const segments = pair(entries, 'in', 'out');
-  const breaks = pair(entries, 'break_start', 'break_end');
+  const jornada = pair(entries, 'in', 'out');
+  const pausas = pair(entries, 'break_start', 'break_end');
+  const segments = jornada.intervals;
+  const breaks = pausas.intervals;
+
+  /* Un tramo sin cerrar es AVISO, no error: a media tarde todo el mundo tiene la jornada abierta.
+     Se señala el asiento que la abrió, que es el que hay que corregir. */
+  if (jornada.unclosedSeq !== null) {
+    issues.push({
+      level: 'warning',
+      path: `asiento.${jornada.unclosedSeq}`,
+      message: 'La jornada quedó abierta: falta fichar la salida.',
+    });
+  }
+  if (pausas.unclosedSeq !== null) {
+    issues.push({
+      level: 'warning',
+      path: `asiento.${pausas.unclosedSeq}`,
+      message: 'La pausa quedó abierta: falta fichar la vuelta.',
+    });
+  }
 
   const tramo = scheduleAt(options.schedules, options.workDate);
   const teoricos =
@@ -100,7 +125,9 @@ export function compileDay(rows: unknown[], options: CompileOptions): CompileRes
   const open = [...segments, ...breaks].some((i) => i.to === null);
 
   return {
-    ok: issues.length === 0,
+    /* `ok` es «no hay errores», no «no hay incidencias»: misma regla que compileSystem. Un día sin
+       terminar tiene aviso y sigue siendo un día válido. */
+    ok: !issues.some((i) => i.level === 'error'),
     day: {
       workDate: options.workDate,
       segments,

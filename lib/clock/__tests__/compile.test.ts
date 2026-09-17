@@ -72,3 +72,59 @@ test('una jornada normal con dos pausas da las horas efectivas correctas', () =>
   assert.equal(resultado.day.balanceMinutes, -15);
   assert.equal(resultado.day.open, false);
 });
+
+/* ─── La jornada sin cerrar ───
+
+   El caso que más veces va a pasar de verdad: alguien entra y se va sin fichar la salida. La regla
+   de la definición no admite matices — nunca se inventa una hora de salida— así que el día queda
+   con un hueco declarado y una incidencia, y las horas efectivas de ese tramo son cero, no una
+   estimación.
+
+   Y es AVISO, no error: a media tarde todo el mundo tiene la jornada abierta. Un día sin terminar
+   no es un día roto, así que `ok` sigue siendo true. La misma regla que usa compileSystem: `ok` es
+   «no hay errores», no «no hay incidencias». */
+
+test('un in sin out deja la jornada abierta y lo dice', () => {
+  const resultado = compileDay([asiento(1, 'in', '09:00')], opciones);
+
+  assert.equal(resultado.day.open, true);
+  assert.equal(resultado.issues.length, 1, 'debería haber exactamente una incidencia');
+  assert.equal(resultado.issues[0].level, 'warning');
+  assert.equal(resultado.issues[0].path, 'asiento.1');
+  assert.equal(resultado.ok, true, 'un día sin terminar no es un día roto');
+});
+
+test('una jornada abierta no inventa la hora de salida', () => {
+  const resultado = compileDay([asiento(1, 'in', '09:00')], opciones);
+
+  assert.equal(resultado.day.segments.length, 1);
+  assert.equal(resultado.day.segments[0].to, null, 'el tramo abierto no puede tener hora de fin');
+  assert.equal(resultado.day.workedMinutes, 0, 'no se cuentan horas de un tramo sin cerrar');
+});
+
+test('una pausa sin cerrar también queda abierta y lo dice', () => {
+  const resultado = compileDay(
+    [asiento(1, 'in', '09:00'), asiento(2, 'break_start', '14:00'), asiento(3, 'out', '18:00')],
+    opciones,
+  );
+
+  assert.equal(resultado.day.open, true);
+  assert.equal(resultado.day.breaks[0].to, null);
+  assert.equal(resultado.issues.length, 1, 'la pausa sin cerrar es la única incidencia');
+  assert.equal(resultado.issues[0].path, 'asiento.2');
+});
+
+test('una serie incoherente devuelve incidencias y no lanza', () => {
+  /* La invariante que sostiene toda la herramienta. Una salida sin entrada, una pausa que cierra
+     sin haber abierto y un orden imposible: nada de esto puede tumbar el visor de nadie. */
+  assert.doesNotThrow(() => {
+    compileDay(
+      [
+        asiento(1, 'out', '18:00'),
+        asiento(2, 'break_end', '11:15'),
+        asiento(3, 'in', '09:00'),
+      ],
+      opciones,
+    );
+  });
+});
