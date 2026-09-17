@@ -11,7 +11,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { monthRange, todayIn, weekRange } from '../dates.ts';
+import { instantAt, monthRange, todayIn, weekRange } from '../dates.ts';
 
 /* ─── Qué día es hoy, donde importa ─── */
 
@@ -75,4 +75,58 @@ test('febrero de un año bisiesto acaba en veintinueve', () => {
 
 test('diciembre no se desborda al año siguiente', () => {
   assert.deepEqual(monthRange('2026-12-05'), { from: '2026-12-01', to: '2026-12-31' });
+});
+
+/* ─── De hora de reloj a instante ───
+
+   Lo que el modo corrección necesita: alguien teclea «17:00» y eso tiene que convertirse en el
+   instante correcto para guardarlo en el registro.
+
+   LA VÍA OBVIA ESTÁ MAL. `new Date('2026-07-10T17:00')` se interpreta en el huso DEL NAVEGADOR, así
+   que un portátil configurado en otra zona escribiría una hora distinta de la que la persona
+   tecleó — en un registro legal, y sin que nada avisara. Las aserciones van contra épocas UTC
+   concretas precisamente para que el resultado no pueda depender de dónde corra el test. */
+
+test('una hora de la tarde en verano se convierte al instante correcto', () => {
+  // Las 17:00 de Madrid en julio (+02:00) son las 15:00 UTC.
+  assert.equal(
+    Date.parse(instantAt('2026-07-10', '17:00')),
+    Date.parse('2026-07-10T15:00:00Z'),
+  );
+});
+
+test('la misma hora en invierno cae una hora más tarde en UTC', () => {
+  // Las 09:30 de Madrid en enero (+01:00) son las 08:30 UTC. Si el desfase estuviera fijado a mano,
+  // uno de estos dos tests fallaría.
+  assert.equal(
+    Date.parse(instantAt('2026-01-15', '09:30')),
+    Date.parse('2026-01-15T08:30:00Z'),
+  );
+});
+
+test('la medianoche del día es el primer instante de ese día', () => {
+  assert.equal(
+    Date.parse(instantAt('2026-07-10', '00:00')),
+    Date.parse('2026-07-09T22:00:00Z'),
+  );
+});
+
+test('el resultado es un instante que Date sabe leer', () => {
+  // Va a viajar a la API y de ahí a una columna timestamptz: si no se parsea, no sirve.
+  assert.ok(Number.isFinite(Date.parse(instantAt('2026-07-10', '17:00'))));
+});
+
+test('una hora repetida por el cambio de hora no lanza y elige una', () => {
+  /* El 2026-10-25 España atrasa el reloj y las 02:30 ocurren DOS VECES. No hay respuesta única, así
+     que lo que importa es que sea determinista y no reviente: se elige la primera, la de antes del
+     cambio (+02:00), que es la que corresponde a la primera vez que el reloj marcó esa hora. */
+  const primera = Date.parse('2026-10-25T00:30:00Z'); // 02:30 con +02:00
+  assert.equal(Date.parse(instantAt('2026-10-25', '02:30')), primera);
+});
+
+test('una hora que no existe por el cambio de hora tampoco lanza', () => {
+  /* El 2026-03-29 el reloj salta de las 02:00 a las 03:00: las 02:30 NO existen. Nadie debería
+     poder teclearlas, pero si llegan, la respuesta es un instante válido y no una excepción: la
+     compilación de este proyecto nunca lanza, y esto alimenta la compilación. */
+  assert.ok(Number.isFinite(Date.parse(instantAt('2026-03-29', '02:30'))));
 });
