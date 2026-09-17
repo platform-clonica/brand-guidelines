@@ -530,6 +530,62 @@ test('un fin de semana sin fichajes no resta nada', () => {
   assert.equal(resultado.balanceMinutes, 0);
 });
 
+/* ─── Las incidencias del rango dicen de qué día son ───
+
+   Hasta ahora `compileRange` las aplanaba todas sin fecha, y eso se documentó como límite del
+   bloque 4: el panel de «Mi jornada» solo podía enseñar las de hoy, porque de las demás no sabía
+   a qué día pertenecían.
+
+   En el panel de equipo deja de ser un límite cómodo y pasa a ser un bloqueo: la definición pide
+   «incidencias abiertas ordenadas por antigüedad», y sin fecha no hay antigüedad que ordenar.
+
+   Las del rango entero —fechas ilegibles, filas sin día— llevan `null`: inventarles un día sería
+   mentir sobre dónde está el problema. */
+
+test('una incidencia de un día concreto lleva su fecha', () => {
+  const resultado = compileRange(
+    [asientoEn('2026-07-06', 1, 'in', '09:00')], // sin salida: jornada abierta
+    { ...rango, from: '2026-07-06', to: '2026-07-06' },
+  );
+
+  const abierta = resultado.issues.find((i) => i.message.includes('jornada'));
+  assert.ok(abierta, 'debería haber una incidencia de jornada abierta');
+  assert.equal(abierta.workDate, '2026-07-06');
+});
+
+test('las incidencias de días distintos no se confunden', () => {
+  const resultado = compileRange(
+    [
+      asientoEn('2026-07-06', 1, 'in', '09:00'),
+      asientoEn('2026-07-07', 2, 'in', '09:00'),
+      asientoEn('2026-07-07', 3, 'in', '09:05'),
+    ],
+    { ...rango, from: '2026-07-06', to: '2026-07-07' },
+  );
+
+  const fechas = resultado.issues.map((i) => i.workDate);
+  assert.ok(fechas.includes('2026-07-06'), 'la del lunes lleva la del lunes');
+  assert.ok(fechas.includes('2026-07-07'), 'la del martes lleva la del martes');
+});
+
+test('vienen en orden cronológico, que es lo que el panel llama antigüedad', () => {
+  const resultado = compileRange(
+    [asientoEn('2026-07-06', 1, 'in', '09:00'), asientoEn('2026-07-07', 2, 'in', '09:00')],
+    { ...rango, from: '2026-07-06', to: '2026-07-07' },
+  );
+
+  const fechas = resultado.issues.map((i) => i.workDate).filter((f): f is string => f !== null);
+  assert.deepEqual([...fechas].sort(), fechas, 'las incidencias no vienen ordenadas por día');
+});
+
+test('una incidencia del rango entero no se inventa un día', () => {
+  // Fechas ilegibles: el problema no está en ningún día, está en lo que se pidió.
+  const resultado = compileRange([], { ...rango, from: 'ayer', to: 'hoy' });
+
+  assert.ok(resultado.issues.length > 0, 'unas fechas ilegibles tienen que dar incidencia');
+  assert.equal(resultado.issues[0].workDate, null);
+});
+
 test('un asiento fuera del rango no entra en el total', () => {
   const resultado = compileRange(
     [

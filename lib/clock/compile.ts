@@ -56,13 +56,28 @@ export type RangeOptions = {
   holidays: string[];
 };
 
+/* Una incidencia del rango SABE DE QUÉ DÍA ES.
+
+   El campo va aquí y no en `ClockIssue` a propósito: en `compileDay` el día es siempre el mismo y
+   añadirlo allí sería repetir un dato constante en cada incidencia. Aquí, en cambio, es lo que
+   convierte una lista aplanada en algo que se puede ordenar por antigüedad y sobre lo que se puede
+   pulsar para ir al día que la provoca.
+
+   `null` para lo que no pertenece a ningún día —unas fechas de periodo ilegibles, una fila que no
+   dice a qué día va—: inventarles uno sería mentir sobre dónde está el problema.
+
+   Sigue siendo compatible con components/studio/IssuesPanel, que es genérico sobre
+   `{ level, path, message }`: un campo de más no lo rompe. */
+export type RangeIssue = ClockIssue & { workDate: string | null };
+
 export type RangeResult = {
   /** Un resultado por CADA día del rango, tenga fichajes o no. */
   days: CompileResult[];
   workedMinutes: number;
   theoreticalMinutes: number;
   balanceMinutes: number;
-  issues: ClockIssue[];
+  /** En orden cronológico: los días se recorren en orden, así que salen ya ordenadas. */
+  issues: RangeIssue[];
 };
 
 const MINUTE = 60_000;
@@ -253,13 +268,15 @@ function eachDate(from: string, to: string): string[] | null {
    semana sin fichar saldría con saldo cero en vez de con cuarenta horas de menos, y el error caería
    a favor de quien no fichó y en contra de la fiabilidad del registro. */
 export function compileRange(rows: unknown[], options: RangeOptions): RangeResult {
-  const issues: ClockIssue[] = [];
+  /* Las del propio periodo: no son de ningún día concreto. */
+  const issues: RangeIssue[] = [];
   const dates = eachDate(options.from, options.to);
 
   if (dates === null) {
     issues.push({
       level: 'error',
       path: 'rango',
+      workDate: null,
       message: 'Las fechas del periodo no se pueden leer.',
     });
     return { days: [], workedMinutes: 0, theoreticalMinutes: 0, balanceMinutes: 0, issues };
@@ -274,6 +291,8 @@ export function compileRange(rows: unknown[], options: RangeOptions): RangeResul
       issues.push({
         level: 'error',
         path: `fila.${index}`,
+        /* Sin día que asignarle, y ese es literalmente el problema que denuncia. */
+        workDate: null,
         message: 'La fila no dice a qué día de jornada pertenece y se ha quedado fuera del periodo.',
       });
       return;
@@ -299,7 +318,12 @@ export function compileRange(rows: unknown[], options: RangeOptions): RangeResul
     workedMinutes: sum((d) => d.workedMinutes),
     theoreticalMinutes: sum((d) => d.theoreticalMinutes),
     balanceMinutes: sum((d) => d.balanceMinutes),
-    issues: [...issues, ...days.flatMap((d) => d.issues)],
+    /* Cada incidencia se lleva la fecha del día que la produjo. Los días se recorren en orden, así
+       que la lista sale ya cronológica: eso es lo que el panel de equipo llama antigüedad. */
+    issues: [
+      ...issues,
+      ...days.flatMap((d) => d.issues.map((i) => ({ ...i, workDate: d.day.workDate }))),
+    ],
   };
 }
 
