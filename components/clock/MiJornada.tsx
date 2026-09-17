@@ -129,6 +129,24 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
     return mapa;
   }, [rango, asientosPorDia]);
 
+  /* El salto de verdad, no a medias: si el día cae fuera de la semana hay que desplegar el mes
+     primero, y la fila solo existe en el DOM DESPUÉS de ese repintado — de ahí el
+     `requestAnimationFrame`. Sin esto, el panel prometía «Ir a» y solo desplegaba una sección.
+
+     El resalte se quita solo a los dos segundos: es para encontrar la fila con la vista, no un
+     estado que haya que cerrar. */
+  const saltarA = (fecha: string) => {
+    if (fecha < semana.from || fecha > semana.to) setMesAbierto(true);
+
+    requestAnimationFrame(() => {
+      const fila = document.getElementById(`ixc-dia-${fecha}`);
+      if (!fila) return;
+      fila.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      fila.classList.add('ixc-dia--saltado');
+      setTimeout(() => fila.classList.remove('ixc-dia--saltado'), 2000);
+    });
+  };
+
   const corregir = async (input: CorreccionInput) => {
     if (!aCorregir) return;
 
@@ -237,11 +255,18 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
               )}
             </section>
 
-            {dia && dia.issues.length > 0 && (
+            {/* Todas las del mes, no solo las de hoy: cada una sabe ya de qué día es. Y las filas
+                llevan a su día, que es lo que el bloque 4 no podía hacer. `locate` devuelve null
+                para las del propio periodo, así que esas no son pulsables — no hay día al que ir. */}
+            {rango.issues.length > 0 && (
               <IssuesPanel
-                issues={dia.issues}
-                locate={() => null}
-                onJump={() => {}}
+                issues={rango.issues}
+                locate={(i) =>
+                  i.workDate === null
+                    ? null
+                    : { label: i.workDate.slice(8), title: `Ir a ${etiquetaDia(i.workDate)}` }
+                }
+                onJump={(i) => i.workDate && saltarA(i.workDate)}
                 stale={false}
                 staleMessage=""
               />

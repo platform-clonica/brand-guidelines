@@ -210,6 +210,16 @@
 .ixc-dia + .ixc-dia { border-top: 1px solid var(--c-warm-dark); }
 .ixc-dia--hoy { background: var(--c-warm-light); }
 
+/* El día al que acaba de saltar una incidencia. Se marca con el filete de la izquierda y no con
+   fondo burdeos: el color de alerta se reserva para lo crítico de verdad, y aquí lo que pasa es
+   que has pulsado algo, no que el registro esté roto. Se quita solo. */
+.ixc-dia--saltado {
+  box-shadow: inset 2px 0 0 var(--c-dark);
+}
+
+/* El salto lleva la fila bajo la cabecera, no al borde mismo de la ventana. */
+.ixc-dia { scroll-margin-top: 24px; }
+
 .ixc-dia__fecha { font-weight: 500; }
 .ixc-dia__tramos { color: var(--c-ash); font-variant-numeric: tabular-nums; }
 .ixc-dia__horas,

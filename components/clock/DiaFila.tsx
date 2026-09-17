@@ -29,7 +29,9 @@ export function DiaFila({
   const saldo = day.balanceMinutes < 0 ? 'ixc-saldo--defecto' : 'ixc-saldo--exceso';
 
   return (
-    <div className={`ixc-dia ${esHoy ? 'ixc-dia--hoy' : ''}`}>
+    /* El `id` es el ancla del salto desde el panel de incidencias. Va con prefijo porque un
+       `id` que fuera solo la fecha chocaría con cualquier otro elemento del mismo día. */
+    <div id={`ixc-dia-${day.workDate}`} className={`ixc-dia ${esHoy ? 'ixc-dia--hoy' : ''}`}>
       <span className="ixc-dia__fecha">{etiquetaDia(day.workDate)}</span>
 
       <span className="ixc-dia__tramos">
