@@ -690,6 +690,17 @@ Migración `20260917140000_create_clock.sql`, aplicada a mano por Carlos en el S
   ambigua, asiento de otro día, hora futura, corrección circular—; `warning` cuando falta algo pero
   el total no miente: jornada abierta, o fichajes en un día declarado como ausencia. `ok` significa
   «no hay errores», no «no hay incidencias», como en `compileSystem`.
-- **Lo que falta del bloque 2:** `calendar.ts` no calcula todavía el saldo de una semana ni de un
-  mes, y no hay `lib/clock/types.ts`. Los 13 casos límite del §2 están cubiertos salvo los que no
-  aplican (ver H8).
+- **La semana y el mes** los resuelve `compileRange`, y la decisión que lo define es que **el rango
+  se enumera por fechas y no por los asientos que hay**. Un día laborable sin fichajes aparece igual
+  y cuenta como defecto; si solo se recorrieran los días con datos, un mes con una semana sin fichar
+  saldría con saldo cero en vez de con cuarenta horas de menos, y el error caería a favor de quien
+  no fichó y en contra de la fiabilidad del registro. La aritmética de días va en UTC: sumar 24
+  horas en hora local se tuerce los dos días del año en que existe el cambio de hora.
+- **`lib/clock/types.ts` se aplaza al bloque 3, a propósito.** Son tipos de fila sin comportamiento:
+  no hay test que escribir antes, y nadie los consume hasta que existan las rutas de API. Escribirlos
+  ahora sería adivinar la forma que necesitará su consumidor.
+- **Estado al cerrar el bloque 2:** 484 tests en verde, `type-check`, `lint` y `build` limpios. Los
+  13 casos límite del §2 están cubiertos salvo los que resultaron no existir (ver H8).
+- **Lo que el bloque 2 NO deja probado.** Todo esto son funciones puras probadas contra datos
+  escritos a mano. Que los asientos REALES de Postgres tengan la forma que `schema.ts` declara no lo
+  demuestra ningún test de aquí, y no se sabrá hasta que el bloque 3 lea filas de verdad.
