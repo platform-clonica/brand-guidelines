@@ -126,3 +126,50 @@ test('los extremos del periodo intensivo entran dentro', () => {
   assert.equal(theoreticalMinutes(intensiva, '2026-06-15', { holidays: [], absences: [] }), 420);
   assert.equal(theoreticalMinutes(intensiva, '2026-09-15', { holidays: [], absences: [] }), 420);
 });
+
+/* ─── Un periodo intensivo que cruza el fin de año ───
+
+   Comparar `MM-DD` como texto funciona mientras el periodo empieza y acaba el mismo año. Uno de
+   Navidad no: `12-15` es mayor que `01-15`, así que la comparación de rango da falso para TODOS los
+   días y el periodo entero se evapora sin avisar. La jornada reducida de Navidad es lo bastante
+   corriente como para que esto no pueda quedarse en un comentario.
+
+   Las fechas están comprobadas, no supuestas: 2026-12-14 lunes · 12-15 martes · 12-21 lunes ·
+   2027-01-08 viernes · 01-15 viernes. El 2027-01-18 sale de contar tres días desde el viernes 15. */
+
+const invernal: ScheduleTramo = {
+  validFrom: '2000-01-01',
+  weekly: { mon: 480, tue: 480, wed: 480, thu: 480, fri: 480, sat: 0, sun: 0 },
+  intensive: {
+    from: '12-15',
+    to: '01-15',
+    weekly: { mon: 360, tue: 360, wed: 360, thu: 360, fri: 300, sat: 0, sun: 0 },
+  },
+};
+
+const sinNada = { holidays: [], absences: [] };
+
+test('el lado de diciembre de un periodo que cruza el año usa la jornada intensiva', () => {
+  assert.equal(theoreticalMinutes(invernal, '2026-12-21', sinNada), 360);
+});
+
+test('el lado de enero de un periodo que cruza el año usa la jornada intensiva', () => {
+  assert.equal(theoreticalMinutes(invernal, '2027-01-08', sinNada), 300);
+});
+
+test('los extremos de un periodo que cruza el año entran dentro', () => {
+  assert.equal(theoreticalMinutes(invernal, '2026-12-15', sinNada), 360);
+  assert.equal(theoreticalMinutes(invernal, '2027-01-15', sinNada), 300);
+});
+
+test('la víspera de un periodo que cruza el año todavía es jornada normal', () => {
+  assert.equal(theoreticalMinutes(invernal, '2026-12-14', sinNada), 480);
+});
+
+test('el día siguiente al final de un periodo que cruza el año vuelve a ser normal', () => {
+  assert.equal(theoreticalMinutes(invernal, '2027-01-18', sinNada), 480);
+});
+
+test('un día muy fuera de un periodo que cruza el año es jornada normal', () => {
+  assert.equal(theoreticalMinutes(invernal, '2026-11-20', sinNada), 480);
+});

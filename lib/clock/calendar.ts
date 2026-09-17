@@ -75,12 +75,15 @@ const covers = (a: Absence, date: string) => a.fromDate <= date && date <= a.toD
 /* ¿Cae la fecha dentro del periodo intensivo? Comparación de `MM-DD` como texto, que en ese formato
    también ordena bien.
 
-   TODAVÍA NO CUBRE un periodo que cruce el fin de año (`12-15` → `01-15`): hoy cae al horario
-   normal, que es un resultado inocuo pero no el correcto. Sin test que lo fije no se implementa, y
-   ese test es el siguiente. */
+   Dos formas, según el periodo cruce o no el fin de año, y la distinción no es un adorno: con un
+   periodo de Navidad (`12-15` → `01-15`), `from` es MAYOR que `to`, así que preguntar por los dos
+   extremos a la vez da falso para todos los días del año y el periodo entero se evapora sin avisar.
+   Cuando el rango viene invertido, el año es un círculo: se está dentro si el día cae después del
+   inicio O antes del final. */
 function inIntensive(period: IntensivePeriod, date: string): boolean {
   const md = date.slice(5);
-  return period.from <= md && md <= period.to;
+  if (period.from <= period.to) return period.from <= md && md <= period.to;
+  return md >= period.from || md <= period.to;
 }
 
 /* Los minutos que se deben un día concreto.
