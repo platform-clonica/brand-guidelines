@@ -215,6 +215,63 @@ test('una corrección que apunta a un asiento que no existe lo dice', () => {
   );
 });
 
+/* ─── Series que no cuadran ───
+
+   Los tres van como ERROR y no como aviso, y la razón es la misma en los tres: no es que falte un
+   dato, es que el número de horas del día deja de ser fiable. En un registro que puede acabar
+   delante de un inspector, un total ambiguo presentado como bueno es peor que un total que se
+   declara roto. `ok` en false es exactamente eso. */
+
+test('dos entradas seguidas sin salida son un error, y no se pierde la primera', () => {
+  /* El caso del doble clic, o de dos pestañas. Hasta ahora el emparejador machacaba la primera
+     entrada en silencio y el día salía cuadrado: 09:05 a 18:00 en vez de 09:00 a 18:00. Un fichaje
+     desaparecido sin que nadie lo sepa es justo lo que esta herramienta no puede permitirse. */
+  const resultado = compileDay(
+    [asiento(1, 'in', '09:00'), asiento(2, 'in', '09:05'), asiento(3, 'out', '18:00')],
+    opciones,
+  );
+
+  assert.equal(resultado.ok, false, 'con dos entradas el total es ambiguo');
+  assert.ok(
+    resultado.issues.some((i) => i.level === 'error' && i.path === 'asiento.2'),
+    'debería señalar la segunda entrada',
+  );
+});
+
+test('una salida anterior a su entrada es un error', () => {
+  // Sale de corregir mal una hora. Sin esto, el tramo daría minutos negativos y restaría del día.
+  const resultado = compileDay(
+    [asiento(1, 'in', '09:00'), asiento(2, 'out', '08:00')],
+    opciones,
+  );
+
+  assert.equal(resultado.ok, false);
+  assert.ok(
+    resultado.issues.some((i) => i.level === 'error' && i.path === 'asiento.2'),
+    'debería señalar la salida imposible',
+  );
+});
+
+test('una pausa fuera de todo tramo de trabajo es un error', () => {
+  /* Entra a las 9, sale a las 12, y la pausa está a las 14: fuera de la jornada. Restarla daría un
+     día de dos horas trabajadas en vez de tres, así que el total mentiría hacia abajo. */
+  const resultado = compileDay(
+    [
+      asiento(1, 'in', '09:00'),
+      asiento(2, 'out', '12:00'),
+      asiento(3, 'break_start', '14:00'),
+      asiento(4, 'break_end', '15:00'),
+    ],
+    opciones,
+  );
+
+  assert.equal(resultado.ok, false);
+  assert.ok(
+    resultado.issues.some((i) => i.level === 'error' && i.path === 'asiento.3'),
+    'debería señalar la pausa que cae fuera',
+  );
+});
+
 test('una serie incoherente devuelve incidencias y no lanza', () => {
   /* La invariante que sostiene toda la herramienta. Una salida sin entrada, una pausa que cierra
      sin haber abierto y un orden imposible: nada de esto puede tumbar el visor de nadie. */

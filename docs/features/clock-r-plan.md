@@ -642,6 +642,17 @@ Migración `20260917140000_create_clock.sql`, aplicada a mano por Carlos en el S
   `REFERENCES`, que tampoco pintan nada sobre un libro de asientos.
   Lo encontró la verificación posterior a aplicar, no la revisión del fichero: es el argumento de
   que el bloque de "Comprobación posterior" de cada migración se ejecute y no solo se escriba.
+  **Aplicada y verificada el 2026-09-17**: a `authenticated` le quedan `select` en `clock_entries` y
+  `clock_consents`, `select` y `update` en `clock_people`, y las cuatro en `clock_absences` y
+  `clock_calendar_days` filtradas por la política de admin. `anon` no aparece en ninguna de las cinco.
+- **La jornada por defecto** (`20260917151000_clock_default_schedule.sql`). La migración inicial
+  dejaba `schedules` en `[]`, así que quien entrara por primera vez nacía sin jornada teórica y
+  todos sus días habrían salido como incidencia hasta que Personas le pusiera el horario a mano —
+  justo la fricción que la herramienta viene a quitar. El tramo por defecto son 40 h de lunes a
+  viernes en minutos, con `validFrom` en 2000-01-01 para que cubra cualquier fecha. Es **el
+  supuesto** (jornada ordinaria máxima del Estatuto), no una norma comprobada con la asesoría.
+  **Aplicada y verificada el 2026-09-17**: el valor por defecto está puesto y no queda ninguna
+  persona sin jornada.
 - **La paridad del hash está probada de verdad.** `clock_entry_hash` ya desplegada reproduce los
   cuatro vectores del fixture. Ya no es "la misma expresión escrita dos veces": es la función de
   producción devolviendo los valores que espera el test de node.

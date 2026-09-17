@@ -58,32 +58,74 @@ const minutesBetween = (from: string, to: string): number =>
    quedó sin cerrar, para poder señalar el asiento exacto en la incidencia.
 
    Un intervalo abierto sale con `to` en null: un hueco declarado, nunca una hora inventada. */
-type Pairing = { intervals: Interval[]; unclosedSeq: number | null };
+type Paired = Interval & { openSeq: number };
+type Pairing = { intervals: Paired[]; unclosedSeq: number | null };
+
+const toInterval = ({ from, to }: Paired): Interval => ({ from, to });
 
 function pair(
   entries: { seq: number; kind: string; occurred_at: string }[],
   open: string,
   close: string,
+  issues: ClockIssue[],
+  duplicateMessage: string,
 ): Pairing {
-  const intervals: Interval[] = [];
+  const intervals: Paired[] = [];
   let pending: { at: string; seq: number } | null = null;
 
   for (const entry of entries) {
-    if (entry.kind === open) pending = { at: entry.occurred_at, seq: entry.seq };
-    else if (entry.kind === close && pending !== null) {
-      intervals.push({ from: pending.at, to: entry.occurred_at });
-      pending = null;
+    if (entry.kind === open) {
+      if (pending !== null) {
+        /* Dos aperturas seguidas: el doble clic, o dos pestañas. Se señala la SEGUNDA y se conserva
+           la primera. Machacarla —que es lo que hacía antes— hacía desaparecer un fichaje sin que
+           nadie se enterase, y el día salía cuadrado con una hora que nadie fichó. */
+        issues.push({ level: 'error', path: `asiento.${entry.seq}`, message: duplicateMessage });
+        continue;
+      }
+      pending = { at: entry.occurred_at, seq: entry.seq };
+      continue;
     }
+
+    if (entry.kind !== close || pending === null) continue;
+
+    if (Date.parse(entry.occurred_at) < Date.parse(pending.at)) {
+      issues.push({
+        level: 'error',
+        path: `asiento.${entry.seq}`,
+        message: 'Cierra antes de la hora a la que empezó.',
+      });
+    }
+
+    intervals.push({ from: pending.at, to: entry.occurred_at, openSeq: pending.seq });
+    pending = null;
   }
 
   if (pending === null) return { intervals, unclosedSeq: null };
 
-  intervals.push({ from: pending.at, to: null });
+  intervals.push({ from: pending.at, to: null, openSeq: pending.seq });
   return { intervals, unclosedSeq: pending.seq };
 }
 
 const spanOf = (intervals: Interval[]): number =>
-  intervals.reduce((total, i) => (i.to === null ? total : total + minutesBetween(i.from, i.to)), 0);
+  intervals.reduce((total, i) => {
+    if (i.to === null) return total;
+    const minutes = minutesBetween(i.from, i.to);
+    /* Un intervalo imposible (cierra antes de abrir) ya salió como error; aquí cuenta como cero
+       para que no reste horas del día. Se deja visible en `segments` a propósito: hay que poder
+       ver qué se fichó mal, y borrarlo lo escondería. */
+    return minutes > 0 ? total + minutes : total;
+  }, 0);
+
+/** ¿La pausa cae dentro del tramo? Con `Date.parse` y no comparando texto: hoy todos los asientos
+    llevan el mismo huso y comparar cadenas funcionaría, pero dejaría una trampa esperando al
+    primer fichaje con otro desfase. */
+function within(segment: Interval, brk: Interval): boolean {
+  const start = Date.parse(brk.from);
+  if (start < Date.parse(segment.from)) return false;
+  if (segment.to === null) return true;
+  const end = brk.to === null ? start : Date.parse(brk.to);
+  return end <= Date.parse(segment.to);
+}
 
 type RawEntry = {
   id: string;
@@ -157,10 +199,22 @@ export function compileDay(rows: unknown[], options: CompileOptions): CompileRes
   const superseded = resolveCorrections(all, issues);
   const entries = all.filter((e) => !superseded.has(e.id));
 
-  const jornada = pair(entries, 'in', 'out');
-  const pausas = pair(entries, 'break_start', 'break_end');
+  const jornada = pair(entries, 'in', 'out', issues, 'Hay otra entrada sin haber fichado la salida de la anterior.');
+  const pausas = pair(entries, 'break_start', 'break_end', issues, 'Hay otra pausa sin haber cerrado la anterior.');
   const segments = jornada.intervals;
   const breaks = pausas.intervals;
+
+  /* Una pausa fuera de todo tramo de trabajo restaría horas que no se estaban trabajando, así que
+     el total mentiría hacia abajo. Es error y no aviso por lo mismo que los otros dos: el número
+     del día deja de ser fiable. */
+  for (const brk of breaks) {
+    if (segments.some((segment) => within(segment, brk))) continue;
+    issues.push({
+      level: 'error',
+      path: `asiento.${brk.openSeq}`,
+      message: 'La pausa cae fuera de todo tramo de trabajo.',
+    });
+  }
 
   /* Un tramo sin cerrar es AVISO, no error: a media tarde todo el mundo tiene la jornada abierta.
      Se señala el asiento que la abrió, que es el que hay que corregir. */
@@ -198,8 +252,8 @@ export function compileDay(rows: unknown[], options: CompileOptions): CompileRes
     ok: !issues.some((i) => i.level === 'error'),
     day: {
       workDate: options.workDate,
-      segments,
-      breaks,
+      segments: segments.map(toInterval),
+      breaks: breaks.map(toInterval),
       supersededIds: [...superseded],
       workedMinutes,
       breakMinutes,
