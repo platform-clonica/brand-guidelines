@@ -537,6 +537,15 @@
   .ixc-main { padding: 24px 16px 56px; }
   .ixc-hoy { padding: 20px 16px; }
 
+  /* La barra de fichar se apila. En escritorio sus tres piezas caben en un renglón, pero en 360px
+     el selector de modalidad y el botón pelearían por el mismo y saldrían los dos estrechos. Antes
+     iban apilados porque vivían dentro de la tarjeta como bloques con su margen; al sacarlos a una
+     barra flex hay que volver a pedirlo. */
+  .ixc-hoy__acciones {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   /* El botón de fichar ocupa el ancho: es la acción de la pantalla y se pulsa con el pulgar. */
   .ixc-actions { gap: 10px; }
   .ixc-actions .ixc-btn { flex: 1 1 100%; }
