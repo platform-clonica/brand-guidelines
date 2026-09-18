@@ -25,6 +25,13 @@ export default [
       /* Prototipos de referencia: código ajeno, minificado y formateado. No se importa
          desde ninguna parte del repo — ver docs/features/ds-mak-r.md. */
       'prototipos/**',
+      /* Claude Design (design-sync). Mismo caso que `prototipos/**`: código ajeno y empaquetado que
+         no se importa desde el repo. `.gitignore` ya las ignora para git, pero eslint no lee
+         `.gitignore`, así que sin esto `npm run lint` escanea ~1.000 ficheros de terceros y saca
+         1.250 avisos y 22 errores de React interno — el linter deja de servir para ver lo nuestro. */
+      '.ds-sync/**',
+      'ds-bundle/**',
+      '.design-sync/**',
     ],
   },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
