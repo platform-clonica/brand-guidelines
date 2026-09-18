@@ -7,7 +7,13 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { scheduleAt, theoreticalMinutes, type ScheduleTramo } from '../calendar.ts';
+import {
+  hhmmFromMinutes,
+  minutesFromHHMM,
+  scheduleAt,
+  theoreticalMinutes,
+  type ScheduleTramo,
+} from '../calendar.ts';
 
 const completa: ScheduleTramo = {
   validFrom: '2000-01-01',
@@ -125,6 +131,52 @@ test('los extremos del periodo intensivo entran dentro', () => {
   // 2026-06-15 es lunes y 2026-09-15 es martes: los dos son días laborables.
   assert.equal(theoreticalMinutes(intensiva, '2026-06-15', { holidays: [], absences: [] }), 420);
   assert.equal(theoreticalMinutes(intensiva, '2026-09-15', { holidays: [], absences: [] }), 420);
+});
+
+/* ─── Horas de reloj y minutos ───
+
+   La jornada se guarda en minutos —sin decimales, porque acaba en un saldo legal— y se edita en
+   horas y minutos, que es como la gente la piensa. La conversión decide la jornada teórica de una
+   persona, y si se equivoca su saldo sale mal SIN QUE NADA FALLE: nadie revisa un 7:30 que debía
+   ser 8:00. De ahí que esté aquí con sus tests y no dentro de un formulario. */
+
+test('una jornada de ocho horas son cuatrocientos ochenta minutos', () => {
+  assert.equal(minutesFromHHMM('08:00'), 480);
+});
+
+test('la media hora cuenta', () => {
+  assert.equal(minutesFromHHMM('07:30'), 450);
+});
+
+test('cero es cero, no nulo', () => {
+  // Un sábado son 0 minutos, que es un valor legítimo y distinto de «no hay dato».
+  assert.equal(minutesFromHHMM('00:00'), 0);
+});
+
+test('van y vuelven sin perder nada', () => {
+  for (const minutos of [0, 450, 480, 510, 1440]) {
+    assert.equal(minutesFromHHMM(hhmmFromMinutes(minutos)), minutos, `con ${minutos}`);
+  }
+});
+
+test('los minutos se escriben con dos cifras', () => {
+  // '7:5' en un campo de hora es un error de lectura esperando a ocurrir.
+  assert.equal(hhmmFromMinutes(450), '07:30');
+  assert.equal(hhmmFromMinutes(0), '00:00');
+  assert.equal(hhmmFromMinutes(480), '08:00');
+});
+
+test('una hora ilegible da null en vez de lanzar', () => {
+  for (const malo of ['', 'ocho', '8', '08:', ':30', '08:60', '25:00', '-01:00']) {
+    assert.equal(minutesFromHHMM(malo), null, `con ${JSON.stringify(malo)}`);
+  }
+});
+
+test('veinticuatro horas es el techo, y cabe', () => {
+  /* El día tiene 24 horas: más que eso no es una jornada, es un error de tecleo. El tope coincide
+     con el que ya valida buildSchedulesPatch en el servidor. */
+  assert.equal(minutesFromHHMM('24:00'), 1440);
+  assert.equal(minutesFromHHMM('24:01'), null);
 });
 
 /* ─── Un periodo intensivo que cruza el fin de año ───

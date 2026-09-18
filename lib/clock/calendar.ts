@@ -24,6 +24,41 @@ export type IntensivePeriod = {
   weekly: WeeklyMinutes;
 };
 
+/* ─── Horas de reloj y minutos ───
+
+   La jornada se GUARDA en minutos —sin decimales, porque acaba en un saldo legal— y se EDITA en
+   horas y minutos, que es como la gente la piensa. La conversión decide la jornada teórica de una
+   persona, y si se equivoca su saldo sale mal sin que nada falle: nadie revisa un 7:30 que debía
+   ser 8:00. De ahí que viva aquí, con sus tests, y no dentro de un formulario.
+
+   SIN MÓDULO DE 24, a propósito: 1440 minutos son `24:00` y no `00:00`. Un día completo es un
+   valor legítimo —el tope que ya valida `buildSchedulesPatch` en el servidor— y colapsarlo a cero
+   convertiría una jornada de 24 horas en una de nada. */
+
+const HHMM = /^(\d{2}):(\d{2})$/;
+
+/** `HH:MM` a minutos, o `null` si no se puede leer. No lanza: alimenta un formulario. */
+export function minutesFromHHMM(value: string): number | null {
+  const partes = HHMM.exec(value);
+  if (!partes) return null;
+
+  const minutos = Number(partes[2]);
+  if (minutos > 59) return null;
+
+  const total = Number(partes[1]) * 60 + minutos;
+  return total > 1440 ? null : total;
+}
+
+/* Minutos a `HH:MM`, con las dos cifras siempre: `7:5` en un campo de hora es un error de lectura
+   esperando a ocurrir. Se acota a un día porque esto también pinta valores que vienen de la base
+   de datos, donde nadie garantiza el rango. */
+export function hhmmFromMinutes(total: number): string {
+  const acotado = Math.max(0, Math.min(1440, Math.round(total)));
+  const horas = Math.floor(acotado / 60);
+  const minutos = acotado % 60;
+  return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
+}
+
 /* Un tramo de jornada, vigente desde `validFrom` (incluido) hasta que empiece el siguiente.
    Las claves van en camelCase porque esto vive dentro de una columna JSONB, y es lo que hace el
    repo ahí (lib/ds/schema.ts); el snake_case se queda para los nombres de columna. */
