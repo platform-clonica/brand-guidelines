@@ -1,0 +1,106 @@
+/* Clock_r — el registro para imprimir. Scoped a .ix-print.
+
+   Hoja aparte de clock.css a propósito: aquella es una pantalla que se mira, esta es un documento
+   que se entrega. Comparten tokens y tipografías, no maquetación.
+
+   Sin color de marca en el cuerpo: esto se imprime, muchas veces en blanco y negro, y un saldo que
+   solo se distingue por el color deja de distinguirse en cuanto sale de la pantalla. Lo que importa
+   se marca con el texto —«No» en la columna de vigencia, «CADENA ROTA» en mayúsculas— y con el
+   tachado, que sobrevive a una fotocopia. */
+
+.ix-print {
+  --mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  --serif: var(--font-ibm-plex-serif), Georgia, serif;
+
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px;
+  background: var(--c-white);
+  color: var(--c-dark);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.ixp-cabecera h1 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 22px;
+  margin: 0 0 16px;
+}
+
+.ixp-cabecera dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 6px 24px;
+  margin: 0 0 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--c-warm-dark);
+}
+.ixp-cabecera dt {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-ash);
+}
+.ixp-cabecera dd { margin: 2px 0 0; }
+
+.ixp-totales { border-collapse: collapse; margin-bottom: 24px; }
+.ixp-totales th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--c-ash);
+  padding: 4px 24px 4px 0;
+}
+.ixp-totales td { font-variant-numeric: tabular-nums; }
+
+.ixp-asientos {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+.ixp-asientos th {
+  text-align: left;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-ash);
+  border-bottom: 1px solid var(--c-dark);
+  padding: 6px 8px 6px 0;
+}
+.ixp-asientos td {
+  padding: 5px 8px 5px 0;
+  border-bottom: 1px solid var(--c-warm-dark);
+  vertical-align: top;
+}
+
+/* Un asiento corregido o anulado. Tachado y no gris claro: el gris se pierde al fotocopiar. */
+.ixp-fuera td { text-decoration: line-through; color: var(--c-ash-dark); }
+
+.ixp-alerta { color: var(--c-bordeaux); font-weight: 500; }
+
+.ixp-pie {
+  margin-top: 28px;
+  padding-top: 14px;
+  border-top: 1px solid var(--c-warm-dark);
+  font-size: 9px;
+  line-height: 1.6;
+  color: var(--c-ash);
+}
+
+@media print {
+  /* Nada de fondos ni márgenes de navegador: el documento pone los suyos. */
+  .ix-print { padding: 0; max-width: none; }
+
+  /* Una fila no se parte entre dos páginas, y la cabecera de la tabla se repite en cada una: sin
+     esto, la segunda página de un registro mensual llega sin saber qué columna es cuál. */
+  .ixp-asientos { page-break-inside: auto; }
+  .ixp-asientos thead { display: table-header-group; }
+  .ixp-asientos tr { page-break-inside: avoid; }
+
+  .ixp-cabecera, .ixp-totales { page-break-after: avoid; }
+  .ixp-pie { page-break-before: avoid; }
+
+  /* El tachado y los filetes tienen que salir aunque el navegador ahorre tinta. */
+  .ix-print, .ix-print * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}

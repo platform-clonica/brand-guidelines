@@ -122,6 +122,26 @@ export function DetallePersona({ personId }: { personId: string }) {
           </p>
         )}
 
+        {/* Las dos salidas del registro. El CSV es para la asesoría y el imprimible es el PDF:
+            se abre en otra pestaña y se imprime solo. El periodo viaja en la URL para que el
+            enlace se pueda guardar y repetir con otras fechas. */}
+        <div className="ixc-acciones-panel">
+          <a
+            className="ixc-toggle"
+            href={`/api/clock/export?personId=${personId}&from=${mes.from}&to=${mes.to}`}
+          >
+            Descargar CSV
+          </a>
+          <a
+            className="ixc-toggle"
+            href={`/workspace/clock_r/equipo/${personId}/imprimir?from=${mes.from}&to=${mes.to}&print=1`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Imprimir o guardar en PDF
+          </a>
+        </div>
+
         <div className="ixc-mes-resumen">
           <span>Trabajado: {formatMinutes(rango.workedMinutes)}</span>
           <span>Jornada: {formatMinutes(rango.theoreticalMinutes)}</span>
