@@ -811,3 +811,44 @@ festivo cuenta como laborable en el saldo.
 - **Lo que el bloque 5 NO deja probado.** Nadie ha abierto estas pantallas todavía. Y `scope=team`
   necesita **dos sesiones distintas** —una de administración y una normal— para comprobar que cada
   una recibe lo suyo; con una sola no se distingue «la RLS filtra bien» de «solo hay una persona».
+  **Comprobado por Carlos el 2026-09-18**: panel, historial y el salto de incidencias funcionan.
+
+## Bloque 6 · qué cambió al implementarlo
+
+- **El PDF no se genera en servidor, y eso corrige el plan.** R2 queda resuelto mirando el repo: la
+  fase con Puppeteer del visor de presentaciones **nunca se construyó** —`deck-export-visor.md` dice
+  «sigue pendiente»— y `@sparticuz/chromium` no es dependencia. Añadirla son ~50 MB de bundle,
+  arranque en frío y riesgo de timeout en Netlify. El PDF es **una página que se imprime**, con
+  `?print=1`, igual que el visor de decks: sale vectorial y con las fuentes reales.
+- **El CSV sigue la convención del repo** (coma, `\r\n`, comillas solo cuando hacen falta) **más una
+  cosa que allí no hay: protección contra inyección de fórmulas.** Un valor que empieza por `=`, `+`,
+  `-` o `@` lo ejecuta Excel al abrirlo, y aquí el motivo lo teclea una persona. **Aviso: el
+  exportador de formularios tiene el mismo hueco, y allí los datos vienen de fuera.** No se tocó: es
+  un formato en producción y la decisión es de Carlos.
+- **La impresión se dispara cuando hay datos**, no al montar: imprimir antes de cargar y que el PDF
+  salga en blanco es el fallo clásico de esta técnica.
+- **La hoja de impresión no usa color para nada que importe**: esto se imprime, muchas veces en
+  blanco y negro. Lo que importa va en el texto y en el tachado, que sobreviven a una fotocopia.
+
+## Bloque 7 · qué cambió al implementarlo
+
+- **La tarjeta con comportamiento se declara con un DATO, no con JSX.** `overlay` vive en
+  `catalog.ts` —tabla pura que importan los tests— y el componente en `tileOverlays.tsx`, el mismo
+  reparto que `AppIcon` con los iconos. Así el dispatcher no necesita un `if` sobre un id concreto.
+  Con su invariante en el test: una tarjeta apagada no puede tener comportamiento.
+- **La home lee sin crear, y eso corrige el plan.** Iba a resolver la persona con `currentPerson`,
+  que **crea** la ficha: eso daría de alta a cualquiera en el registro horario por el mero hecho de
+  abrir el lanzador, o sea **antes de haber visto el aviso de protección de datos**. El alta ocurre
+  dentro de Clock_r.
+- **Un fallo cazado antes de commitear, y que estaba en verde.** La consulta de la home no filtraba
+  por usuario y se apoyaba en la RLS para devolver una fila. Pero la política es
+  `clock_is_admin() OR user_id = auth.uid()`: a administración le devuelve el equipo entero y
+  `maybeSingle()` revienta con la segunda persona. **La RLS decide SI puedo ver una fila, no CUÁL de
+  ellas soy yo.** La prueba real llega cuando entre Josep.
+- **El aviso de protección de datos funciona entero; el texto es un marcador declarado.** Lo redacta
+  quien lleve lo legal. Se compara la **versión** aceptada, no si existe alguna: así subir
+  `POLICY_VERSION` repregunta a todo el equipo. Y no bloquea la pantalla —deshabilita el fichaje—
+  porque la definición dice «antes de poder fichar», no «antes de poder mirar».
+- **Lo que el bloque 7 NO deja resuelto.** El texto legal. Los festivos de 2026 sin cargar, que
+  restan jornada a todo el equipo cada festivo. Josep sin ficha. Y `docs/features/clock-r.md` sigue
+  diciendo «pendiente de implementar»: la fase 3 del prompt pide actualizarlo, y es la última tarea.
