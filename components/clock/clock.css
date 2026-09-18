@@ -225,9 +225,17 @@
   background: var(--c-white);
 }
 
+/* Los anchos se eligen para los CUATRO sitios que pintan esta fila, no solo para la semana:
+   `DiaFila`, las incidencias y la `FilaPersona` de PanelEquipo, y el `HistorialDia` de
+   DetallePersona. Misma fila, mismos anchos — es la coherencia que pide CLAUDE.md.
+
+   Se miden en `ch` porque la tipografía es monoespaciada, así que un `ch` es exactamente un
+   carácter y el ancho se puede razonar contando: «miércoles 17» son 12 (y la primera columna lleva
+   además NOMBRES de persona en el panel de equipo), «12 h 45 min» son 11, y el saldo llega a
+   «−3 h 50 min», 11 con el signo tipográfico. Los 10/9/9 de antes cortaban los tres. */
 .ixc-dia {
   display: grid;
-  grid-template-columns: 10ch 1fr 9ch 9ch;
+  grid-template-columns: 13ch 1fr 11ch 12ch;
   gap: 16px;
   align-items: baseline;
   padding: 14px 18px;
@@ -259,11 +267,25 @@
    APAGADO POR DEFECTO, y esa es la condición no negociable: con la edición siempre activa, la
    comodidad se paga en asientos tocados sin querer dentro de un registro legal. Hay que entrar
    a propósito. */
-.ixc-modo-correccion {
+/* Título de sección e interruptor en la misma línea, el interruptor pegado a la derecha. */
+.ixc-seccion__cab {
   display: flex;
   align-items: baseline;
+  justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
+}
+/* El hueco lo pone la fila, no el título: dentro de la cabecera su margen sobra. */
+.ixc-seccion__cab .ixc-seccion__titulo { margin-bottom: 0; }
+
+/* La nota que explica qué hace corregir. Clase propia y no `.ixc-aviso-correccion`, que la
+   comparten PanelEquipo y DetallePersona como texto en línea: aquí es un párrafo suelto y
+   darle margen a la clase compartida se lo daría también a ellos. */
+.ixc-seccion__nota {
+  font-size: var(--fs-caption);
+  letter-spacing: 0.04em;
+  color: var(--c-ash);
+  margin: 0 0 16px;
 }
 
 .ixc-toggle {
@@ -384,17 +406,71 @@
   border-bottom: 1px solid var(--c-dark);
 }
 
+/* ── La barra de fichar ──
+   Lo primero de la pantalla y en oscuro, en todos los anchos. El contraste invertido la separa del
+   resto, que es todo claro: pegada arriba tiene que leerse como barra de sistema y no como un trozo
+   más del contenido que le pasa por debajo.
+
+   CUIDADO CON EL BURDEOS AQUÍ. Es el color de alerta por su `uiRole` declarado en lib/tokens.ts,
+   pero #99335F sobre #1C1A17 da del orden de 2:1 de contraste, muy por debajo del 4.5:1 que necesita
+   un texto para leerse. Así que dentro de esta barra el aviso NO lleva el texto en burdeos: el texto
+   va en Warm Light y el burdeos se queda en el filete de la izquierda, donde sigue siendo la señal
+   sin que haya que leerlo. El color conserva su rol; cambia qué parte del elemento lo lleva. */
+
+.ixc-hoy__acciones {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  background: var(--c-dark);
+  color: var(--c-warm-light);
+}
+
+/* Los márgenes superiores de estas dos los ponía la tarjeta cuando vivían dentro. Aquí el hueco lo
+   da el `gap` de la barra, así que sobran. */
+.ixc-hoy__acciones .ixc-modo { margin-top: 0; border-color: var(--c-ash-dark); }
+.ixc-hoy__acciones .ixc-actions { margin-top: 0; }
+
+/* Invertidos sobre el fondo oscuro: el relleno pasa a claro y el fantasma a borde claro. Sin esto
+   el botón principal sería Dark sobre Dark, es decir, invisible. */
+.ixc-hoy__acciones .ixc-btn {
+  background: var(--c-warm-light);
+  border-color: var(--c-warm-light);
+  color: var(--c-dark);
+}
+.ixc-hoy__acciones .ixc-btn--ghost {
+  background: transparent;
+  border-color: var(--c-ash);
+  color: var(--c-warm-light);
+}
+.ixc-hoy__acciones .ixc-btn--ghost:hover { border-color: var(--c-warm-light); }
+
+.ixc-hoy__acciones .ixc-modo button { color: var(--c-warm-dark); }
+.ixc-hoy__acciones .ixc-modo button[aria-pressed='true'] {
+  background: var(--c-warm-light);
+  color: var(--c-dark);
+}
+
+.ixc-hoy__acciones .ixc-toggle {
+  background: transparent;
+  border-color: var(--c-ash);
+  color: var(--c-warm-light);
+}
+
+/* El aviso dentro de la barra. Ver arriba por qué el texto no va en burdeos. */
+.ixc-hoy__acciones .ixc-alerta {
+  margin-top: 0;
+  background: transparent;
+  color: var(--c-warm-light);
+  border-left-color: var(--c-bordeaux);
+}
+
 /* ── Escritorio ──
-   El mismo punto de ruptura que el bloque de móvil, por el otro lado.
-
-   POR QUÉ LA BARRA DE FICHAR SE SALE DE LA TARJETA. `position: sticky` se pega dentro de su padre,
-   así que una barra dentro de `.ixc-hoy` se despegaría en cuanto la tarjeta saliera de pantalla —
-   que es exactamente cuando hace falta. Colgando de `.ixc-main`, que abarca toda la página, se queda
-   arriba mientras se baja a la semana y al mes. No se duplica nada: el botón es el mismo y está una
-   sola vez en el DOM, solo que fuera de la tarjeta.
-
-   En móvil no cambia nada: la barra vuelve a ser flujo normal, detrás de la tarjeta, y los márgenes
-   de `.ixc-modo` y `.ixc-actions` reproducen el espaciado de antes. */
+   El mismo punto de ruptura que el bloque de móvil, por el otro lado. Aquí la barra se queda
+   pegada arriba mientras se baja a la semana y al mes; en móvil es flujo normal, igual de oscura y
+   también la primera. */
 
 @media (min-width: 721px) {
   .ixc-hoy {
@@ -416,17 +492,8 @@
     position: sticky;
     top: 0;
     z-index: 5;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-top: 16px;
-    padding: 12px 16px;
-    border: 1px solid var(--c-warm-dark);
-    background: var(--c-warm-light);
   }
-  .ixc-hoy__acciones .ixc-modo { margin-top: 0; }
-  .ixc-hoy__acciones .ixc-actions { margin-top: 0; margin-left: auto; }
+  .ixc-hoy__acciones .ixc-actions { margin-left: auto; }
 
   /* Los 52px de alto son para pulsar de pie cruzando una puerta, que es el caso de móvil. Pegada
      arriba en un escritorio y con ratón, ese alto se come pantalla en cada scroll. */
@@ -443,18 +510,20 @@
     text-transform: uppercase;
     font-weight: 500;
   }
+  /* Sobre el fondo oscuro: el punto apagado es Ash y el de dentro, Warm Light. Al revés que en
+     claro, donde el lleno era Dark. */
   .ixc-hoy__punto {
     width: 8px;
     height: 8px;
     background: var(--c-ash);
   }
-  .ixc-hoy__estado--dentro .ixc-hoy__punto { background: var(--c-dark); }
+  .ixc-hoy__estado--dentro .ixc-hoy__punto { background: var(--c-warm-light); }
   .ixc-hoy__estado small {
     font-size: var(--fs-caption);
     font-weight: 400;
     text-transform: none;
     letter-spacing: 0;
-    color: var(--c-ash);
+    color: var(--c-warm-dark);
     font-variant-numeric: tabular-nums;
   }
 }

@@ -297,6 +297,50 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
 
         {persona && (
           <>
+            {/* La barra de fichar, lo primero de todo y en oscuro.
+
+                Primero porque es la acción de la pantalla: quien entra viene a fichar, no a leer su
+                saldo. Y pegada arriba en escritorio para no tener que volver al principio cuando se
+                ha bajado a la semana o al mes. `position: sticky` se pega dentro de su padre, así
+                que la barra cuelga de `.ixc-main` —que abarca la página entera— y no de la tarjeta,
+                que se despegaría justo cuando hace falta. El botón está una sola vez en el DOM. */}
+            <div className="ixc-hoy__acciones">
+              <span
+                className={`ixc-hoy__estado ${acciones[0] === 'in' ? '' : 'ixc-hoy__estado--dentro'}`}
+              >
+                <span className="ixc-hoy__punto" aria-hidden="true" />
+                {ESTADO[acciones[0]]}
+                <small>{formatMinutes(dia?.day.workedMinutes ?? 0)}</small>
+              </span>
+
+              {/* No bloquea la pantalla: deshabilita el fichaje y deja mirar. La definición dice
+                  «antes de poder fichar», no «antes de poder mirar», y un modal del que no se puede
+                  salir enseña a cerrar de un clic lo que estorba — lo contrario de lo que un aviso
+                  pretende. Va dentro de la barra porque explica por qué el botón está apagado: si
+                  se quedara fuera, al bajar la página el botón parecería roto sin motivo. */}
+              {aceptada === false && (
+                <p className="ixc-alerta">
+                  Antes de fichar tienes que leer y aceptar el aviso de protección de datos.{' '}
+                  <button
+                    type="button"
+                    className="ixc-toggle"
+                    style={{ marginLeft: 8 }}
+                    onClick={() => setAvisoAbierto(true)}
+                  >
+                    Leer el aviso
+                  </button>
+                </p>
+              )}
+
+              <FicharButton
+                actions={acciones}
+                mode={mode}
+                onMode={setMode}
+                onFichar={fichar}
+                busy={busy || cargando || aceptada !== true}
+              />
+            </div>
+
             <section className="ixc-hoy" aria-label="Hoy">
               <div className="ixc-hoy__resumen">
                 <p className="ixc-eyebrow">{etiquetaDia(hoy)}</p>
@@ -350,47 +394,6 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
               </div>
             </section>
 
-            {/* La barra de fichar, FUERA de la tarjeta a propósito: pegada arriba en escritorio
-                mientras se baja a la semana y al mes, para no tener que volver al principio para
-                fichar. `position: sticky` se pega dentro de su padre, así que dentro de `.ixc-hoy`
-                se despegaría justo cuando hace falta. El botón sigue siendo uno solo. */}
-            <div className="ixc-hoy__acciones">
-              <span
-                className={`ixc-hoy__estado ${acciones[0] === 'in' ? '' : 'ixc-hoy__estado--dentro'}`}
-              >
-                <span className="ixc-hoy__punto" aria-hidden="true" />
-                {ESTADO[acciones[0]]}
-                <small>{formatMinutes(dia?.day.workedMinutes ?? 0)}</small>
-              </span>
-
-              {/* No bloquea la pantalla: deshabilita el fichaje y deja mirar. La definición dice
-                  «antes de poder fichar», no «antes de poder mirar», y un modal del que no se puede
-                  salir enseña a cerrar de un clic lo que estorba — lo contrario de lo que un aviso
-                  pretende. Va dentro de la barra porque explica por qué el botón está apagado: si
-                  se quedara fuera, al bajar la página el botón parecería roto sin motivo. */}
-              {aceptada === false && (
-                <p className="ixc-alerta">
-                  Antes de fichar tienes que leer y aceptar el aviso de protección de datos.{' '}
-                  <button
-                    type="button"
-                    className="ixc-toggle"
-                    style={{ marginLeft: 8 }}
-                    onClick={() => setAvisoAbierto(true)}
-                  >
-                    Leer el aviso
-                  </button>
-                </p>
-              )}
-
-              <FicharButton
-                actions={acciones}
-                mode={mode}
-                onMode={setMode}
-                onFichar={fichar}
-                busy={busy || cargando || aceptada !== true}
-              />
-            </div>
-
             {error && (
               <p className="ixc-alerta" role="alert">
                 {error}
@@ -420,30 +423,36 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
             )}
 
             <section className="ixc-seccion" aria-label="Esta semana">
-              <h2 className="ixc-seccion__titulo">
-                Esta semana{' '}
-                <span className={`ixc-saldo ${saldoSemana < 0 ? 'ixc-saldo--defecto' : 'ixc-saldo--exceso'}`}>
-                  {formatMinutes(saldoSemana)}
-                </span>
-              </h2>
+              {/* El interruptor va en la misma línea del título, a la derecha: sigue estando
+                  donde están los asientos que enciende, que es la razón de que no viva en la
+                  cabecera de la página. «Editar» se lee antes que «Modo corrección», y el
+                  `aria-label` lo desarrolla sin contradecir lo que se ve — la norma de accesibilidad
+                  pide que el nombre accesible contenga el texto visible, y por eso empieza por
+                  «Editar» en vez de sustituirlo por otra cosa. */}
+              <div className="ixc-seccion__cab">
+                <h2 className="ixc-seccion__titulo">
+                  Esta semana{' '}
+                  <span className={`ixc-saldo ${saldoSemana < 0 ? 'ixc-saldo--defecto' : 'ixc-saldo--exceso'}`}>
+                    {formatMinutes(saldoSemana)}
+                  </span>
+                </h2>
 
-              {/* El interruptor va aquí y no en la cabecera: es donde están los asientos que
-                  enciende. Un interruptor lejos de lo que activa se pulsa sin saber qué hace. */}
-              <div className="ixc-modo-correccion">
                 <button
                   type="button"
                   className="ixc-toggle"
                   aria-pressed={corrigiendo}
+                  aria-label="Editar los fichajes de esta semana"
                   onClick={() => setCorrigiendo((v) => !v)}
                 >
-                  Modo corrección
+                  Editar
                 </button>
-                {corrigiendo && (
-                  <span className="ixc-aviso-correccion">
-                    Corregir escribe un asiento nuevo. El original no se borra.
-                  </span>
-                )}
               </div>
+
+              {corrigiendo && (
+                <p className="ixc-seccion__nota">
+                  Corregir escribe un asiento nuevo. El original no se borra.
+                </p>
+              )}
 
               <div className="ixc-semana">
                 {cargando && <p className="ixc-vacio">Cargando</p>}
