@@ -778,3 +778,36 @@ festivo cuenta como laborable en el saldo.
 - **Lo que el bloque 4 NO deja resuelto.** El panel de incidencias solo muestra las de HOY, porque
   `compileRange` aplana las del mes sin decir de qué día es cada una; y sus filas no son pulsables
   porque no hay adónde saltar. Las dos cosas están escritas en el código, no disimuladas.
+  **Resuelto en el bloque 5** (ver abajo): el límite dejó de ser cómodo en cuanto el panel de equipo
+  pidió incidencias ordenadas por antigüedad.
+
+## Bloque 5 · qué cambió al implementarlo
+
+- **El límite del bloque 4 pasó a ser un bloqueo, y eso fue lo primero.** El panel pide «incidencias
+  abiertas ordenadas por antigüedad» y sin fecha no hay antigüedad que ordenar. Ahora cada incidencia
+  del rango lleva su día (`RangeIssue`), con `null` para las que no son de ningún día —fechas de
+  periodo ilegibles, una fila sin día— porque inventarles uno sería mentir sobre dónde está el
+  problema. De paso, en «Mi jornada» el panel muestra el mes entero y sus filas saltan al día.
+- **El resumen se construye desde las PERSONAS, no desde los asientos.** Si se construyera desde los
+  asientos, quien no ha fichado en toda la semana desaparecería del panel — y es exactamente la
+  persona que hay que ver. Mismo principio que hace que `compileRange` enumere fechas.
+- **`scope=team` en asientos y ausencias**, para no hacer una petición por cabeza. Sin comprobación
+  de rol a propósito: la RLS ya deja ver lo propio o todo según quien pregunte, y un 403 aquí
+  significaría definir en dos sitios quién puede mirar.
+- **El rol se comprueba en servidor Y se explica.** La RLS devolvería cero filas a quien no es
+  administración, y una pantalla vacía parece rota. La comprobación no protege nada nuevo: convierte
+  una lista vacía en una negativa legible.
+- **El historial de una persona ENSEÑA los asientos sustituidos**, tachados y con su motivo. Es la
+  única pantalla que lo hace, y es el sentido de que la tabla solo admita inserciones: si al corregir
+  se reescribiera la hora, esa pantalla no existiría porque no habría nada que enseñar.
+- **La comprobación de cadena va aparte de la carga.** Estaba dentro del `Promise.all`, así que un
+  fallo suyo tumbaba todo y la pantalla decía «no se pudo cargar el historial» en vez de enseñarlo.
+  Y tiene tres estados, no dos: que falte el veredicto **no** puede leerse como «verificada».
+- **El editor de jornada añade un tramo con su fecha de efecto**, no pisa el vigente. Es la
+  consecuencia práctica de que `schedules` sea la única fila que se reescribe.
+- **`minutesFromHHMM` / `hhmmFromMinutes` viven en `lib/clock` con tests**, no en el formulario: la
+  conversión decide la jornada teórica de alguien y un 7:30 que debía ser 8:00 no lo revisa nadie.
+  Sin módulo de 24: 1440 minutos son `24:00`, no `00:00`.
+- **Lo que el bloque 5 NO deja probado.** Nadie ha abierto estas pantallas todavía. Y `scope=team`
+  necesita **dos sesiones distintas** —una de administración y una normal— para comprobar que cada
+  una recibe lo suyo; con una sola no se distingue «la RLS filtra bien» de «solo hay una persona».
