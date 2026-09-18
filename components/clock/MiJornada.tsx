@@ -22,7 +22,18 @@ import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
 import { ClockLogo } from '@/components/studio/Wordmark';
 import { LogoutButton } from '@/components/studio/LogoutButton';
 import { IssuesPanel } from '@/components/studio/IssuesPanel';
-import { amendEntry, ChainBusyError, listAbsences, listCalendar, listEntries, recordEntry } from '@/lib/clock/api';
+import {
+  acceptPolicy,
+  amendEntry,
+  ChainBusyError,
+  getConsent,
+  listAbsences,
+  listCalendar,
+  listEntries,
+  recordEntry,
+} from '@/lib/clock/api';
+import { POLICY_HASH, POLICY_VERSION } from '@/lib/clock/policy';
+import { AvisoProteccionDatos } from './AvisoProteccionDatos';
 import { availableActions, correctableEntries, type ClockAction } from '@/lib/clock/actions';
 import type { EntryRow } from '@/lib/clock/schema';
 import { CorregirModal, type CorreccionInput } from './CorregirModal';
@@ -50,6 +61,12 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
   /* Plegado por defecto: lo que se mira a diario es hoy y la semana. El mes es para cuadrar a fin
      de mes, y desplegado de serie empujaría la semana fuera de la pantalla en un móvil. */
   const [mesAbierto, setMesAbierto] = useState(false);
+  /* Se compara la VERSIÓN aceptada con la vigente, no si existe alguna aceptación: mirar solo si
+     hay alguna haría que subir POLICY_VERSION no volviera a preguntar a nadie, y ese es justo el
+     mecanismo por el que un cambio del texto no pasa desapercibido.
+     `null` mientras se comprueba: hasta saberlo no se afirma ni que falta ni que está. */
+  const [aceptada, setAceptada] = useState<boolean | null>(null);
+  const [avisoAbierto, setAvisoAbierto] = useState(false);
 
   const hoy = todayIn();
   const mes = useMemo(() => monthRange(hoy), [hoy]);
@@ -77,6 +94,21 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
   useEffect(() => {
     void cargar();
   }, [cargar]);
+
+  /* Aparte de `cargar`, a propósito: si la comprobación del consentimiento fallara dentro del
+     Promise.all, tumbaría la carga entera y la pantalla no enseñaría la jornada. Es la misma
+     lección que la verificación de cadena en el historial. */
+  useEffect(() => {
+    void getConsent()
+      .then((c) => setAceptada(c?.policy_version === POLICY_VERSION))
+      .catch(() => setAceptada(false));
+  }, []);
+
+  const aceptarAviso = async () => {
+    await acceptPolicy(POLICY_VERSION, POLICY_HASH);
+    setAceptada(true);
+    setAvisoAbierto(false);
+  };
 
   /* `schedules` viene de un JSONB y no está validado: si no es una lista, se trata como vacía y el
      propio compilador lo dice con «no hay jornada teórica vigente». No se inventa una por defecto. */
@@ -236,12 +268,30 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
                 {dia?.day.open && <span>Jornada abierta</span>}
               </div>
 
+              {/* No bloquea la pantalla: deshabilita el fichaje y deja mirar. La definición dice
+                  «antes de poder fichar», no «antes de poder mirar», y un modal del que no se puede
+                  salir enseña a cerrar de un clic lo que estorba — lo contrario de lo que un aviso
+                  pretende. */}
+              {aceptada === false && (
+                <p className="ixc-alerta">
+                  Antes de fichar tienes que leer y aceptar el aviso de protección de datos.{' '}
+                  <button
+                    type="button"
+                    className="ixc-toggle"
+                    style={{ marginLeft: 8 }}
+                    onClick={() => setAvisoAbierto(true)}
+                  >
+                    Leer el aviso
+                  </button>
+                </p>
+              )}
+
               <FicharButton
                 actions={acciones}
                 mode={mode}
                 onMode={setMode}
                 onFichar={fichar}
-                busy={busy || cargando}
+                busy={busy || cargando || aceptada !== true}
               />
 
               {error && (
@@ -357,6 +407,10 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
 
       {aCorregir && (
         <CorregirModal entry={aCorregir} onClose={() => setACorregir(null)} onSubmit={corregir} />
+      )}
+
+      {avisoAbierto && (
+        <AvisoProteccionDatos onClose={() => setAvisoAbierto(false)} onAceptar={aceptarAviso} />
       )}
     </div>
   );
