@@ -6,7 +6,12 @@
 > el proyecto, FormMak_r lo investiga, ReWrit_r escribe, DSMak_r arranca la interfaz, y Clock_r
 > registra el tiempo con el que se hacen las otras cuatro.
 
-Estado: **definido** · pendiente de implementar.
+Estado: **implementado** · pendiente de piloto (2026-09-18).
+
+Los siete bloques están en código, con la base de datos aplicada en producción y verificada. Lo que
+cambió al implementarlo, y por qué, está en [clock-r-plan.md](clock-r-plan.md), que es el documento
+vivo: este define **qué** hace la herramienta y aquel registra **cómo** se resolvió y qué se corrigió
+por el camino. Lo que todavía no está probado se lista en *Pendiente*, al final.
 
 ## Contexto
 
@@ -431,21 +436,41 @@ memoria. Dos de ellos corrigen supuestos que traía la definición antes de mira
   asiento original en el cálculo y el original sigue siendo visible. Un asiento anulado desaparece
   del cálculo. Tramos solapados tras corregir producen incidencia. Una serie deliberadamente
   incoherente devuelve incidencias y nunca una excepción.
-- `hash.test.ts` — la cadena verifica de principio a fin. Alterar el contenido de un asiento
-  intermedio rompe la verificación en ese punto exacto. La función de TypeScript y la de Postgres
-  producen el mismo hash para la misma entrada — este test es el que evita que la garantía sea
-  decorativa.
+- `hash.test.ts` — **corregido respecto a lo que decía esta lista.** No compara en vivo la función de
+  TypeScript con la de Postgres: ningún test de este repo habla con la base de datos. Lo que hace es
+  comprobar la implementación de TypeScript contra **vectores dorados generados en Postgres**
+  (`fixtures/hash-vectors.json`, regenerables con `scripts/clock-hash-vectors.ts`). Es más débil que
+  una comparación en vivo y por eso se dice: si alguien cambia la función de Postgres sin regenerar
+  los vectores, lo caza el paso manual, no el test. Además comprueba que el prefijo de longitud mide
+  bytes y no caracteres, y que dos asientos distintos no pueden producir la misma carga útil.
+  En producción **el hash lo calcula solo Postgres**; `lib/clock/hash.ts` es un oráculo de test y no
+  está en ninguna ruta de ejecución.
 - `calendar.test.ts` — el saldo usa el tramo de `schedules` vigente en la fecha, no el actual. Un
   festivo y una ausencia no generan incidencia por falta de fichaje. La jornada intensiva aplica
   solo dentro de su periodo. El cruce de medianoche asigna el tramo al `work_date` correcto.
-- `export.test.ts` — el CSV incluye los asientos de corrección con su motivo y su autor, no solo el
-  resultado. El PDF lleva periodo, persona y fecha de generación. Los textos libres se escapan
-  antes de inyectarse.
+- `export.test.ts` — el CSV incluye los asientos de corrección con su motivo y su autor, y el asiento
+  sustituido sale igual, marcado como no vigente. Los textos libres se escapan, y además **no se
+  ejecutan al abrirlos en Excel**: un motivo que empiece por `=`, `+`, `-` o `@` se neutraliza.
+  **Corregido respecto a lo que decía esta lista: no hay test del PDF**, y no puede haberlo — el PDF
+  no lo genera código nuestro, es una página que se imprime desde el navegador (ver *Pendiente*).
 - `lib/workspace/__tests__/catalog.test.ts` — la entrada `clockr`, su posición delante de
   `socialmakr`, y las invariantes que ya cubre el archivo: ids únicos y tarjeta apagada sin `href`.
 - `npm run type-check` y `npm run build` limpios.
 
 **Manual**
+
+Estado al 2026-09-18. Los trece se repiten enteros antes del piloto; esto dice cuáles se han hecho ya.
+
+- **Hechos y comprobados** (Carlos, 2026-09-17 y 18): el 4, el 5 y el 7 — fichar desde la tarjeta,
+  la semana cuadra, y corregir una hora deja el original visible y no guarda sin motivo. Además, la
+  cadena se verificó recalculándola desde fuera con `clock_entry_hash`.
+- **Probado por otra vía**: el 6. A `authenticated` solo le queda `select` sobre `clock_entries`, así
+  que un `update` se deniega **por privilegio antes de llegar a la RLS** — comprobado consultando los
+  permisos concedidos, que es más fuerte que intentarlo una vez.
+- **Bloqueados hasta que haya una segunda persona**: el 3 y el 11. Con un solo usuario, que es además
+  administrador, no se puede distinguir «la RLS filtra bien» de «solo hay una fila». Es también la
+  única prueba real del filtro por usuario de la tarjeta del lanzador (ver el plan, bloque 7).
+- **Pendientes**: el 1, el 2, el 8, el 9, el 10, el 12 y el 13.
 
 1. Sin sesión, `/workspace/clock_r` redirige a `/workspace/login?next=/workspace/clock_r`.
 2. Con una cuenta que no sea `@interactius.com`, lo mismo.
@@ -489,6 +514,30 @@ memoria. Dos de ellos corrigen supuestos que traía la definición antes de mira
   señal: fichajes duplicados por doble clic o por una pestaña repetida.
 - **Apagado de Zoho.** No es una tarea de código, pero es la que cierra el proyecto. Ver decisiones
   abiertas.
+
+### Lo que falta antes del piloto (2026-09-18)
+
+Esto no es trabajo futuro: es lo que impide dar la herramienta por lista.
+
+- **El texto del aviso de protección de datos.** Hoy es un marcador declarado en `lib/clock/policy.ts`,
+  escrito para que no se pueda confundir con el definitivo. El circuito funciona entero: al llegar el
+  texto se sustituye, se sube `POLICY_VERSION` y se repregunta a todo el equipo sin tocar código.
+- **Los festivos de 2026, sin cargar.** Hasta que estén, cada festivo cuenta como día laborable y
+  resta ocho horas de saldo a toda la plantilla. Es lo que más silenciosamente falsea el registro. El
+  panel de equipo avisa en Burdeos mientras el año esté vacío.
+- **Josep no tiene ficha** porque no ha entrado nunca. Cuando entre, hay que repetir a mano el
+  `update` que lo pone como administrador — la vía que se eligió pedía ese segundo paso.
+- **El formato de exportación, con la asesoría.** Sigue siendo una decisión abierta de la definición,
+  y la recomendación era preguntarlo **antes** de escribir el exportador. El CSV lleva todos los
+  datos; el orden de columnas es provisional y barato de cambiar.
+- **El marco normativo, contrastado.** El §Contexto está escrito sobre fuentes secundarias. Hay que
+  repasarlo con la asesoría antes de apagar Zoho, no después.
+
+### Un hueco que NO es de Clock_r, y conviene que no se pierda
+
+El exportador de formularios (`app/forms/api/export`) escapa el CSV pero **no protege contra
+inyección de fórmulas**, y allí los datos los teclea gente de fuera. Clock_r sí lo hace. No se tocó
+porque es un formato en producción y la decisión es de Carlos.
 
 ---
 
