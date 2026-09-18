@@ -46,6 +46,19 @@ import type { ClockMode, ClockPersonRow } from '@/lib/clock/types';
 import { FicharButton } from './FicharButton';
 import './clock.css';
 
+/* `weekRange` empieza en lunes, así que el índice 0 es lunes. */
+const LETRA_DIA = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+/* El estado en una palabra, derivado de `availableActions` y no de una lectura propia de los
+   tramos: si aquí se dedujera otra vez, el día que las dos lecturas discreparan la barra diría
+   «Fuera» con el botón ofreciendo «Salir». */
+const ESTADO: Record<ClockAction, string> = {
+  in: 'Fuera',
+  out: 'Dentro',
+  break_start: 'Dentro',
+  break_end: 'En pausa',
+};
+
 export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
   const [entries, setEntries] = useState<unknown[]>([]);
   const [absences, setAbsences] = useState<{ fromDate: string; toDate: string }[]>([]);
@@ -135,6 +148,40 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
     () => rango.days.filter((d) => d.day.workDate >= semana.from && d.day.workDate <= semana.to),
     [rango, semana.from, semana.to],
   );
+
+  /* El vistazo de la semana: siete barras, de lunes a domingo.
+
+     SE CONSTRUYE DESDE `weekRange` Y NO DESDE `diasSemana`. `compileRange` solo cubre el mes, así
+     que una semana a caballo de dos meses —la de fin de mes, todos los meses— dejaría fuera los días
+     del otro y el gráfico saldría con cinco columnas sin decir por qué. Los días que faltan salen
+     vacíos, que es la verdad: no hay dato, no que se trabajara cero.
+
+     Las barras se miden contra el día más largo de la semana y no contra la teórica de cada uno: un
+     sábado trabajado tiene teórica cero, y dividir entre ella lo pintaría al 100% o lo escondería
+     del todo. Contra un máximo común, cada barra se lee en minutos comparables. */
+  const vistaSemana = useMemo(() => {
+    const inicio = new Date(`${semana.from}T00:00:00Z`);
+    const dias = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(inicio);
+      d.setUTCDate(d.getUTCDate() + i);
+      const fecha = d.toISOString().slice(0, 10);
+      const r = porFecha.get(fecha);
+      return {
+        fecha,
+        trabajados: r?.day.workedMinutes ?? 0,
+        teoricos: r?.day.theoreticalMinutes ?? 0,
+      };
+    });
+    /* El 1 no es una jornada inventada: es el suelo que evita dividir entre cero en una semana sin
+       un solo minuto, donde todas las barras valen cero de todas formas. */
+    const referencia = Math.max(1, ...dias.map((d) => Math.max(d.trabajados, d.teoricos)));
+    return dias.map((d) => ({
+      ...d,
+      pct: Math.round((d.trabajados / referencia) * 100),
+      esHoy: d.fecha === hoy,
+      laborable: d.teoricos > 0,
+    }));
+  }, [semana.from, porFecha, hoy]);
 
   /* Los asientos crudos de cada día, para el modo corrección. Se corrige cualquier día de la
      semana y no solo hoy: el caso típico es «ayer olvidé fichar la salida», y restringirlo a hoy
@@ -251,27 +298,76 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
         {persona && (
           <>
             <section className="ixc-hoy" aria-label="Hoy">
-              <p className="ixc-eyebrow">{etiquetaDia(hoy)}</p>
+              <div className="ixc-hoy__resumen">
+                <p className="ixc-eyebrow">{etiquetaDia(hoy)}</p>
 
-              <p className="ixc-total">
-                {formatMinutes(dia?.day.workedMinutes ?? 0)}
-                <small>de {formatMinutes(dia?.day.theoreticalMinutes ?? 0)}</small>
-              </p>
+                <p className="ixc-total">
+                  {formatMinutes(dia?.day.workedMinutes ?? 0)}
+                  <small>de {formatMinutes(dia?.day.theoreticalMinutes ?? 0)}</small>
+                </p>
 
-              <div className="ixc-meta">
-                <span>Pausas: {formatMinutes(dia?.day.breakMinutes ?? 0)}</span>
-                <span
-                  className={`ixc-saldo ${(dia?.day.balanceMinutes ?? 0) < 0 ? 'ixc-saldo--defecto' : 'ixc-saldo--exceso'}`}
-                >
-                  Saldo del día: {formatMinutes(dia?.day.balanceMinutes ?? 0)}
-                </span>
-                {dia?.day.open && <span>Jornada abierta</span>}
+                <div className="ixc-meta">
+                  <span>Pausas: {formatMinutes(dia?.day.breakMinutes ?? 0)}</span>
+                  <span
+                    className={`ixc-saldo ${(dia?.day.balanceMinutes ?? 0) < 0 ? 'ixc-saldo--defecto' : 'ixc-saldo--exceso'}`}
+                  >
+                    Saldo del día: {formatMinutes(dia?.day.balanceMinutes ?? 0)}
+                  </span>
+                  {dia?.day.open && <span>Jornada abierta</span>}
+                </div>
               </div>
+
+              {/* Solo en escritorio, por CSS. Las barras van `aria-hidden` porque son la misma
+                  semana que la tabla de abajo, que sí se lee entera: anunciar siete barras sin
+                  texto sería ruido por un dato que ya está dicho. */}
+              <div className="ixc-hoy__semana-vista">
+                <div className="ixc-vista__cab">
+                  <span className="ixc-eyebrow">Esta semana</span>
+                  <span
+                    className={`ixc-saldo ${saldoSemana < 0 ? 'ixc-saldo--defecto' : 'ixc-saldo--exceso'}`}
+                  >
+                    {formatMinutes(saldoSemana)}
+                  </span>
+                </div>
+
+                <div className="ixc-vista__barras" aria-hidden="true">
+                  {vistaSemana.map((d, i) => (
+                    <div
+                      key={d.fecha}
+                      className={`ixc-vista__col ${d.esHoy ? 'ixc-vista__col--hoy' : ''} ${
+                        d.laborable ? '' : 'ixc-vista__col--libre'
+                      }`}
+                    >
+                      <span className="ixc-vista__pista">
+                        <span className="ixc-vista__relleno" style={{ height: `${d.pct}%` }} />
+                      </span>
+                      <span className={`ixc-vista__dia ${d.esHoy ? 'ixc-vista__dia--hoy' : ''}`}>
+                        {LETRA_DIA[i]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* La barra de fichar, FUERA de la tarjeta a propósito: pegada arriba en escritorio
+                mientras se baja a la semana y al mes, para no tener que volver al principio para
+                fichar. `position: sticky` se pega dentro de su padre, así que dentro de `.ixc-hoy`
+                se despegaría justo cuando hace falta. El botón sigue siendo uno solo. */}
+            <div className="ixc-hoy__acciones">
+              <span
+                className={`ixc-hoy__estado ${acciones[0] === 'in' ? '' : 'ixc-hoy__estado--dentro'}`}
+              >
+                <span className="ixc-hoy__punto" aria-hidden="true" />
+                {ESTADO[acciones[0]]}
+                <small>{formatMinutes(dia?.day.workedMinutes ?? 0)}</small>
+              </span>
 
               {/* No bloquea la pantalla: deshabilita el fichaje y deja mirar. La definición dice
                   «antes de poder fichar», no «antes de poder mirar», y un modal del que no se puede
                   salir enseña a cerrar de un clic lo que estorba — lo contrario de lo que un aviso
-                  pretende. */}
+                  pretende. Va dentro de la barra porque explica por qué el botón está apagado: si
+                  se quedara fuera, al bajar la página el botón parecería roto sin motivo. */}
               {aceptada === false && (
                 <p className="ixc-alerta">
                   Antes de fichar tienes que leer y aceptar el aviso de protección de datos.{' '}
@@ -293,18 +389,18 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
                 onFichar={fichar}
                 busy={busy || cargando || aceptada !== true}
               />
+            </div>
 
-              {error && (
-                <p className="ixc-alerta" role="alert">
-                  {error}
-                </p>
-              )}
-              {cadenaRota && (
-                <p className="ixc-alerta" role="alert">
-                  El registro de este periodo ha dejado de ser fiable. Avisa a administración.
-                </p>
-              )}
-            </section>
+            {error && (
+              <p className="ixc-alerta" role="alert">
+                {error}
+              </p>
+            )}
+            {cadenaRota && (
+              <p className="ixc-alerta" role="alert">
+                El registro de este periodo ha dejado de ser fiable. Avisa a administración.
+              </p>
+            )}
 
             {/* Todas las del mes, no solo las de hoy: cada una sabe ya de qué día es. Y las filas
                 llevan a su día, que es lo que el bloque 4 no podía hacer. `locate` devuelve null
