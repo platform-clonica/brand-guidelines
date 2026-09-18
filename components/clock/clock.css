@@ -302,6 +302,14 @@
 }
 .ixc-asiento:hover { border-color: var(--c-dark); }
 
+/* ── Acciones del panel de administración ── */
+.ixc-acciones-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 8px;
+}
+
 /* ── El mes ──
    Plegado por defecto: lo que se mira a diario es hoy y la semana. El mes es para cuadrar a fin de
    mes, y desplegado de serie empujaría la semana fuera de la pantalla en un móvil. */
