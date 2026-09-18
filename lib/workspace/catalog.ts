@@ -23,6 +23,11 @@ export type AppEntry = {
   description?: string;
   /** Wordmark de la herramienta, partido por el guión bajo (ver components/studio/Wordmark.tsx). */
   wordmark?: { before: string; after: string };
+  /* Una tarjeta que además HACE algo, no solo lleva a un sitio. Es un DATO y no JSX, por lo mismo
+     que los iconos no están aquí: este módulo es tabla de datos pura y lo importan los tests. El
+     componente que le corresponde vive en components/workspace/tileOverlays.tsx, igual que el mapa
+     de iconos vive en AppIcon.tsx. Así el dispatcher no necesita un `if` sobre un id concreto. */
+  overlay?: 'clock';
 };
 
 export const APPS: AppEntry[] = [
@@ -78,6 +83,9 @@ export const APPS: AppEntry[] = [
     href: '/workspace/clock_r',
     description: 'Registro horario',
     wordmark: { before: 'Clock', after: 'r' },
+    /* Se ficha desde aquí, sin entrar. La fricción de fichar es la razón de existir de la
+       herramienta: un registro que cuesta abrir se llena de olvidos. */
+    overlay: 'clock',
   },
   {
     id: 'socialmakr',

@@ -57,6 +57,14 @@ test('toda herramienta trae su wordmark; ningún link lo trae', () => {
   }
 });
 
+test('una tarjeta apagada no puede tener comportamiento', () => {
+  /* `overlay` añade una acción sobre la tarjeta. En una sin `href` no habría nada que accionar, y
+     sería la misma contradicción silenciosa que `external` sin destino. */
+  for (const a of APPS) {
+    if (a.href === null) assert.equal(a.overlay, undefined, `${a.id}: apagada pero con comportamiento`);
+  }
+});
+
 test('ningún grupo se queda vacío', () => {
   for (const g of GROUPS) {
     assert.ok(appsIn(g.id).length > 0, `el grupo ${g.id} no tiene ninguna app`);

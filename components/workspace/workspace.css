@@ -100,6 +100,36 @@
     border-color 150ms var(--ease, ease);
 }
 
+/* Una tarjeta que además hace algo: el enlace arriba y el botón debajo, apilados. El botón no puede
+   ir dentro del <a> —sería HTML inválido y el clic ambiguo— así que comparten envoltorio. */
+.ixw-tile-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: var(--tile-w);
+  max-width: 100%;
+}
+.ixw-tile-wrap .ixw-tile { width: 100%; }
+
+/* El único botón con relleno del lanzador, y a propósito: es la acción de la que depende que el
+   registro sea real. Alto cómodo para el pulgar, que es como se ficha al cruzar una puerta. */
+.ixw-tile__ficha {
+  appearance: none;
+  cursor: pointer;
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 14px;
+  border: 1px solid var(--c-dark);
+  background: var(--c-dark);
+  color: var(--c-warm-light);
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.ixw-tile__ficha:hover { opacity: 0.88; }
+.ixw-tile__ficha[disabled] { cursor: default; opacity: 0.45; }
+
 .ixw-tile--link { height: 92px; }
 .ixw-tile--tool { height: 192px; }
 

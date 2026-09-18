@@ -7,7 +7,7 @@ import type { AppEntry } from '@/lib/workspace/catalog';
    Deshabilitada (`href: null`) se renderiza como <div aria-disabled>, NO como un <a> sin destino:
    así no es focusable, no hay enlace muerto y el tabulador se la salta. El motivo ("Próximamente")
    es texto visible, no solo un atributo. */
-export function AppTile({ app }: { app: AppEntry }) {
+export function AppTile({ app, overlay }: { app: AppEntry; overlay?: React.ReactNode }) {
   const shape = app.group === 'tools' ? 'ixw-tile--tool' : 'ixw-tile--link';
   const body = (
     <>
@@ -33,7 +33,7 @@ export function AppTile({ app }: { app: AppEntry }) {
     ? { target: '_blank' as const, rel: 'noopener noreferrer' }
     : {};
 
-  return (
+  const enlace = (
     <a
       className={`ixw-tile ${shape}`}
       href={app.href}
@@ -43,5 +43,17 @@ export function AppTile({ app }: { app: AppEntry }) {
     >
       {body}
     </a>
+  );
+
+  if (!overlay) return enlace;
+
+  /* El botón va FUERA del enlace, no dentro: un <button> dentro de un <a> es HTML inválido y el
+     clic sería ambiguo. Se apilan en un envoltorio, igual que CardActions se superpone a la
+     miniatura de una galería en vez de anidarse en ella. */
+  return (
+    <div className="ixw-tile-wrap">
+      {enlace}
+      {overlay}
+    </div>
   );
 }
