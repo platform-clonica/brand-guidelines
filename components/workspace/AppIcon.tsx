@@ -98,6 +98,29 @@ const ICONS: Record<string, ReactElement> = {
     </svg>
   ),
 
+  clockr: (
+    <svg viewBox="0 0 400 400" fill="none" aria-hidden="true" focusable="false" className="ixw-tile__icon">
+      {/* Estructura secundaria: la hoja de atrás y los renglones del registro */}
+      <g stroke="#B0B5B0" strokeWidth="6" strokeLinecap="square" strokeLinejoin="miter">
+        <path d="M75 40 H305 V95" />
+        <path d="M80 170 H210 M80 210 H190 M80 250 H215" />
+      </g>
+
+      {/* Estructura principal: la hoja del registro y su cabecera */}
+      <g stroke="#1C1A17" strokeWidth="6" strokeLinecap="square" strokeLinejoin="miter">
+        <path d="M45 75 H275 V355 H45 Z" />
+        <path d="M45 130 H275" />
+        <path d="M80 100 H150" />
+      </g>
+
+      {/* Acento: el reloj, que es lo que convierte una lista de renglones en un registro horario */}
+      <g stroke="#F59E0B" strokeWidth="6" strokeLinecap="square" strokeLinejoin="miter">
+        <circle cx="295" cy="290" r="62" fill="#F59E0B" fillOpacity="0.15" />
+        <path d="M295 250 V290 H325" />
+      </g>
+    </svg>
+  ),
+
   dsmakr: (
     <svg viewBox="0 0 400 400" fill="none" aria-hidden="true" focusable="false" className="ixw-tile__icon">
       {/* Estructura secundaria: ejes de retícula, jerarquía y enlace de sistema */}

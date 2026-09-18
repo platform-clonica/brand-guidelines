@@ -20,6 +20,10 @@ se mueve nunca: sus enlaces ya están enviados.
 | `/workspace/rewrit_r` | Reescritura de correos y textos con la voz de marca |
 | `/workspace/dsmak_r` | Galería de design systems |
 | `/workspace/dsmak_r/[id]` | Editor de un design system |
+| `/workspace/clock_r` | Registro horario: mi jornada, con el botón de fichar |
+| `/workspace/clock_r/equipo` | Panel de equipo — **solo administración** |
+| `/workspace/clock_r/equipo/[personId]` | Historial de una persona — **solo administración** |
+| `/workspace/clock_r/equipo/[personId]/imprimir` | El registro listo para imprimir o guardar en PDF. Con `?print=1` se imprime solo, igual que `/deck/[id]/view?print=1` |
 
 Todo `/workspace/*` lo protege [middleware.ts](../../middleware.ts): **sin sesión de equipo**
 —sesión Y cuenta `@interactius.com`, ver [workspace-login-google.md](workspace-login-google.md)—

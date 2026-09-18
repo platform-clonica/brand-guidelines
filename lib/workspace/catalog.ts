@@ -72,6 +72,14 @@ export const APPS: AppEntry[] = [
     wordmark: { before: 'DSMak', after: 'r' },
   },
   {
+    id: 'clockr',
+    label: 'Clockr',
+    group: 'tools',
+    href: '/workspace/clock_r',
+    description: 'Registro horario',
+    wordmark: { before: 'Clock', after: 'r' },
+  },
+  {
     id: 'socialmakr',
     label: 'SocialMakr',
     group: 'tools',
