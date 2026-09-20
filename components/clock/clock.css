@@ -23,8 +23,10 @@
   --mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
   --serif: var(--font-ibm-plex-serif), Georgia, serif;
 
-  /* Peldaños de lib/typeScale.ts, verificados uno a uno */
-  --fs-display: clamp(3rem, 2rem + 5vw, 6rem);          /* display  (serif 300/400) */
+  /* Peldaños de lib/typeScale.ts, verificados uno a uno. Solo se declaran los que se usan: una
+     variable que no consume nadie es código muerto que el siguiente da por vigente. El peldaño
+     `display` estuvo aquí para el número del banner y salió al bajarlo a `title`. */
+  --fs-title: clamp(2rem, 1.4rem + 3vw, 4rem);          /* title    (serif 300/400) */
   --fs-title-sm: clamp(1.25rem, 1rem + 1.25vw, 2rem);   /* title-sm (serif 400)     */
   --fs-body-sm: clamp(0.75rem, 0.7rem + 0.25vw, 1rem);  /* body-sm  (mono)          */
   --fs-caption: 0.625rem;                               /* caption  (mono)          */
@@ -58,11 +60,29 @@
 
 /* ── El bloque de hoy ── */
 
+/* El banner de hoy, en negativo.
+
+   INVERTIR EL FONDO OBLIGA A REELEGIR TODOS LOS GRISES DE DENTRO, no solo a cambiar dos colores.
+   Sobre Dark, Ash da 3.54:1 y Ash Dark 1.77:1, los dos por debajo del 4.5:1 que necesita un texto
+   para leerse. Warm Dark da 12.51:1 y Warm Light 15.55:1, así que el gris de texto de aquí dentro
+   pasa a ser Warm Dark. Lo de abajo son esas reelecciones, no adornos. */
 .ixc-hoy {
-  border: 1px solid var(--c-warm-dark);
-  background: var(--c-white);
+  border: 1px solid var(--c-dark);
+  background: var(--c-dark);
+  color: var(--c-warm-light);
   padding: 28px;
 }
+
+/* Van acotados a `.ixc-hoy` porque estas cuatro clases las comparten la tabla de la semana,
+   PanelEquipo y DetallePersona, que siguen sobre fondo claro. */
+.ixc-hoy .ixc-eyebrow { color: var(--c-warm-dark); }
+.ixc-hoy .ixc-total small { color: var(--c-warm-dark); }
+.ixc-hoy .ixc-meta { color: var(--c-warm-dark); }
+
+/* El saldo se sigue distinguiendo por el signo y no por el color — la misma razón que está escrita
+   más abajo en la regla del saldo. Aquí los dos tonos solo tienen que ser legibles. */
+.ixc-hoy .ixc-saldo--defecto { color: var(--c-warm-dark); }
+.ixc-hoy .ixc-saldo--exceso { color: var(--c-warm-light); }
 
 .ixc-eyebrow {
   font-size: var(--fs-caption);
@@ -73,11 +93,13 @@
   margin: 0;
 }
 
-/* El total del día. Serif 300, cifras tabulares para que no baile al contar. */
+/* El total del día. Serif 300, cifras tabulares para que no baile al contar.
+   Va en el peldaño `title` y no en `display`: 96px de alto máximo dejaban el resto del banner
+   pequeño al lado. Sigue siendo un peldaño declarado de lib/typeScale.ts, no un tamaño a medida. */
 .ixc-total {
   font-family: var(--serif);
   font-weight: 300;
-  font-size: var(--fs-display);
+  font-size: var(--fs-title);
   line-height: 1;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
@@ -364,8 +386,12 @@
 
    NINGUNA barra usa un acento. El prototipo tiñe de Opal la barra de hoy, y Opal identifica un
    servicio —pensamiento estratégico— en lib/tokens.ts, así que aquí sería decoración: justo lo que
-   la norma prohíbe. Hoy se distingue con Ash y con la etiqueta subrayada, que además contrasta
-   mejor que el Warm Dark del prototipo sobre una pista clara. */
+   la norma prohíbe. Hoy se distingue por el tono del relleno y por la etiqueta subrayada.
+
+   Las barras viven SOLO dentro del banner, que está en negativo, así que se definen ya invertidas
+   en vez de sobrescribirse después: pista oscura y relleno claro. Sobre la pista Ash Dark, el
+   relleno Warm Light da 8.81:1 y el de hoy Warm Dark 7.09:1, los dos por encima del 3:1 que pide un
+   elemento de interfaz. */
 
 /* Los dos, apagados de base y encendidos en el bloque de escritorio. Van ANTES de la media query a
    propósito: tienen la misma especificidad que las reglas de allí, así que puestos después ganarían
@@ -389,21 +415,21 @@
 }
 
 .ixc-vista__col { display: flex; flex-direction: column; gap: 8px; height: 100%; }
-.ixc-vista__pista { flex: 1; display: flex; align-items: flex-end; background: var(--c-warm-light); }
-.ixc-vista__relleno { width: 100%; background: var(--c-dark); }
-.ixc-vista__col--hoy .ixc-vista__relleno { background: var(--c-ash); }
+.ixc-vista__pista { flex: 1; display: flex; align-items: flex-end; background: var(--c-ash-dark); }
+.ixc-vista__relleno { width: 100%; background: var(--c-warm-light); }
+.ixc-vista__col--hoy .ixc-vista__relleno { background: var(--c-warm-dark); }
 /* Sábado, domingo y festivo: la pista sigue ahí para que la semana se lea entera, pero apagada. */
 .ixc-vista__col--libre .ixc-vista__pista { opacity: 0.45; }
 
 .ixc-vista__dia {
   font-size: var(--fs-caption);
   text-align: center;
-  color: var(--c-ash);
+  color: var(--c-warm-dark);
 }
 .ixc-vista__dia--hoy {
-  color: var(--c-dark);
+  color: var(--c-warm-light);
   font-weight: 500;
-  border-bottom: 1px solid var(--c-dark);
+  border-bottom: 1px solid var(--c-warm-light);
 }
 
 /* ── La barra de fichar ──
@@ -412,7 +438,7 @@
    más del contenido que le pasa por debajo.
 
    CUIDADO CON EL BURDEOS AQUÍ. Es el color de alerta por su `uiRole` declarado en lib/tokens.ts,
-   pero #99335F sobre #1C1A17 da del orden de 2:1 de contraste, muy por debajo del 4.5:1 que necesita
+   pero #99335F sobre #1C1A17 da 2.47:1 de contraste, muy por debajo del 4.5:1 que necesita
    un texto para leerse. Así que dentro de esta barra el aviso NO lleva el texto en burdeos: el texto
    va en Warm Light y el burdeos se queda en el filete de la izquierda, donde sigue siendo la señal
    sin que haya que leerlo. El color conserva su rol; cambia qué parte del elemento lo lleva. */
@@ -480,11 +506,13 @@
   }
   .ixc-hoy__resumen { padding: 28px; }
 
+  /* El filete que parte el banner en dos. Sobre el fondo oscuro tiene que ser Ash Dark: un
+     Warm Dark aquí sería una raya casi blanca partiendo la tarjeta por la mitad. */
   .ixc-hoy__semana-vista {
     display: flex;
     flex-direction: column;
     gap: 14px;
-    border-left: 1px solid var(--c-warm-dark);
+    border-left: 1px solid var(--c-ash-dark);
     padding: 24px 28px;
   }
 
