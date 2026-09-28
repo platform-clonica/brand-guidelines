@@ -7,6 +7,7 @@ import { getForm, translateForm, updateForm } from '@/lib/forms/api';
 import type { TranslateTarget } from '@/lib/forms/translate';
 import type { FormDraft } from '@/lib/forms/schema';
 import type { FormListItem } from '@/lib/forms/types';
+import type { SessionUser } from '@/lib/auth/sessionUser';
 import { HeroPanel } from '@/components/forms/HeroPanel';
 import { FormRenderer } from '@/components/forms/FormRenderer';
 import { ConfirmModal } from '@/components/deck/studio/ConfirmModal';
@@ -45,7 +46,7 @@ const LANG_LABELS: Record<TranslateTarget, string> = {
    dos átomos de estado (`md` es la verdad, `def` es lo compilado), recompilado con debounce que
    conserva la última versión buena, autoguardado por inactividad, aviso al salir con cambios sin
    guardar y panel lateral redimensionable. */
-export function FormStudio({ formId }: { formId: string }) {
+export function FormStudio({ formId, user }: { formId: string; user: SessionUser }) {
   const router = useRouter();
 
   const [record, setRecord] = useState<FormListItem | null>(null);
@@ -243,7 +244,15 @@ export function FormStudio({ formId }: { formId: string }) {
   };
 
   const onSubmitMeta = async (values: FormMetaValues) => {
-    const next = applyMeta(md, { title: values.title, client: values.client, accent: values.accent });
+    const next = applyMeta(md, {
+      title: values.title,
+      client: values.client,
+      accent: values.accent,
+      slug: values.slug,
+      description: values.description,
+      indexable: values.indexable,
+      ai_crawlers: values.aiCrawlers,
+    });
     replaceMd(next);
     setTags(values.tags);
     setEditingMeta(false);
@@ -258,8 +267,10 @@ export function FormStudio({ formId }: { formId: string }) {
   };
 
   const onCopyUrl = async () => {
-    if (!publicId) return;
-    const url = `${window.location.origin}/forms/f/${publicId}`;
+    // El alias manda si existe; sin alias, el id opaco. Es la misma canónica que declara la página.
+    const target = def?.slug ?? publicId;
+    if (!target) return;
+    const url = `${window.location.origin}/forms/f/${target}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch {
@@ -309,6 +320,7 @@ export function FormStudio({ formId }: { formId: string }) {
         responses={record.responses ?? 0}
         canPublish={compiles}
         copied={copied}
+        user={user}
         onHome={() => withGuard(() => router.push('/workspace/formmak_r'))}
         onEditTitle={() => setEditingMeta(true)}
         onTogglePublish={onTogglePublish}
@@ -385,11 +397,17 @@ export function FormStudio({ formId }: { formId: string }) {
       {editingMeta && def && (
         <FormMetaModal
           mode="edit"
+          formId={formId}
+          publicId={publicId}
           initial={{
             title: def.title,
             client: def.client ?? '',
             accent: def.accent,
             tags,
+            slug: def.slug ?? '',
+            description: def.description ?? '',
+            indexable: def.indexable,
+            aiCrawlers: def.ai_crawlers,
           }}
           onClose={() => setEditingMeta(false)}
           onSubmit={onSubmitMeta}

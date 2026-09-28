@@ -12,7 +12,8 @@ import { DeckLogo } from '../studio/DeckLogo';
 import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
 import { CardActions } from '@/components/studio/CardActions';
 import { FilterBar, SearchField } from '@/components/studio/GalleryFilters';
-import { LogoutButton } from '@/components/studio/LogoutButton';
+import { UserMenu } from '@/components/studio/UserMenu';
+import type { SessionUser } from '@/lib/auth/sessionUser';
 import { colors } from '../studio/ui';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
@@ -34,7 +35,7 @@ type Modal =
 
 /* Landing / gallery: predictive search + tag filters + a 4-up grid of deck cover thumbnails.
    First cell is "Crear nueva presentación". Cards and the "new" flow route to /deck/[id]. */
-export function DeckGallery() {
+export function DeckGallery({ user }: { user: SessionUser }) {
   const router = useRouter();
   const [items, setItems] = useState<DeckListItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -140,7 +141,7 @@ export function DeckGallery() {
         <MarkDivider />
         <DeckLogo height={22} />
         <span style={{ marginLeft: 'auto' }} />
-        <LogoutButton />
+        <UserMenu user={user} />
 
         {/* Centrado respecto a la cabecera, no al hueco que queda: en flujo se desplazaría cada
             vez que cambie el ancho del logo o del botón de salir. Ancho en % para que nunca

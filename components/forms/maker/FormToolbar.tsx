@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
+import { UserMenu } from '@/components/studio/UserMenu';
+import type { SessionUser } from '@/lib/auth/sessionUser';
 import { colors, toolbarBtn } from '@/components/deck/studio/ui';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
@@ -24,6 +26,7 @@ export function FormToolbar({
   onCopyUrl,
   onSaveNow,
   copied,
+  user,
 }: {
   title: string;
   status: 'draft' | 'published';
@@ -39,6 +42,7 @@ export function FormToolbar({
   onCopyUrl: () => void;
   onSaveNow: () => void;
   copied: boolean;
+  user: SessionUser;
 }) {
   const [titleHover, setTitleHover] = useState(false);
   const published = status === 'published';
@@ -150,6 +154,9 @@ export function FormToolbar({
       >
         {published ? 'Despublicar' : 'Publicar'}
       </button>
+
+      {/* Última posición de la barra, separada de las acciones: es de la sesión, no del documento. */}
+      <UserMenu user={user} />
     </header>
   );
 }

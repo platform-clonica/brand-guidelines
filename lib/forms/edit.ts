@@ -20,8 +20,12 @@ function frontmatterRange(raw: string): Range | null {
 }
 
 /* ── Cambia (o añade) una clave de primer nivel del frontmatter.
-   Se usa para publicar/despublicar sin tocar nada más del documento. */
-export function setFrontmatterValue(raw: string, key: string, value: string): string {
+   Se usa para publicar/despublicar sin tocar nada más del documento.
+
+   `after` nombra las claves tras las cuales colocar la clave si hay que CREARLA (la primera que
+   exista gana). Sin él, una clave nueva cae detrás de `title:`, que es donde acababa todo antes
+   y donde una `slug` o un `ai_crawlers` quedan fuera de sitio. No mueve nada ya escrito. */
+export function setFrontmatterValue(raw: string, key: string, value: string, after: string[] = ['title']): string {
   const fm = frontmatterRange(raw);
   if (!fm) return raw;
 
@@ -35,9 +39,16 @@ export function setFrontmatterValue(raw: string, key: string, value: string): st
     }
   }
 
-  // No estaba: se inserta justo después de `title:` si existe, o al principio del frontmatter.
-  const titleAt = lines.findIndex((l, i) => i >= start && i < end && /^title\s*:/.test(l));
-  const at = titleAt === -1 ? start : titleAt + 1;
+  // No estaba: se inserta tras el primer ancla que exista, o al principio del frontmatter.
+  let at = start;
+  for (const anchor of after) {
+    const anchorRe = new RegExp(`^${escapeRe(anchor)}\\s*:`);
+    const i = lines.findIndex((l, n) => n >= start && n < end && anchorRe.test(l));
+    if (i !== -1) {
+      at = i + 1;
+      break;
+    }
+  }
   lines.splice(at, 0, `${key}: ${value}`);
   return lines.join(eol);
 }
@@ -116,16 +127,54 @@ export function removeFrontmatterKey(raw: string, key: string): string {
 
 /* ── Aplica los metadatos editados en el modal del editor.
    Solo toca las claves que el modal gobierna; el resto del documento no se mueve.
-   Las etiquetas NO van aquí: viven en la columna `tags` de la tabla, no en el markdown. */
-export function applyMeta(
-  raw: string,
-  meta: { title: string; client?: string; accent?: string },
-): string {
+   Las etiquetas NO van aquí: viven en la columna `tags` de la tabla, no en el markdown.
+
+   Regla de limpieza, la misma que ya tenía `client`: un valor vacío o igual al valor por defecto
+   BORRA la clave en vez de escribirla. Un frontmatter lleno de `indexable: false` y
+   `ai_crawlers: block` no informa de nada — el defecto ya lo dice lib/forms/schema.ts. */
+export type MetaPatch = {
+  title: string;
+  client?: string;
+  accent?: string;
+  slug?: string;
+  description?: string;
+  indexable?: boolean;
+  ai_crawlers?: 'allow' | 'block';
+};
+
+export function applyMeta(raw: string, meta: MetaPatch): string {
   let md = setFrontmatterValue(raw, 'title', yamlString(meta.title));
   if (meta.accent) md = setFrontmatterValue(md, 'accent', meta.accent);
   md = meta.client?.trim()
-    ? setFrontmatterValue(md, 'client', yamlString(meta.client.trim()))
+    ? setFrontmatterValue(md, 'client', yamlString(meta.client.trim()), ['title', 'id'])
     : removeFrontmatterKey(md, 'client');
+
+  /* `slug` solo se toca si el modal la gobierna. `undefined` significa "no la edites" (el modal
+     de crear/duplicar no la muestra); cadena vacía significa "quítala". */
+  if (meta.slug !== undefined) {
+    md = meta.slug.trim()
+      ? setFrontmatterValue(md, 'slug', meta.slug.trim(), ['id'])
+      : removeFrontmatterKey(md, 'slug');
+  }
+
+  if (meta.description !== undefined) {
+    md = meta.description.trim()
+      ? setFrontmatterValue(md, 'description', yamlString(meta.description.trim()), ['client', 'title'])
+      : removeFrontmatterKey(md, 'description');
+  }
+
+  if (meta.indexable !== undefined) {
+    md = meta.indexable
+      ? setFrontmatterValue(md, 'indexable', 'true', ['allow_multiple', 'status'])
+      : removeFrontmatterKey(md, 'indexable');
+  }
+
+  if (meta.ai_crawlers !== undefined) {
+    md = meta.ai_crawlers === 'allow'
+      ? setFrontmatterValue(md, 'ai_crawlers', 'allow', ['indexable', 'allow_multiple', 'status'])
+      : removeFrontmatterKey(md, 'ai_crawlers');
+  }
+
   return md;
 }
 
@@ -133,14 +182,18 @@ export function applyMeta(
    Se parte del documento original y solo se reescriben las claves que DEBEN cambiar; el resto
    (campos, intro, imágenes, textos de éxito) se hereda tal cual, que es justo el sentido de duplicar.
 
-   Dos reglas no negociables:
+   Tres reglas no negociables:
    - `id` nuevo, porque es único en la tabla y porque las respuestas se agrupan por él.
-   - `status: draft`, porque publicar una copia sin querer es un error caro. */
+   - `status: draft`, porque publicar una copia sin querer es un error caro.
+   - **`slug` fuera.** Desde que la slug es la URL pública (lib/forms/slug.ts) es única igual que
+     el id: heredarla haría que la copia no se pudiera guardar, o peor, que dos formularios se
+     disputaran la misma URL. La copia nace sin alias y se le pone uno si hace falta. */
 export function duplicateMd(
   source: string,
   opts: { publicId: string; title: string; client?: string; accent?: string },
 ): string {
   let md = setFrontmatterValue(source, 'id', opts.publicId);
+  md = removeFrontmatterKey(md, 'slug');
   md = setFrontmatterValue(md, 'title', yamlString(opts.title));
   md = setFrontmatterValue(md, 'status', 'draft');
   if (opts.accent) md = setFrontmatterValue(md, 'accent', opts.accent);

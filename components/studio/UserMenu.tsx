@@ -2,15 +2,9 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { colors } from '@/components/deck/studio/ui';
 import { LogoutButton } from './LogoutButton';
+import type { SessionUser } from '@/lib/auth/sessionUser';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
-
-export type SessionUser = {
-  name: string;
-  email: string;
-  /** `picture`/`avatar_url` de Google. `null` si la cuenta no tiene foto. */
-  avatarUrl: string | null;
-};
 
 /* La foto del usuario, y bajo ella un menú con "Cerrar sesión".
 
@@ -83,7 +77,7 @@ export function UserMenu({ user, className }: { user: SessionUser; className?: s
               <div style={nombre}>{user.name}</div>
               <div style={correo}>{user.email}</div>
             </div>
-            <LogoutButton variant="menu" />
+            <LogoutButton />
           </div>
         </>
       )}

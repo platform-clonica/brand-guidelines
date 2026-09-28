@@ -38,6 +38,17 @@ export function updateForm(id: string, patch: FormUpdateInput): Promise<FormReco
   }).then((r) => json<FormRecord>(r));
 }
 
+/* ¿Está libre esta URL? Lo pregunta el modal de ajustes mientras se teclea, para poder decirlo
+   ahí mismo en vez de dejar que el autoguardado choque contra el índice único.
+   `formId` es el uuid del formulario que se edita: su propia slug no cuenta como ocupada. */
+export function checkSlug(slug: string, formId?: string): Promise<{ available: boolean; error: string | null }> {
+  const qs = new URLSearchParams({ slug });
+  if (formId) qs.set('formId', formId);
+  return fetch(`/api/forms/slug-check?${qs}`, { cache: 'no-store' }).then((r) =>
+    json<{ available: boolean; error: string | null }>(r),
+  );
+}
+
 export function deleteForm(id: string): Promise<{ ok: boolean }> {
   return fetch(`/api/forms/${id}`, { method: 'DELETE' }).then((r) => json<{ ok: boolean }>(r));
 }

@@ -1,5 +1,7 @@
-/* 404 for the /forms segment (unknown id or draft form). Kept noindex via the X-Robots-Tag header
-   set in middleware for all non-api /forms paths. Does not reveal whether a form exists. */
+/* 404 for the /forms segment (unknown id or draft form). Does not reveal whether a form exists.
+
+   Noindex heredado de app/forms/layout.tsx: un `not-found.tsx` no puede exportar metadatos
+   propios, y la cabecera del middleware ya no cubre `/forms/f/*` (ver el comentario de allí). */
 
 import '@/components/forms/forms.css';
 

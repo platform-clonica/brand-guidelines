@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getSessionUser } from '@/lib/auth/sessionUser';
 import { FormGallery } from '@/components/forms/maker/FormGallery';
 
 export const metadata: Metadata = {
@@ -6,6 +7,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function FormMakerPage() {
-  return <FormGallery />;
+export default async function FormMakerPage() {
+  const user = await getSessionUser();
+  return <FormGallery user={user} />;
 }

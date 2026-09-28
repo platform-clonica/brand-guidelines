@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 
 import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
-import { LogoutButton } from '@/components/studio/LogoutButton';
+import { UserMenu } from '@/components/studio/UserMenu';
+import type { SessionUser } from '@/lib/auth/sessionUser';
 import { Wordmark } from '@/components/studio/Wordmark';
 import { btn, colors, label as labelStyle, seg, segOn } from '@/components/deck/studio/ui';
 import type { EvalResult } from '@/lib/eval';
@@ -45,7 +46,7 @@ const SPLIT_STORAGE_KEY = 'rewrite.draftW';
 
    El texto reescrito se pinta en IBM Plex Serif — es prosa, no chrome. Todo lo demás va en
    Mono, igual que en las dos herramientas hermanas. */
-export function Rewriter() {
+export function Rewriter({ user }: { user: SessionUser }) {
   const [draft, setDraft] = useState('');
   const [context, setContext] = useState('');
   const [textType, setTextType] = useState<TextType>('correo');
@@ -195,7 +196,7 @@ export function Rewriter() {
         <MarkDivider />
         <Wordmark before="ReWrit" after="r" title="ReWritr" height={22} />
         <span style={{ marginLeft: 'auto' }} />
-        <LogoutButton />
+        <UserMenu user={user} />
       </header>
 
       <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
