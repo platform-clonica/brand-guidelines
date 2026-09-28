@@ -189,16 +189,91 @@ espejo: el listado conserva el último título bueno en vez de mostrar uno a med
 | Acción | Dónde | Nota |
 |---|---|---|
 | Crear | galería | `FormMetaModal` → plantilla de `templates.ts` → `/workspace/formmak_r/[id]` |
-| Duplicar | galería | `duplicateMd`: hereda todo menos `id` (nuevo) y `status` (siempre borrador) |
+| Duplicar | galería | `duplicateMd`: hereda todo menos `id` (nuevo), `slug` (fuera) y `status` (siempre borrador) |
 | Borrar | galería | avisa del nº de respuestas; **las respuestas no se borran** |
 | Publicar | editor | reescribe solo la línea `status:`, nunca reserializa el YAML |
-| Compartir | editor | copia `/forms/f/{public_id}` |
+| Ajustes | editor | clic en el título → `FormMetaModal`: título, cliente, acento, etiquetas, **URL, descripción, indexación y GEO** |
+| Compartir | editor | copia la canónica: `/forms/f/{slug}` si hay alias, `/forms/f/{public_id}` si no |
 | Exportar CSV | editor | enlaza a `/forms/api/export`, que existía y no tenía punto de entrada en la UI |
 
 Publicar y duplicar usan `setFrontmatterValue`, que opera **sobre líneas**. Reserializar el
 frontmatter con js-yaml reordenaría claves, se comería comentarios y reformatearía cadenas escritas a
 mano: el `md` es del autor y solo se toca la línea que toca. Hay un test de ida y vuelta que exige
 que publicar y despublicar el formulario real devuelva un texto **byte a byte idéntico** al original.
+
+## La `slug` es la URL pública (septiembre de 2026)
+
+Hasta aquí `slug` era **decorativa**: solo daba nombre al CSV exportado y se estampaba en cada
+respuesta (`responses.form_slug`). La URL era siempre el `public_id` opaco. Y sin embargo
+[lib/forms/translate.ts](../../lib/forms/translate.ts) ya decía *"`id` y `slug` son la URL
+pública"* y rechazaba una traducción que la cambiara: una **norma de facto sin respaldo en el
+código**, exactamente del tipo que el siguiente se salta sin querer.
+
+Se ha resuelto **a favor de la norma escrita**: la slug pasa a ser un **alias** de la URL.
+
+- `/forms/f/{slug}` y `/forms/f/{public_id}` resuelven al mismo formulario. El id opaco **no
+  desaparece nunca** — los enlaces ya repartidos siguen vivos, y un formulario sin slug conserva
+  su URL no enumerable de siempre.
+- **La no-enumerabilidad del PRD §10 sigue siendo el defecto.** Un formulario nace sin alias.
+  Ponerle uno es una decisión del autor, y el modal se lo dice con esas palabras: *déjalo vacío si
+  el formulario es confidencial*.
+- El id gana sobre la slug al resolver. No puede haber empate —la gramática de la slug prohíbe
+  `_` y los ids nacen como `fk_…`— pero el orden queda escrito por si algún día se afloja.
+- **Gramática** ([lib/forms/slug.ts](../../lib/forms/slug.ts)): minúsculas, dígitos y guiones
+  simples, 80 caracteres, sin segmentos reservados. El modal **normaliza al teclear**, así que
+  nadie tiene que adivinarla. La valida además `frontmatterSchema`, para que una slug imposible no
+  llegue a publicarse.
+- **Unicidad en tres capas**: el modal pregunta a `/api/forms/slug-check` mientras se escribe,
+  `/api/forms[/:id]` devuelve 409 con mensaje entendible, y el índice único
+  `forms_slug_key` lo garantiza de verdad
+  ([migración](../../supabase/migrations/20260928100000_forms_slug_unique.sql)).
+- **Duplicar ya no hereda la slug.** Heredarla habría hecho que la copia no se pudiera guardar, o
+  peor, que dos formularios se disputaran la misma URL.
+- El segmento de la URL se concatena dentro de un filtro `.or()` de PostgREST, así que pasa por
+  `isRouteKey` antes de tocar la base de datos: todo lo que no sea `[A-Za-z0-9_-]` es un 404.
+
+## Compartir, indexar y GEO
+
+Tres decisiones distintas, y conviene no mezclarlas. Viven en
+[lib/forms/seo.ts](../../lib/forms/seo.ts) y se editan en el mismo modal de ajustes.
+
+| Decisión | Clave | Defecto | Qué hace |
+|---|---|---|---|
+| Compartir | `description` | — | Título, descripción e imagen para el unfurl de WhatsApp, Slack o LinkedIn |
+| Indexar | `indexable` | `false` | Levanta el `noindex` de **ese** formulario |
+| GEO | `ai_crawlers` | `block` | Directivas por agente para GPTBot, ClaudeBot, PerplexityBot, Google-Extended… |
+
+**Compartir no es indexar.** Un enlace privado también se pega en un chat, y ahí el unfurl es lo
+único que se ve. Es el criterio que ya seguía el visor de presentaciones
+([app/deck/[id]/view/page.tsx](../../app/deck/[id]/view/page.tsx)): `noindex` y aun así OG
+completo. Sin descripción propia se compone `Formulario para {cliente}`, la misma frase que el
+deck; sin cliente no hay descripción, que es mejor que rellenarla.
+
+**El `noindex` sigue siendo el defecto, y eso no cambia** (PRD §9, §10). Lo que cambia es **dónde**
+se declara. Antes lo imponía la cabecera `X-Robots-Tag` del middleware, que es **ciega**: en el
+borde no se sabe qué formulario se está pidiendo sin consultar la base de datos en cada petición, y
+una cabecera fija le gana siempre a los metadatos de la página — el interruptor no habría tenido
+efecto. Ahora el defecto lo declara [app/forms/layout.tsx](../../app/forms/layout.tsx), que cubre
+el segmento entero (**la 404 incluida**, que no puede exportar metadatos propios) y que la página
+pisa solo cuando el formulario pide ser indexable. El middleware conserva la cabecera para el
+resto de `/forms`.
+
+**La canónica importa justo ahora**, porque la slug crea un segundo camino a la misma página:
+`alternates.canonical` apunta al alias si lo hay y al id si no.
+
+**GEO** se emite como **metaetiquetas por agente** (`<meta name="GPTBot" content="noindex,
+nofollow, noarchive">`), que es la convención documentada para robots meta. Límite honesto, escrito
+también en el código: una metaetiqueta la lee quien decide leerla. El control duro de un rastreador
+es `robots.txt` o una regla en el borde, y ninguno de los dos puede depender del formulario
+concreto. Es una declaración de intenciones legible por máquina, no un cortafuegos.
+
+Los **datos estructurados** (JSON-LD `WebPage`) se emiten **solo si el formulario es indexable**: en
+una página `noindex` no los lee nadie y lo único que harían es publicar el nombre del cliente en el
+HTML de un enlace privado.
+
+Traducir un formulario **no puede** cambiar `slug`, `indexable` ni `ai_crawlers`: el verificador de
+`translate.ts` los trata como identificadores y ajustes, no como contenido. Una traducción que
+decidiera por el autor si su formulario sale en Google se rechaza entera.
 
 ## Pendiente / avisos
 
@@ -217,3 +292,10 @@ que publicar y despublicar el formulario real devuelva un texto **byte a byte id
 - `massimo-dutti.md` sigue en fichero. El respaldo lo hace innecesario; migrar cuando haya confianza.
 - `forms-persistencia-supabase.md` cita `content/forms/prework-taller-acme.md` como ejemplo de
   referencia, y ese fichero ya no existe (se borró en un commit posterior).
+- **No hay `lang` en el frontmatter.** El JSON-LD declara `inLanguage: 'es'` porque es lo que dice
+  `app/layout.tsx` para todo `/forms`, pero `translate.ts` ya produce formularios en catalán e
+  inglés y nada lo registra. Un formulario traducido e indexable declararía un idioma falso. Si la
+  indexación se usa de verdad, esto necesita una clave.
+- **La comprobación de slug tiene una ventana de carrera** de unos segundos entre
+  `/api/forms/slug-check` y el guardado. La pierde quien guarde segundo, con el 409 y su mensaje;
+  la garantía dura es el índice único.

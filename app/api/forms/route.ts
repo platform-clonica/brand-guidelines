@@ -10,6 +10,7 @@ import { requireUser, supabaseAuthServer } from '@/lib/supabase/server';
 import { compileForm } from '@/lib/forms/compile';
 import type { FormCreateInput } from '@/lib/forms/types';
 import { mirrorFrom } from '@/lib/forms/mirror';
+import { slugTaken } from '@/lib/forms/registry';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,6 +64,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `El formulario no compila — ${detail}` }, { status: 400 });
   }
 
+  /* La plantilla nace sin slug y duplicar la quita a propósito (lib/forms/edit.ts), así que aquí
+     solo llega una slug si alguien pegó un markdown entero. Aun así se comprueba: es la URL
+     pública y no puede haber dos. */
+  if (compiled.def.slug && (await slugTaken(compiled.def.slug))) {
+    return NextResponse.json(
+      { error: `La URL "${compiled.def.slug}" ya la usa otro formulario. Cámbiala antes de crear.` },
+      { status: 409 },
+    );
+  }
+
   const sb = await supabaseAuthServer();
   const { data, error } = await sb
     .from('forms')
@@ -72,10 +83,10 @@ export async function POST(req: Request) {
 
   if (error) {
     if (error.code === '23505') {
-      return NextResponse.json(
-        { error: `Ya existe un formulario con el id "${compiled.def.id}". Cambia el campo \`id\` del frontmatter.` },
-        { status: 409 },
-      );
+      const clash = /slug/.test(error.message)
+        ? `Ya existe un formulario con la URL "${compiled.def.slug}". Cambia el campo \`slug\` del frontmatter.`
+        : `Ya existe un formulario con el id "${compiled.def.id}". Cambia el campo \`id\` del frontmatter.`;
+      return NextResponse.json({ error: clash }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

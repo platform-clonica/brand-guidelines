@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { GROUPS, appsIn } from '@/lib/workspace/catalog';
 import { AppTile } from '@/components/workspace/AppTile';
-import { ToolsMenu } from '@/components/workspace/ToolsMenu';
-import { UserMenu, type SessionUser } from '@/components/studio/UserMenu';
-import { getUser } from '@/lib/supabase/server';
+import { BrandMark } from '@/components/studio/BrandMark';
+import { UserMenu } from '@/components/studio/UserMenu';
+import { getSessionUser } from '@/lib/auth/sessionUser';
 import '@/components/workspace/workspace.css';
 
 /* Dispatcher: la pantalla a la que se llega al iniciar sesión (lib/auth/safeNext.ts).
@@ -35,28 +35,15 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  /* El middleware garantiza que aquí hay sesión de equipo; los `??` son por si acaso, no por si
-     no. Google manda `full_name`/`name` y `avatar_url`/`picture` — se leen los dos nombres porque
-     el proveedor puebla ambos y no conviene depender de cuál. */
-  const user = await getUser();
-  const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
-  const str = (k: string) => (typeof meta[k] === 'string' ? (meta[k] as string) : null);
-
-  const sesion: SessionUser = {
-    name: str('full_name') ?? str('name') ?? user?.email ?? 'Cuenta',
-    email: user?.email ?? '',
-    avatarUrl: str('avatar_url') ?? str('picture'),
-  };
+  const sesion = await getSessionUser();
 
   return (
     <div className="ix-workspace">
       {/* Misma cabecera que las landings de las herramientas: barra con filete inferior,
           imagotipo a la izquierda y cerrar sesión a la derecha. */}
       <header className="ixw-header">
-        {/* El imagotipo es el <h1> de la página y, al pasar por encima, el atajo a las Tools.
-            Sigue enlazando a la home: el menú acompaña al enlace, no lo sustituye. */}
         <h1 className="ixw-header__title">
-          <ToolsMenu />
+          <BrandMark height={22} />
           <span className="ixw-sr">Interactius</span>
         </h1>
         <UserMenu user={sesion} className="ixw-header__logout" />

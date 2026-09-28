@@ -6,8 +6,9 @@
    - `name` de cada campo es la clave con la que se guardan las respuestas en `responses.answers`,
      y con la que app/forms/api/export construye las columnas del CSV. Traducir un `name` deja
      huérfanas todas las respuestas ya recogidas.
-   - `id` y `slug` son la URL pública. `type` es el discriminante del esquema Zod.
-   - `status` y `accent` son enumerados: traducirlos rompe la validación.
+   - `id` y `slug` son la URL pública — la slug literalmente (lib/forms/slug.ts), no como metáfora:
+     traducirla deja muertos todos los enlaces repartidos. `type` es el discriminante del Zod.
+   - `status`, `accent` y `ai_crawlers` son enumerados: traducirlos rompe la validación.
 
    Por eso hay dos capas: un prompt que lo explica y un VERIFICADOR determinista que lo comprueba.
    El modelo puede equivocarse; el verificador no. Si la traducción altera un identificador, se
@@ -37,10 +38,10 @@ Preserve the document EXACTLY otherwise: same key order, same indentation, same 
 list structure, same \`---\` delimiters. The frontmatter must remain valid YAML.
 
 NEVER translate a YAML KEY. Every key stays verbatim in English/Spanish as written:
-id, slug, title, client, status, logo, background, accent, intro_title, submit_label,
-success_title, success_message, allow_multiple, fields, type, name, label, caption, required,
-placeholder, options, value, min, max, min_label, max_label, min_select, max_select, rows,
-maxlength, pattern, step, default, title, description, body.
+id, slug, title, client, description, status, logo, background, accent, intro_title, submit_label,
+success_title, success_message, allow_multiple, indexable, ai_crawlers, fields, type, name, label,
+caption, required, placeholder, options, value, min, max, min_label, max_label, min_select,
+max_select, rows, maxlength, pattern, step, default, title, body.
 
 NEVER translate these VALUES — copy them character for character:
 - \`id:\` and \`slug:\` — they are the public URL.
@@ -48,7 +49,9 @@ NEVER translate these VALUES — copy them character for character:
   Changing it orphans real data. Copy each \`name\` value exactly, including underscores and hyphens.
 - \`type:\` — it is a schema discriminator (text, textarea, email, number, tel, url, radio,
   checkbox, ranking, select, boolean, scale, date, section, content).
-- \`status:\` (draft/published) and \`accent:\` (opal/bordeaux/emerald) — enumerations.
+- \`status:\` (draft/published), \`accent:\` (opal/bordeaux/emerald) and \`ai_crawlers:\`
+  (allow/block) — enumerations.
+- \`indexable:\` — a boolean.
 - \`logo:\` and \`background:\` — URLs.
 - \`required:\`, \`allow_multiple:\` — booleans. Any numeric value.
 - On a long-form option \`{ value, label }\`, translate ONLY \`label\`; \`value\` is a storage key.
@@ -95,6 +98,10 @@ function diffIdentity(a: FormDraft, b: FormDraft): TranslationProblem[] {
   same('accent', 'accent', a.accent, b.accent);
   same('logo', 'logo', a.logo ?? '', b.logo ?? '');
   same('background', 'background', a.background ?? '', b.background ?? '');
+  /* Indexación y GEO son ajustes, no contenido: una traducción que los cambie está decidiendo
+     por el autor si su formulario sale en Google o alimenta a un modelo. */
+  same('indexable', 'indexable', a.indexable, b.indexable);
+  same('ai_crawlers', 'ai_crawlers', a.ai_crawlers, b.ai_crawlers);
 
   if (a.fields.length !== b.fields.length) {
     out.push({ kind: 'campos', detail: `el número de campos cambió: ${a.fields.length} → ${b.fields.length}` });

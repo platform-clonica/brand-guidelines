@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import type { SaveState } from '../DeckStudio';
 import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
+import { UserMenu } from '@/components/studio/UserMenu';
+import type { SessionUser } from '@/lib/auth/sessionUser';
 import { btn, colors, toolbarBtn } from './ui';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
@@ -22,6 +24,7 @@ export function DeckToolbar({
   onDownloadPdf,
   onCopyUrl,
   copied,
+  user,
 }: {
   title: string | null;
   dirty: boolean;
@@ -36,6 +39,8 @@ export function DeckToolbar({
   onDownloadPdf: () => void;
   onCopyUrl: () => void;
   copied: boolean;
+  /* Opcional: /lab monta el editor fuera de /workspace, donde no hay sesión que mostrar. */
+  user?: SessionUser;
 }) {
   const [titleHover, setTitleHover] = useState(false);
   const showTip = titleHover && !!title;
@@ -109,6 +114,10 @@ export function DeckToolbar({
       <button style={toolbarBtn} onClick={onDownloadPdf}>Descargar PDF</button>
 
       <button style={toolbarBtn} onClick={onCopyUrl}>{copied ? 'Copiado ✓' : 'Compartir URL'}</button>
+
+      {/* Última posición de la barra, separada de las acciones: es de la sesión, no del documento.
+          Sin sesión no hay nada que mostrar — es el caso de /lab, fuera de /workspace. */}
+      {user && <UserMenu user={user} />}
     </div>
   );
 }

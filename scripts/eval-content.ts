@@ -63,7 +63,7 @@ const PENDIENTE_DECISION = new Map<string, string>([
    un campo de formulario. */
 const MACHINE_KEYS = new Set([
   'id', 'name', 'slug', 'accent', 'status', 'client', 'logo', 'background',
-  'version', 'type', 'theme', 'redirect', 'webhook',
+  'version', 'type', 'theme', 'redirect', 'webhook', 'indexable', 'ai_crawlers',
 ]);
 
 /** Claves cuyo valor no es prosa: etiquetas, botones, specs técnicas. Solo eximen de LONGITUD. */

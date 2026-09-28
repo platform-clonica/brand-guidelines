@@ -4,10 +4,12 @@
 /* Campos derivados del frontmatter en cada guardado. El `md` manda: estos existen para poder
    listar, ordenar y filtrar sin parsear cincuenta markdowns. */
 export type FormMirror = {
-  public_id: string;   // el `id` del frontmatter — lo que va en /forms/f/[id]
+  public_id: string;   // el `id` del frontmatter — la URL pública que siempre funciona
   title: string;
   client: string | null;
   status: 'draft' | 'published';
+  /* Alias legible de la URL (lib/forms/slug.ts). Único en la tabla por índice: desde que
+     `/forms/f/{slug}` resuelve, dos filas con la misma slug harían la URL ambigua. */
   slug: string | null;
 };
 

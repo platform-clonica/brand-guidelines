@@ -61,8 +61,17 @@ export default async function middleware(request: NextRequest) {
       return response;
     }
     const response = NextResponse.next();
-    // Belt-and-braces noindex at the edge for the public form pages (also set via page metadata).
-    if (!pathname.startsWith('/forms/api')) response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    /* Noindex en el borde para todo lo de /forms MENOS las páginas de formulario.
+
+       En `/forms/f/*` la decisión es POR FORMULARIO (`indexable` del frontmatter) y aquí no se
+       puede saber cuál se está pidiendo sin ir a la base de datos en cada petición. Una cabecera
+       fija ganaría siempre a los metadatos de la página y dejaría el interruptor sin efecto.
+       Ese defecto lo declara ahora app/forms/layout.tsx, que cubre el segmento entero —la 404
+       incluida— y que la página pisa solo cuando el formulario pide ser indexable. */
+    const isFormPage = pathname.startsWith('/forms/f/');
+    if (!pathname.startsWith('/forms/api') && !isFormPage) {
+      response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    }
     return response;
   }
 

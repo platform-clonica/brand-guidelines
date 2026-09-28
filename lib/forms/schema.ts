@@ -8,6 +8,7 @@
    Written for Zod v4. */
 
 import { z } from 'zod';
+import { SLUG_MAX, SLUG_RE } from './slug.ts';
 
 /* ── Accents: only the three brand accents are selectable per form.
    Lowercase keys map to the CSS vars --c-{accent} in app/globals.css (verified against lib/tokens.ts,
@@ -69,9 +70,15 @@ export function isInputField(f: Field): f is InputField {
 /* ── Frontmatter (form level, PRD §8.1). `intro` is the Markdown body of the .md (filled by the parser). */
 export const frontmatterSchema = z.object({
   id: z.string().min(1),
-  slug: z.string().optional(),
+  /* Alias de URL pública (lib/forms/slug.ts). Opcional: sin slug, la URL es el id opaco.
+     Se valida la gramática aquí para que un documento con una slug imposible no llegue
+     a publicarse y a repartirse un enlace que nunca resolverá. */
+  slug: z.string().regex(SLUG_RE, 'slug: solo minúsculas, números y guiones simples').max(SLUG_MAX).optional(),
   title: z.string().min(1),
   client: z.string().optional(),
+  /* Resumen para compartir: meta description, OG y datos estructurados. No se pinta en la
+     página — el texto visible de entrada es el cuerpo Markdown (`intro`). */
+  description: z.string().max(300).optional(),
   status: z.enum(['draft', 'published']).default('draft'),
   logo: z.string().optional(),
   background: z.string().optional(),
@@ -81,6 +88,15 @@ export const frontmatterSchema = z.object({
   success_title: z.string().default('Gracias'),
   success_message: z.string().default('Hemos recibido tus respuestas.'),
   allow_multiple: z.boolean().default(true),
+  /* ── Indexación. Los formularios son `noindex` POR DEFECTO y eso no cambia: son enlaces
+     privados de cliente (PRD §9, §10). Este interruptor levanta el noindex de UN formulario
+     concreto — para una encuesta abierta, una convocatoria pública. Es una decisión por pieza,
+     nunca una política global. */
+  indexable: z.boolean().default(false),
+  /* ── GEO. Qué pueden hacer los rastreadores de los motores generativos (GPTBot, ClaudeBot,
+     PerplexityBot, Google-Extended…) con esta página. `block` por defecto, igual que arriba:
+     un formulario de cliente no alimenta a nadie salvo que se diga que sí. */
+  ai_crawlers: z.enum(['allow', 'block']).default('block'),
   fields: z.array(fieldSchema).min(1),
 });
 

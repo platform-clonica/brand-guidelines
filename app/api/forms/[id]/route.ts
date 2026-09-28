@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import { requireUser, supabaseAuthServer } from '@/lib/supabase/server';
 import { compileForm } from '@/lib/forms/compile';
 import { mirrorFrom } from '@/lib/forms/mirror';
+import { slugTaken } from '@/lib/forms/registry';
 import type { FormUpdateInput } from '@/lib/forms/types';
 
 export const dynamic = 'force-dynamic';
@@ -55,7 +56,20 @@ export async function PATCH(req: Request, { params }: Ctx) {
        cambio, solo se refrescan cuando el documento es válido — así el listado nunca muestra el
        título a medias de un formulario roto, y conserva el último bueno. */
     const compiled = compileForm(body.md);
-    if (compiled.ok) Object.assign(patch, mirrorFrom(compiled.def));
+    if (compiled.ok) {
+      /* La slug es la URL pública desde que existe lib/forms/slug.ts: dos formularios no pueden
+         compartirla. El índice único de la tabla lo impide igualmente, pero comprobarlo aquí deja
+         un mensaje que se entiende en vez de un 23505 en crudo. El camino normal ni llega: el
+         modal de ajustes valida contra /api/forms/slug-check antes de tocar el documento.
+         Esto salta cuando alguien escribe la slug a mano en el markdown. */
+      if (compiled.def.slug && (await slugTaken(compiled.def.slug, id))) {
+        return NextResponse.json(
+          { error: `La URL "${compiled.def.slug}" ya la usa otro formulario. Cámbiala para poder guardar.` },
+          { status: 409 },
+        );
+      }
+      Object.assign(patch, mirrorFrom(compiled.def));
+    }
   }
 
   if (Object.keys(patch).length === 0) {
@@ -67,10 +81,10 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
   if (error) {
     if (error.code === '23505') {
-      return NextResponse.json(
-        { error: 'Ese `id` de frontmatter ya lo usa otro formulario. Cámbialo para poder guardar.' },
-        { status: 409 },
-      );
+      const clash = /slug/.test(error.message)
+        ? 'Esa `slug` ya la usa otro formulario. Cámbiala para poder guardar.'
+        : 'Ese `id` de frontmatter ya lo usa otro formulario. Cámbialo para poder guardar.';
+      return NextResponse.json({ error: clash }, { status: 409 });
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

@@ -9,6 +9,7 @@ import { splitSourceBlocks, setBlockImage } from '@/lib/deck/source';
 import { DeckRenderer } from './DeckRenderer';
 import { ToneReport } from './ToneReport';
 import { DeckToolbar } from './studio/DeckToolbar';
+import type { SessionUser } from '@/lib/auth/sessionUser';
 import { DeckMetaModal, type MetaValues } from './studio/DeckMetaModal';
 import { ConfirmModal } from './studio/ConfirmModal';
 import { SlideNavigator } from './studio/SlideNavigator';
@@ -102,7 +103,7 @@ type ModalState =
   | { kind: 'edit'; initial: Partial<MetaValues> & { client_name?: string | null } }
   | null;
 
-export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo }: { deckId?: string; initialMd?: string; previewClientLogo?: string } = {}) {
+export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo, user }: { deckId?: string; initialMd?: string; previewClientLogo?: string; user?: SessionUser } = {}) {
   const router = useRouter();
   // When addressed by /deck/[id] we load that deck on mount; start blank to avoid a
   // flash of the sample template. Standalone (no id) seeds `initialMd` if given (the /lab sandbox
@@ -489,6 +490,7 @@ export function DeckStudio({ deckId, initialMd: initialMdProp, previewClientLogo
         onDownloadPdf={onDownloadPdf}
         onCopyUrl={onCopyUrl}
         copied={copied}
+        user={user}
       />
 
       <div ref={rowRef} style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>

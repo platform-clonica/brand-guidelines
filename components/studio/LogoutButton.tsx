@@ -3,59 +3,29 @@ import { colors } from '@/components/deck/studio/ui';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
-/* Cerrar sesión. Un `form` POST a /deck/logout, así que funciona sin JavaScript y no necesita
-   'use client' — por eso el dispatcher puede ser un server component entero.
+/* Cerrar sesión. Un `form` POST a /workspace/logout, así que funciona sin JavaScript aunque el
+   menú que lo contiene falle.
 
-   Estaba copiado en DeckGallery y en FormGallery; el dispatcher habría sido la tercera copia.
+   Existe como componente porque el formulario estaba copiado en DeckGallery y en FormGallery, y
+   el dispatcher habría sido la tercera copia. Hoy lo monta un solo sitio —UserMenu— pero se queda
+   separado: es la pieza que no necesita cliente, y mezclarla con el desplegable la ataría a él.
 
-   Dos variantes:
-   - `bar`  — el botón rectangular de las cabeceras de las galerías.
-   - `menu` — la fila dentro del desplegable de UserMenu, en el dispatcher.
-
-   Había una tercera, `avatar`: un círculo con icono de apagado que cerraba la sesión de un clic.
-   No la usaba nadie —el dispatcher montaba `bar`— y su comentario defendía una decisión que se ha
-   revertido: ahora la foto del usuario abre un menú, precisamente para que cerrar sesión exija
-   intención y no se dispare con un clic accidental. Se retira en vez de dejar código muerto que
-   documenta lo contrario de lo que hace la aplicación. */
-export function LogoutButton({
-  variant = 'bar',
-  className,
-}: {
-  variant?: 'bar' | 'menu';
-  className?: string;
-}) {
-  const isMenu = variant === 'menu';
-
+   Tuvo dos variantes más, `bar` y `avatar`, y las dos se han retirado al quedarse sin uso: el
+   botón rectangular de las cabeceras y un círculo que cerraba la sesión de un clic. Las cabeceras
+   montan ahora la foto del usuario y cerrar sesión vive dentro de su menú. */
+export function LogoutButton({ className }: { className?: string }) {
   return (
-    <form action="/workspace/logout" method="post" className={className} style={isMenu ? { display: 'block' } : undefined}>
-      <button
-        type="submit"
-        title="Cerrar sesión"
-        aria-label="Cerrar sesión"
-        role={isMenu ? 'menuitem' : undefined}
-        style={isMenu ? menuRowBtn : bar}
-      >
-        {isMenu && <PowerIcon />}
+    <form action="/workspace/logout" method="post" className={className} style={{ display: 'block' }}>
+      <button type="submit" title="Cerrar sesión" aria-label="Cerrar sesión" role="menuitem" style={fila}>
+        <PowerIcon />
         Cerrar sesión
       </button>
     </form>
   );
 }
 
-const bar: CSSProperties = {
-  appearance: 'none',
-  cursor: 'pointer',
-  border: `1px solid ${colors.warmDark}`,
-  background: colors.white,
-  color: colors.ash,
-  padding: '7px 12px',
-  font: `500 10px/1 ${MONO}`,
-  letterSpacing: '.06em',
-  textTransform: 'uppercase',
-};
-
 /* Fila del desplegable: ancho completo, sin filete propio — el panel ya lo pone. */
-const menuRowBtn: CSSProperties = {
+const fila: CSSProperties = {
   appearance: 'none',
   cursor: 'pointer',
   display: 'flex',

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getSessionUser } from '@/lib/auth/sessionUser';
 import { DeckStudio } from '@/components/deck/DeckStudio';
 
 export const metadata: Metadata = {
@@ -11,5 +12,6 @@ type Props = { params: Promise<{ id: string }> };
 // Editor for a saved deck — loaded by id from the gallery. Outside the brand-guide chrome.
 export default async function DeckEditPage({ params }: Props) {
   const { id } = await params;
-  return <DeckStudio deckId={id} />;
+  const user = await getSessionUser();
+  return <DeckStudio deckId={id} user={user} />;
 }
