@@ -344,3 +344,11 @@ test('el snippet de privacy lleva el texto legal con el enlace', () => {
   assert.equal(p.type, 'privacy');
   assert.match('label' in p ? p.label : '', /\[política de privacidad\]\(https:\/\/www\.interactius\.com\/aviso-legal\)/);
 });
+
+test('un formulario nuevo lleva la privacidad de serie, al final y sin avisos', () => {
+  const res = compileForm(newFormMd({ title: 'Nuevo' }));
+  assert.equal(res.ok, true, res.ok ? '' : JSON.stringify(res.issues));
+  if (!res.ok) return;
+  assert.deepEqual(res.def.fields.map((f) => f.type), ['text', 'privacy']);
+  assert.equal(res.issues.length, 0);
+});

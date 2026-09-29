@@ -17,6 +17,13 @@ export function newPublicId(): string {
   return `fk_${out}`;
 }
 
+/* ── El consentimiento legal. Lo lleva de serie todo formulario nuevo y está también en la paleta.
+   Sin `required`: la privacidad es obligatoria siempre. Se pinta al final del formulario aunque el
+   autor la mueva, y los campos que se añadan después entran por encima de ella. */
+const PRIVACY_SNIPPET = `  - type: privacy
+    name: privacidad
+    label: ${yamlString(PRIVACY_LABEL)}`;
+
 /* ── Markdown inicial de un formulario nuevo.
    Nace como borrador: publicar es un acto deliberado, no el estado por defecto. */
 export function newFormMd(opts: {
@@ -43,6 +50,7 @@ fields:
     name: nombre
     label: Nombre y apellidos
     required: true
+${PRIVACY_SNIPPET}
 ---
 
 Escribe aquí la introducción del formulario. Admite **Markdown**: negritas, enlaces y listas.
@@ -169,11 +177,7 @@ export const FIELD_SNIPPETS: FieldSnippet[] = [
   {
     type: 'privacy',
     label: 'Privacidad',
-    // Sin `required`: la privacidad es obligatoria siempre. Se pinta al final del formulario
-    // aunque el autor la mueva, y los campos que se añadan después entran por encima de ella.
-    snippet: `  - type: privacy
-    name: privacidad
-    label: ${yamlString(PRIVACY_LABEL)}`,
+    snippet: PRIVACY_SNIPPET,
   },
   {
     type: 'url',
