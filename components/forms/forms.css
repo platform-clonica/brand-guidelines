@@ -208,6 +208,17 @@
 .ixf-input::placeholder,
 .ixf-textarea::placeholder { color: var(--c-ash, #75706B); opacity: 0.7; }
 
+/* Enlaces dentro del texto (intro, bloques `content`, etiquetas como la de privacidad).
+   Tailwind los deja sin subrayar; aquí se devuelve. Grosor y separación, los del subrayado
+   canónico de globals.css (.hover-wipe-underline: 1px a 4px de la línea base). No se usa esa
+   clase porque es inline-block y un enlace a mitad de frase tiene que poder partirse. */
+.ixf-panel a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
 /* Choice groups */
 .ixf-choices { display: flex; flex-direction: column; gap: 10px; }
 .ixf-choice {
