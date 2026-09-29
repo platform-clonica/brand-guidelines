@@ -317,3 +317,30 @@ test('newPublicId genera ids con la forma esperada y sin repetirse', () => {
   assert.equal(ids.size, 500);
   for (const id of ids) assert.match(id, /^fk_[A-Za-z1-9]{7}$/);
 });
+
+/* ── privacy: lo que se añade entra por encima; la privacidad sigue siendo la última. */
+
+test('añadir un campo con privacy presente lo coloca antes de ella', () => {
+  const privacy = FIELD_SNIPPETS.find((s) => s.type === 'privacy')!.snippet;
+  const text = FIELD_SNIPPETS.find((s) => s.type === 'text')!.snippet;
+  const conPrivacidad = appendField(DOC, privacy).md;
+  const { md, selectionStart, selectionEnd } = appendField(conPrivacidad, text);
+
+  assert.equal(md.slice(selectionStart, selectionEnd), text);
+  assert.ok(md.indexOf('type: text\n    name: campo_texto') < md.indexOf('type: privacy'));
+  const res = compileForm(md);
+  assert.equal(res.ok, true, res.ok ? '' : JSON.stringify(res.issues));
+  if (!res.ok) return;
+  assert.deepEqual(res.def.fields.map((f) => f.type), ['text', 'text', 'privacy']);
+  assert.equal(res.issues.length, 0); // el documento ya la tiene al final: sin aviso
+});
+
+test('el snippet de privacy lleva el texto legal con el enlace', () => {
+  const { md } = appendField(DOC, FIELD_SNIPPETS.find((s) => s.type === 'privacy')!.snippet);
+  const res = compileForm(md);
+  assert.equal(res.ok, true);
+  if (!res.ok) return;
+  const p = res.def.fields.at(-1)!;
+  assert.equal(p.type, 'privacy');
+  assert.match('label' in p ? p.label : '', /\[política de privacidad\]\(https:\/\/www\.interactius\.com\/aviso-legal\)/);
+});

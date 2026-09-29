@@ -24,8 +24,8 @@ export function FieldRow({ field, value, error, onChange }: Props) {
 
   return (
     <div className="ixf-field">
-      {/* boolean renders its label beside the checkbox (in Control) — no top label here, or it duplicates. */}
-      {field.type !== 'boolean' ? (
+      {/* boolean/privacy render their label beside the checkbox (in Control) — no top label here, or it duplicates. */}
+      {field.type !== 'boolean' && field.type !== 'privacy' ? (
         <label className="ixf-label" htmlFor={id}>
           <Md inline>{field.label}</Md>
           {field.required ? <span className="ixf-req" aria-hidden>*</span> : null}
@@ -139,6 +139,7 @@ function Control({
       return <RankingControl field={field} value={value} onChange={onChange} describedBy={describedBy} />;
 
     case 'boolean':
+    case 'privacy':
       return (
         <label className="ixf-choice">
           <input
@@ -150,7 +151,8 @@ function Control({
             onChange={(e) => set(e.target.checked)}
           />
           <span>
-            <Md inline>{field.label}</Md>
+            {/* Privacy links to the legal notice: open it aside, never navigate away from the form. */}
+            <Md inline newTab={field.type === 'privacy'}>{field.label}</Md>
             {field.required ? <span className="ixf-req" aria-hidden>*</span> : null}
           </span>
         </label>

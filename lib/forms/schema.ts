@@ -39,7 +39,14 @@ const inputBase = {
   placeholder: z.string().optional(),
 };
 
-/* ── The 14 field types (PRD §8.3). Discriminated by `type`. */
+/* ── Privacidad: el consentimiento legal de Interactius. Es un `boolean` con tres reglas fijas:
+   siempre obligatorio (`required` solo admite `true`), uno como mucho por formulario y siempre el
+   último (las dos últimas las impone el compilador, lib/forms/compile.ts). El texto es editable;
+   este es el que se usa si el autor no escribe `label`. */
+export const PRIVACY_LABEL =
+  'Acepto recibir mensajes de Interactius y su [política de privacidad](https://www.interactius.com/aviso-legal). Permito que Interactius pueda almacenar y procesar mis datos personales.';
+
+/* ── The field types (PRD §8.3 + `privacy`). Discriminated by `type`. */
 export const fieldSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('text'), ...inputBase, maxlength: z.number().int().positive().optional(), pattern: z.string().optional(), default: z.string().optional() }),
   z.object({ type: z.literal('email'), ...inputBase, default: z.string().optional() }),
@@ -52,6 +59,13 @@ export const fieldSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('ranking'), ...inputBase, options: z.array(optionSchema).min(2), default: z.array(z.string()).optional() }),
   z.object({ type: z.literal('select'), ...inputBase, options: z.array(optionSchema).min(1), default: z.string().optional() }),
   z.object({ type: z.literal('boolean'), ...inputBase, default: z.boolean().optional() }),
+  z.object({
+    type: z.literal('privacy'),
+    name: inputBase.name.default('privacidad'),
+    label: inputBase.label.default(PRIVACY_LABEL),
+    caption: inputBase.caption,
+    required: z.literal(true, { error: 'privacy es siempre obligatorio: quita `required` o déjalo en true' }).default(true),
+  }),
   z.object({ type: z.literal('scale'), ...inputBase, min: z.number().int(), max: z.number().int(), min_label: z.string().optional(), max_label: z.string().optional(), default: z.number().optional() }),
   z.object({ type: z.literal('date'), ...inputBase, min: z.string().optional(), max: z.string().optional(), default: z.string().optional() }),
   // Presentational blocks — no input, not collected.
@@ -62,7 +76,7 @@ export const fieldSchema = z.discriminatedUnion('type', [
 export type Field = z.infer<typeof fieldSchema>;
 export type InputField = Exclude<Field, { type: 'section' } | { type: 'content' }>;
 
-const INPUT_TYPES = ['text', 'email', 'number', 'tel', 'url', 'textarea', 'radio', 'checkbox', 'ranking', 'select', 'boolean', 'scale', 'date'] as const;
+const INPUT_TYPES = ['text', 'email', 'number', 'tel', 'url', 'textarea', 'radio', 'checkbox', 'ranking', 'select', 'boolean', 'privacy', 'scale', 'date'] as const;
 export function isInputField(f: Field): f is InputField {
   return (INPUT_TYPES as readonly string[]).includes(f.type);
 }
@@ -147,6 +161,7 @@ function normalizeValue(f: InputField, v: unknown): unknown {
       return ordered;
     }
     case 'boolean':
+    case 'privacy':
       return typeof v === 'boolean' ? v : undefined;
     case 'number':
     case 'scale': {
@@ -176,7 +191,7 @@ function buildTypeSchema(def: FormDraft): z.ZodType<Record<string, unknown>> {
 
 /* A required field is "missing" when normalization left it out/empty (consent boolean must be true). */
 function isMissing(f: InputField, v: unknown): boolean {
-  if (f.type === 'boolean') return v !== true;
+  if (f.type === 'boolean' || f.type === 'privacy') return v !== true;
   return v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
 }
 
@@ -240,6 +255,7 @@ function fieldValueSchema(f: InputField): z.ZodTypeAny {
       // ISO date (YYYY-MM-DD); range bounds are enforced client-side, revalidated loosely here.
       return z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional();
     case 'boolean':
+    case 'privacy':
       return z.boolean().optional();
     case 'radio':
     case 'select': {

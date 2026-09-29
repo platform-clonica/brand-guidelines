@@ -125,7 +125,18 @@ export function compileForm(raw: string): CompileResult {
   const errors = crossFieldErrors(def, at);
   if (errors.length) return { ok: false, def: null, issues: dedupe(errors) };
 
-  return { ok: true, def, issues: dedupe(warnings(def, at)) };
+  const issues = dedupe(warnings(def, at));
+  return { ok: true, def: privacyLast(def), issues };
+}
+
+/* ── La privacidad va SIEMPRE al final, escriba el autor lo que escriba. Se reordena después de
+   las comprobaciones porque sus issues señalan índices del documento tal como está escrito. */
+function privacyLast(def: FormDraft): FormDraft {
+  const at = def.fields.findIndex((f) => f.type === 'privacy');
+  if (at === -1 || at === def.fields.length - 1) return def;
+  const fields = def.fields.slice();
+  fields.push(...fields.splice(at, 1));
+  return { ...def, fields };
 }
 
 /* ── Errores que invalidan el formulario aunque el esquema los acepte. */
@@ -149,6 +160,17 @@ function crossFieldErrors(
       path: `fields.${i}.name`,
       message: `name duplicado "${f.name}" (ya está en el campo ${first + 1}). Cada campo necesita un name único o una respuesta pisa a la otra.`,
       line: at(['fields', i, 'name']),
+    });
+  });
+
+  // Privacidad: una sola. Dos consentimientos iguales al final del formulario no tienen sentido.
+  def.fields.forEach((f, i) => {
+    if (f.type !== 'privacy' || def.fields.findIndex((g) => g.type === 'privacy') === i) return;
+    out.push({
+      level: 'error',
+      path: `fields.${i}.type`,
+      message: 'Solo puede haber un campo privacy por formulario.',
+      line: at(['fields', i, 'type']),
     });
   });
 
@@ -204,6 +226,17 @@ function warnings(
       });
     }
   });
+
+  // Privacidad fuera de sitio: no rompe (se pinta al final igualmente), pero el documento engaña.
+  const privacyAt = def.fields.findIndex((f) => f.type === 'privacy');
+  if (privacyAt !== -1 && privacyAt !== def.fields.length - 1) {
+    out.push({
+      level: 'warning',
+      path: `fields.${privacyAt}`,
+      message: 'El campo privacy se muestra siempre al final del formulario; muévelo al final de la lista para que el documento lo refleje.',
+      line: at(['fields', privacyAt]),
+    });
+  }
 
   // min_select/max_select cruzados: no rompe, pero nunca se podrá enviar.
   def.fields.forEach((f, i) => {

@@ -2,7 +2,7 @@
    Equivalente de lib/deck/templates.ts + lib/deck/catalog.ts para formularios.
    Sin dependencias de Node: esto corre en el navegador. */
 
-import type { Accent } from './schema.ts';
+import { PRIVACY_LABEL, type Accent } from './schema.ts';
 import { yamlString } from './edit.ts';
 
 /* ── Id público opaco, con la forma de los que ya existen (`fk_Hjd81rX`).
@@ -165,6 +165,15 @@ export const FIELD_SNIPPETS: FieldSnippet[] = [
     name: campo_si_no
     label: Acepto el tratamiento de estas respuestas.
     required: false`,
+  },
+  {
+    type: 'privacy',
+    label: 'Privacidad',
+    // Sin `required`: la privacidad es obligatoria siempre. Se pinta al final del formulario
+    // aunque el autor la mueva, y los campos que se añadan después entran por encima de ella.
+    snippet: `  - type: privacy
+    name: privacidad
+    label: ${yamlString(PRIVACY_LABEL)}`,
   },
   {
     type: 'url',

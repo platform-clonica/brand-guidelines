@@ -98,6 +98,12 @@ export function appendField(raw: string, snippet: string): Insertion {
       break;
     }
   }
+  // La privacidad cierra siempre el formulario: lo nuevo entra justo antes de ella.
+  // Si lo que se añade es la propia privacidad, va al final como cualquier otro.
+  const addingPrivacy = /^\s*-\s*type\s*:\s*privacy\s*$/m.test(snippet);
+  const privacyAt = addingPrivacy ? -1 : privacyItemStart(lines, fieldsAt + 1, insertAt);
+  if (privacyAt !== -1) insertAt = privacyAt;
+
   // No arrastrar las líneas en blanco que hubiera al final de la lista.
   while (insertAt > fieldsAt + 1 && !lines[insertAt - 1].trim()) insertAt--;
 
@@ -210,6 +216,25 @@ export function duplicateMd(
 export function yamlString(s: string): string {
   if (/^https?:\/\/\S+$/.test(s)) return s;
   return /[:#\-?[\]{}&*!|>'"%@`,]|^\s|\s$/.test(s) ? JSON.stringify(s) : s;
+}
+
+/* Línea donde empieza el elemento `type: privacy` de la lista `fields` ([from, to)), o -1.
+   Los elementos son las líneas `- ` con la indentación del primero; `type` puede ir en la misma
+   línea del guion o en cualquiera de las siguientes del bloque. */
+function privacyItemStart(lines: string[], from: number, to: number): number {
+  let itemIndent: number | null = null;
+  let current = -1;
+  for (let i = from; i < to; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+    const indent = line.length - line.trimStart().length;
+    if (/^\s*-\s/.test(line) && (itemIndent === null || indent === itemIndent)) {
+      itemIndent ??= indent;
+      current = i;
+    }
+    if (current !== -1 && /^\s*(-\s*)?type\s*:\s*["']?privacy["']?\s*$/.test(line)) return current;
+  }
+  return -1;
 }
 
 /* Offsets de carácter del bloque recién insertado, a partir de su rango de líneas. */

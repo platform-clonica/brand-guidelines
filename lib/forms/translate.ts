@@ -48,7 +48,7 @@ NEVER translate these VALUES — copy them character for character:
 - \`name:\` — THIS IS CRITICAL. It is the storage key for every answer already collected.
   Changing it orphans real data. Copy each \`name\` value exactly, including underscores and hyphens.
 - \`type:\` — it is a schema discriminator (text, textarea, email, number, tel, url, radio,
-  checkbox, ranking, select, boolean, scale, date, section, content).
+  checkbox, ranking, select, boolean, privacy, scale, date, section, content).
 - \`status:\` (draft/published), \`accent:\` (opal/bordeaux/emerald) and \`ai_crawlers:\`
   (allow/block) — enumerations.
 - \`indexable:\` — a boolean.

@@ -21,6 +21,7 @@ const MD_RULES = [
   '  - type: text|textarea|email|number|tel|url',
   '          radio|checkbox|select|ranking',
   '          boolean|scale|date',
+  '          privacy (obligatorio, siempre al final)',
   '          section|content (no se responden)',
   '    name:  clave de la respuesta — no la cambies',
   '           si el formulario ya tiene respuestas',
