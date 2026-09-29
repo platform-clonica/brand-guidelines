@@ -25,7 +25,7 @@ function initialValues(def: FormDraft): Record<string, unknown> {
       v[f.name] = [...start, ...all.filter((x) => !start.includes(x))];
     } else if ('default' in f && f.default !== undefined) v[f.name] = f.default;
     else if (f.type === 'checkbox') v[f.name] = [];
-    else if (f.type === 'boolean') v[f.name] = false;
+    else if (f.type === 'boolean' || f.type === 'privacy') v[f.name] = false;
   }
   return v;
 }

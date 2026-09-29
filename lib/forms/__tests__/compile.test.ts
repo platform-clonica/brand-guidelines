@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { compileForm, splitFrontmatter } from '../compile.ts';
+import { PRIVACY_LABEL, normalizeAnswers, validateAnswers } from '../schema.ts';
 
 const FIXTURE = join(process.cwd(), 'content', 'forms', 'massimo-dutti.md');
 
@@ -256,4 +257,59 @@ test('cuerpo vacío → intro vacía, sin romper', () => {
   assert.equal(res.ok, true);
   if (!res.ok) return;
   assert.equal(res.def.intro, '');
+});
+
+/* ── privacy: obligatorio siempre, uno como mucho, y siempre el último. */
+
+const PRIV = `---
+id: fk_x
+title: T
+fields:
+  - type: privacy
+  - type: text
+    name: nombre
+    label: Nombre
+---
+`;
+
+test('privacy: sin label ni name toma el texto legal por defecto y es obligatorio', () => {
+  const res = compileForm(PRIV);
+  assert.equal(res.ok, true, res.ok ? '' : JSON.stringify(res.issues));
+  if (!res.ok) return;
+  const p = res.def.fields.find((f) => f.type === 'privacy');
+  assert.ok(p && p.type === 'privacy');
+  assert.equal(p.name, 'privacidad');
+  assert.equal(p.label, PRIVACY_LABEL);
+  assert.equal(p.required, true);
+});
+
+test('privacy: se mueve al final aunque el documento la ponga antes, con aviso', () => {
+  const res = compileForm(PRIV);
+  assert.equal(res.ok, true);
+  if (!res.ok) return;
+  assert.deepEqual(res.def.fields.map((f) => f.type), ['text', 'privacy']);
+  assert.ok(res.issues.some((i) => i.level === 'warning' && /al final/.test(i.message)));
+});
+
+test('privacy: required false no compila', () => {
+  const res = compileForm(PRIV.replace('  - type: privacy\n', '  - type: privacy\n    required: false\n'));
+  assert.equal(res.ok, false);
+});
+
+test('privacy: dos en el mismo formulario es un error', () => {
+  const res = compileForm(PRIV.replace('  - type: privacy\n', '  - type: privacy\n  - type: privacy\n    name: otra\n'));
+  assert.equal(res.ok, false);
+  if (res.ok) return;
+  assert.ok(res.issues.some((i) => /Solo puede haber un campo privacy/.test(i.message)));
+});
+
+test('privacy: sin marcar no valida; marcada sí', () => {
+  const res = compileForm(PRIV);
+  assert.equal(res.ok, true);
+  if (!res.ok) return;
+  const off = validateAnswers(res.def, normalizeAnswers(res.def, { nombre: 'Ana', privacidad: false }));
+  assert.equal(off.ok, false);
+  if (!off.ok) assert.equal(off.errors.privacidad, 'obligatorio');
+  const on = validateAnswers(res.def, normalizeAnswers(res.def, { nombre: 'Ana', privacidad: true }));
+  assert.equal(on.ok, true);
 });

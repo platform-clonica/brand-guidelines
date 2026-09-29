@@ -130,6 +130,28 @@ formulario vive en un panel, así que se añadió un escenario `.ixf-stage` que 
 reglas, con `.ixf-stage--wide` para pintar a dos columnas cuando el panel mide ≥ 900 px. El ancho se
 mide con `ResizeObserver` sobre el **panel**, porque una media query miraría el viewport.
 
+### El campo `privacy`: el consentimiento legal, con tres reglas fijas
+
+El único tipo que no es genérico. Es un `boolean` con el texto legal de Interactius:
+
+```yaml
+  - type: privacy
+    name: privacidad
+    label: "Acepto recibir mensajes de Interactius y su [política de privacidad](https://www.interactius.com/aviso-legal). Permito que Interactius pueda almacenar y procesar mis datos personales."
+```
+
+- **Siempre obligatorio.** `required` solo admite `true` (y se da por puesto); `required: false`
+  no compila. Sin marcar, el envío no pasa ni en el navegador ni en el servidor.
+- **Siempre al final.** El compilador lo mueve al último lugar aunque el documento lo ponga antes
+  (con un aviso), y `appendField` inserta lo que se añade desde la paleta **por encima** de él,
+  para que el `md` refleje lo que se ve.
+- **Uno como mucho** por formulario: dos son un error.
+
+`name` y `label` tienen valor por defecto (`privacidad` y el texto de arriba, `PRIVACY_LABEL` en
+[lib/forms/schema.ts](../../lib/forms/schema.ts)): `- type: privacy` a secas es válido. El texto se
+puede editar. El enlace abre en pestaña nueva, para no perder las respuestas. En el CSV sale como
+una columna más, `sí`/`no`.
+
 ## Arquitectura (archivos)
 
 | Área | Archivo |
