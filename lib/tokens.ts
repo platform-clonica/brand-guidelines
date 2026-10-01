@@ -57,6 +57,10 @@ export const toolIconAccents: { app: string; hex: string; note: string }[] = [
   /* DSMak_r comparte el cian de ReWrit_r a propósito — confirmado por Alberto en agosto de 2026.
      El acento no es un identificador único por herramienta: dos pueden compartirlo. */
   { app: 'dsmakr',   hex: '#00D1FF', note: 'Cian — tokens de diseño y componente maestro' },
+  /* IMG_r, octubre de 2026. Decisión de CARLOS, con Alberto informado después; queda anotada así para
+     que él pueda revocarla sin reconstruir el porqué. Aviso dado y asumido: a 72 px el magenta queda
+     cerca del coral de DeckMak_r (#FF6B6B). Alcance: AppIcon.tsx y nada más. */
+  { app: 'imgr',     hex: '#EC4899', note: 'Magenta — la imagen y el revelado' },
 ];
 
 export const typography = {
