@@ -6,7 +6,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { describeChanges, downloadName, legacyName, normalizeTag, normalizeTags } from '../naming.ts';
+import { describeChanges, downloadName, legacyName, normalizeTag, normalizeTags, withName } from '../naming.ts';
 
 test('legacyName prefiere el alt, que guarda el nombre original del fichero sin sanear', () => {
   assert.equal(
@@ -58,4 +58,17 @@ test('describeChanges cuenta solo lo que la otra pestaña cambió', () => {
   );
   assert.equal(describeChanges(opened, { name: 'Pasillo', tags: ['oficina', 'luz', 'portada'] }), 'Sus cambios: etiqueta añadida: portada.');
   assert.equal(describeChanges(opened, { name: 'Pasillo', tags: ['luz', 'oficina'] }), '');
+});
+
+test('normalizeTag quita llaves, comillas y barras invertidas, que romperían el filtro de arrays de PostgREST', () => {
+  assert.equal(normalizeTag('{luz}'), 'luz');
+  assert.equal(normalizeTag('sala "grande"'), 'sala-grande');
+  assert.equal(normalizeTag('a\\b'), 'ab');
+});
+
+test('withName pone nombre a una fila que llegó sin él, con la regla de las antiguas', () => {
+  const row = { name: null, alt: 'hub (1)', storage_path: 'images/1782815153902-hub__1_.jpg', tags: [] };
+  assert.equal(withName(row).name, 'hub (1)');
+  assert.equal(withName({ ...row, name: 'Sala' }).name, 'Sala');
+  assert.equal(withName({ ...row, name: '  ' }).name, 'hub (1)');
 });

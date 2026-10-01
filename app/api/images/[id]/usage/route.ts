@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server';
 import { dbFail, requireUser, supabaseAuthServer } from '@/lib/supabase/server';
+import { isUuid } from '@/lib/uuid';
+import { imageUses } from '@/lib/images/usage';
 
 export const dynamic = 'force-dynamic';
 
 type Ctx = { params: Promise<{ id: string }> };
 
-/* GET /api/images/:id/usage — qué documentos referencian esta imagen (por su URL en el markdown).
+/* GET /api/images/:id/usage — qué decks y formularios llevan esta imagen en su `md`.
 
-   Mira decks Y formularios. Antes solo miraba decks, lo que era correcto mientras la galería
-   fuera exclusiva del DeckMaker; desde que FormMaker elige la imagen de fondo desde la misma
-   galería, borrar una imagen usada por un formulario habría dicho "no se usa" y habría dejado
-   el formulario con la imagen rota. */
+   Antes hacía aquí sus propias dos consultas `ilike`. Ahora delega en `image_uses` (lib/images/usage.ts),
+   la misma definición que usan el listado y el DELETE que bloquea: si cambia qué significa «en uso»,
+   cambia en un solo sitio. La respuesta es la de siempre, `{ count, uses }`. */
 export async function GET(_req: Request, { params }: Ctx) {
   /* Cinturón además de los tirantes: el middleware ya exige sesión, pero su matcher excluye
      toda ruta con un punto. El patrón es el que /api/forms ya usaba. */
@@ -18,40 +19,18 @@ export async function GET(_req: Request, { params }: Ctx) {
   if (unauth) return unauth;
 
   const { id } = await params;
+  const notFound = NextResponse.json({ error: 'Esa imagen ya no está en el banco.' }, { status: 404 });
+  if (!isUuid(id)) return notFound;
   const sb = await supabaseAuthServer();
 
-  const { data: img, error: findErr } = await sb
-    .from('images')
-    .select('url')
-    .eq('id', id)
-    .single();
-  if (findErr) return dbFail('images/[id]/usage', findErr, 404);
+  const { data: img, error: findErr } = await sb.from('images').select('id').eq('id', id).maybeSingle();
+  if (findErr) return dbFail('images/[id]/usage', findErr, 500);
+  if (!img) return notFound;
 
-  if (!img?.url) return NextResponse.json({ count: 0, uses: [] });
-
-  // Escape LIKE wildcards so a literal URL match can't be widened by `%`/`_`.
-  const needle = img.url.replace(/[\\%_]/g, (c: string) => `\\${c}`);
-
-  const [deckRes, formRes] = await Promise.all([
-    sb.from('decks').select('id, commercial_id, clients(name)').ilike('md', `%${needle}%`),
-    sb.from('forms').select('id, title').ilike('md', `%${needle}%`),
-  ]);
-  if (deckRes.error) return NextResponse.json({ error: deckRes.error.message }, { status: 500 });
-  if (formRes.error) return NextResponse.json({ error: formRes.error.message }, { status: 500 });
-
-  const uses = [
-    ...(deckRes.data ?? []).map((d: Record<string, unknown>) => ({
-      kind: 'deck' as const,
-      name:
-        (d.commercial_id as string | null) ||
-        (d.clients as { name?: string } | null)?.name ||
-        'Sin nombre',
-    })),
-    ...(formRes.data ?? []).map((f: Record<string, unknown>) => ({
-      kind: 'form' as const,
-      name: (f.title as string | null) || 'Sin título',
-    })),
-  ];
-
-  return NextResponse.json({ count: uses.length, uses });
+  try {
+    const uses = (await imageUses(sb, [id])).get(id) ?? [];
+    return NextResponse.json({ count: uses.length, uses }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch (e) {
+    return dbFail('images/[id]/usage', e as { code?: string; message: string }, 500);
+  }
 }

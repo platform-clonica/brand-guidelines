@@ -42,6 +42,23 @@ export function variantPaths(id: string, mime: string): VariantPaths {
   return { original: `images/${id}/original.${ext}`, light: `images/${id}/light.jpg`, thumb: `images/${id}/thumb.jpg` };
 }
 
+/* Los ficheros de una imagen nueva que Storage no tiene. `names` es lo que devuelve `list('images/<id>')`,
+   sin carpeta. El `POST` no registra una fila sin sus tres ficheros. */
+export function missingVariants(paths: VariantPaths, names: readonly string[]): string[] {
+  return [paths.original, paths.light, paths.thumb].map((p) => p.slice(p.lastIndexOf('/') + 1)).filter((n) => !names.includes(n));
+}
+
+/* Todos los ficheros de una imagen, para borrarla sin dejar huérfanos: original, ligera, miniatura y,
+   en la fase 2, el original anterior a sobrescribir. Las antiguas solo tienen la ligera. */
+export function objectPaths(row: {
+  original_path: string | null;
+  storage_path: string;
+  thumb_path: string | null;
+  prior_original_path: string | null;
+}): string[] {
+  return [row.original_path, row.storage_path, row.thumb_path, row.prior_original_path].filter((p): p is string => !!p);
+}
+
 /* Formato público y estable de Supabase Storage, el mismo de lib/decks/publicApi.ts. Esa copia es
    'use client' y un Route Handler no puede importar valores de ahí; esta la usa el servidor. */
 export function publicObjectUrl(base: string, bucket: string, path: string): string {

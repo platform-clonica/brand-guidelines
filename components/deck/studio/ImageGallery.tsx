@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import type { ImageRecord } from '@/lib/decks/types';
+import type { ImageCreateInput, ImageRecord } from '@/lib/decks/types';
 import { deleteImage, imageUsage, listImages, registerImage, uploadImage, type ImageUse } from '@/lib/decks/api';
 import { optimizeImage } from '@/lib/deck/optimizeImage';
 import { Modal } from './Modal';
@@ -52,7 +52,7 @@ export function ImageGallery({
 
   useEffect(() => {
     listImages()
-      .then(setImages)
+      .then((page) => setImages(page.items))
       .catch((e) => setError(e instanceof Error ? e.message : 'No se pudieron cargar las imágenes'))
       .finally(() => setLoading(false));
   }, []);
@@ -65,7 +65,9 @@ export function ImageGallery({
       const blob = await (await fetch(dataUrl)).blob();
       const base = file.name.replace(/\.[^.]+$/, '');
       const { path, url } = await uploadImage(blob, `${base}.jpg`);
-      const rec = await registerImage({ storage_path: path, url, alt: base });
+      /* Bloque 2 → 3 del plan de IMG_r: esta subida pasa a ImageUploadModal en el bloque 3. Hasta
+         entonces el POST exige nombre, etiquetas y los tres ficheros, y la rechaza con un 400. */
+      const rec = await registerImage({ storage_path: path, url, alt: base } as unknown as ImageCreateInput);
       setImages((prev) => [rec, ...prev]);
       setSelected(url);
     } catch (e) {
@@ -94,7 +96,12 @@ export function ImageGallery({
     setDeleting(true);
     setError(null);
     try {
-      await deleteImage(img.id);
+      const res = await deleteImage(img.id);
+      if (!res.ok) {
+        setError('Esta imagen se usa en algún documento y no se puede eliminar.');
+        setToDelete(null);
+        return;
+      }
       setImages((prev) => prev.filter((i) => i.id !== img.id));
       if (selected === img.url) setSelected(null);
       setToDelete(null);

@@ -21,6 +21,7 @@ import {
   isFiltered,
   keysetFilter,
   matchesFilter,
+  pageOf,
   parseListQuery,
   searchText,
   tagFacets,
@@ -147,4 +148,13 @@ test('tagFacets cuenta, ordena por uso y luego alfabéticamente, y cuenta las qu
     { tag: 'oficina', count: 1 },
   ]);
   assert.equal(f.untagged, 2);
+});
+
+test('pageOf corta la página y da el cursor de la última solo si hay más', () => {
+  const rows = [1, 2, 3].map((n) => ({ id: `3f2b8c1e-9a4d-4c3b-8f7e-1a2b3c4d5e6${n}`, created_at: `2026-10-0${n}T10:00:00+00:00` }));
+  const page = pageOf(rows, 2);
+  assert.deepEqual(page.items, rows.slice(0, 2));
+  assert.deepEqual(decodeCursor(page.nextCursor), { createdAt: rows[1].created_at, id: rows[1].id });
+  assert.equal(pageOf(rows, 3).nextCursor, null);
+  assert.deepEqual(pageOf([], 60), { items: [], nextCursor: null });
 });

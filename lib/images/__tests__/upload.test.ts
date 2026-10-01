@@ -8,6 +8,8 @@ import {
   MAX_BYTES,
   effectiveTags,
   formatBytes,
+  missingVariants,
+  objectPaths,
   publicObjectUrl,
   rowProblem,
   unreadableMessage,
@@ -164,4 +166,19 @@ test('validateUpdateInput exige nombre, una etiqueta y el updated_at que se ley�
   assert.equal(err({ name: 'a', tags: [], expectedUpdatedAt: '2026-10-01T10:00:00Z' }), 'Falta al menos una etiqueta.');
   assert.equal(err({ name: 'a', tags: ['luz'] }), 'Falta la fecha de la versión que se editó.');
   assert.equal(err('x'), 'Cuerpo no válido.');
+});
+
+test('missingVariants dice qué ficheros de la imagen no están en Storage', () => {
+  const paths = variantPaths(ID, 'image/png');
+  assert.deepEqual(missingVariants(paths, ['light.jpg', 'original.png', 'thumb.jpg']), []);
+  assert.deepEqual(missingVariants(paths, ['light.jpg']), ['original.png', 'thumb.jpg']);
+  assert.deepEqual(missingVariants(paths, []), ['original.png', 'light.jpg', 'thumb.jpg']);
+});
+
+test('objectPaths da todos los ficheros de una imagen para borrarla, sin nulos', () => {
+  const nueva = { original_path: `images/${ID}/original.png`, storage_path: `images/${ID}/light.jpg`, thumb_path: `images/${ID}/thumb.jpg`, prior_original_path: null };
+  assert.deepEqual(objectPaths(nueva), [`images/${ID}/original.png`, `images/${ID}/light.jpg`, `images/${ID}/thumb.jpg`]);
+  assert.deepEqual(objectPaths({ ...nueva, prior_original_path: `images/${ID}/original-1.png` }).length, 4);
+  const antigua = { original_path: null, storage_path: 'images/1789503530988-BLANC_MAD_02-215.jpg', thumb_path: null, prior_original_path: null };
+  assert.deepEqual(objectPaths(antigua), ['images/1789503530988-BLANC_MAD_02-215.jpg']);
 });

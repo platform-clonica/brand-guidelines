@@ -23,10 +23,12 @@ export function legacyName(alt: string | null, storagePath: string): string {
 }
 
 /* Una etiqueta: minúsculas, espacios a un solo guion, sin guiones en los bordes. Conserva las tildes:
-   la búsqueda ya las ignora (lib/images/filter.ts), y «presentación» se lee mejor que «presentacion». */
+   la búsqueda ya las ignora (lib/images/filter.ts), y «presentación» se lee mejor que «presentacion».
+   Quita llaves, comillas y barras invertidas: el filtro `contains` de PostgREST escribe las etiquetas
+   como un array literal (`{a,b}`) y ahí romperían la consulta. */
 export function normalizeTag(raw: string): string {
   const clean = (s: string) => s.replace(/-+/g, '-').replace(/^-|-$/g, '');
-  const t = clean(raw.toLocaleLowerCase('es').trim().replace(/\s+/g, '-'));
+  const t = clean(raw.toLocaleLowerCase('es').replace(/[{}"\\]/g, '').trim().replace(/\s+/g, '-'));
   return clean(t.slice(0, TAG_MAX));
 }
 
@@ -39,6 +41,12 @@ export function normalizeTags(raw: readonly string[]): string[] {
     if (t && !out.includes(t)) out.push(t);
   }
   return out;
+}
+
+/* Una fila con nombre. Entre la migración y su `not null` (20261001100100), la versión anterior del
+   popup puede insertar filas sin `name`; la API se las pone con la misma regla de las antiguas. */
+export function withName<T extends { name: string | null; alt: string | null; storage_path: string }>(row: T): Omit<T, 'name'> & { name: string } {
+  return { ...row, name: row.name?.trim() ? row.name : legacyName(row.alt, row.storage_path) };
 }
 
 /* Nombre del fichero que se descarga: el de la imagen, sin lo que un sistema de ficheros no admite. */

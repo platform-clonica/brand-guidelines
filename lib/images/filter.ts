@@ -82,6 +82,14 @@ export function keysetFilter(c: Cursor): string {
   return `created_at.lt."${c.createdAt}",and(created_at.eq."${c.createdAt}",id.lt.${c.id})`;
 }
 
+/* Corta una página pedida con `limit + 1` filas: si sobra una, hay más, y el cursor es la última que se
+   devuelve. */
+export function pageOf<T extends { id: string; created_at: string }>(rows: readonly T[], limit: number) {
+  const items = rows.slice(0, limit);
+  const last = items[items.length - 1];
+  return { items, nextCursor: rows.length > limit && last ? encodeCursor({ createdAt: last.created_at, id: last.id }) : null };
+}
+
 export type ListQuery = { search: string; tags: string[]; untagged: boolean; cursor: Cursor | null; limit: number };
 
 export function parseListQuery(p: URLSearchParams): ListQuery {

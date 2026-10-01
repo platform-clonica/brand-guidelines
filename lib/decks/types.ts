@@ -107,12 +107,15 @@ export type ImageDetail = ImageRecord & { uses: ImageUse[]; uploaded_by: string 
 
 export type ImageUpdateInput = ImageMeta & { expectedUpdatedAt: string };
 
-export type ImageCreateInput = {
-  storage_path: string;
-  url: string;
-  alt?: string | null;
-  width?: number | null;
-  height?: number | null;
-  source?: 'upload' | 'generated';
-  prompt?: string | null;
+/* Lo que el navegador manda a POST /api/images después de subir los tres ficheros a `images/<id>/`.
+   Las rutas y la URL las recalcula el servidor desde el id y el tipo (lib/images/upload.ts). */
+export type ImageCreateInput = ImageMeta & {
+  id: string;
+  original_type: string;
+  original_bytes: number;
+  original_width: number;
+  original_height: number;
+  /** Medidas de la versión ligera. */
+  width: number;
+  height: number;
 };
