@@ -98,11 +98,14 @@ export function useFocusTrap(
         first.focus();
       }
     };
-    document.addEventListener('keydown', onKey);
+    /* En window y no en document: React (Next lo monta sobre document) atiende sus eventos en
+       document, así que un campo que se queda el Escape con stopPropagation —la lista de TagInput—
+       solo puede pararlo antes de window. En document la trampa lo recibía igual y cerraba el modal. */
+    window.addEventListener('keydown', onKey);
 
     return () => {
       modalStack.remove(entry);
-      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('keydown', onKey);
       for (const el of siblings) el.removeAttribute('inert');
       document.documentElement.style.overflow = prevOverflow;
       // 1 · devolver el foco a quien lo tenía

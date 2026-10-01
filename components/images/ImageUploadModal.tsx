@@ -287,6 +287,8 @@ function UploadRow({
   onRemove: () => void;
 }) {
   const nameId = `imgr-nombre-${row.key}`;
+  // Un fichero que el navegador no sabe pintar deja el hueco gris, no el icono de imagen rota.
+  const [unpainted, setUnpainted] = useState(false);
   const problem = row.bad ? rowProblem(row, common) : null;
   const tags = effectiveTags(common, row.tags);
   const missingName = row.bad && !row.name.trim();
@@ -306,8 +308,17 @@ function UploadRow({
         borderTop: `1px solid ${colors.warmDark}`, paddingTop: 12,
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={row.preview} alt="" style={{ width: 72, height: 54, objectFit: 'cover', display: 'block', background: colors.grey }} />
+      {unpainted ? (
+        <div style={{ width: 72, height: 54, background: colors.grey }} />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={row.preview}
+          alt=""
+          onError={() => setUnpainted(true)}
+          style={{ width: 72, height: 54, objectFit: 'cover', display: 'block', background: colors.grey }}
+        />
+      )}
       <div style={{ minWidth: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
           <div style={{ font: `400 10px/1.4 ${MONO}`, color: colors.ash, overflowWrap: 'anywhere' }}>

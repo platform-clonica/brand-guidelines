@@ -68,7 +68,12 @@ export function TagInput({
   const remove = (t: string) => onChange(tags.filter((x) => x !== t));
 
   const onKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'ArrowDown' && options.length) {
+    if (e.key === 'ArrowDown' && !open) {
+      // Cerrada con Escape, la flecha la vuelve a abrir en la primera sugerencia, como un combobox.
+      e.preventDefault();
+      setOpen(true);
+      setHi(0);
+    } else if (e.key === 'ArrowDown' && options.length) {
       e.preventDefault();
       setHi((active + 1) % options.length);
     } else if (e.key === 'ArrowUp' && options.length) {
