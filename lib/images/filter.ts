@@ -41,6 +41,10 @@ export const effectiveSearch = (q: string) => {
   return s.length >= SEARCH_MIN ? s : '';
 };
 
+/* Si el filtro acota de verdad la rejilla: «ab» todavía no busca. Decide qué vacío se enseña: el del
+   banco vacío o el de «ninguna coincide». `isFiltered` decide otra cosa, si hay algo que quitar. */
+export const narrows = (f: ImageFilter) => effectiveSearch(f.q) !== '' || f.tags.length > 0 || f.untagged;
+
 /* Si una imagen pasa el filtro. Es la regla del servidor, para decidir en el navegador si una imagen
    recién subida o editada se queda en la rejilla filtrada. «Sin etiquetas» excluye a las demás. */
 export function matchesFilter(img: { name: string; tags: readonly string[] }, f: ImageFilter): boolean {

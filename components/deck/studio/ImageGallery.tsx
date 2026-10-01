@@ -7,7 +7,7 @@ import { ImageUploadModal } from '@/components/images/ImageUploadModal';
 import { useImageList } from '@/components/images/useImageList';
 import { SearchField } from '@/components/studio/GalleryFilters';
 import { ToastProvider } from '@/components/ui/Toast';
-import { isFiltered } from '@/lib/images/filter';
+import { narrows } from '@/lib/images/filter';
 import type { ImageListItem } from '@/lib/decks/types';
 import { Modal } from './Modal';
 import { btn, btnGhost, colors, linkBtn } from './ui';
@@ -86,7 +86,7 @@ function Gallery({ onSelect, onClose }: { onSelect: (url: string) => void; onClo
         {items === null && <div style={empty}>Cargando</div>}
         {items?.length === 0 && !list.error && (
           <div style={empty}>
-            {isFiltered(list.filter)
+            {narrows(list.filter)
               ? 'Ninguna imagen coincide.'
               : 'Aún no hay imágenes en el banco. Sube la primera con el botón de arriba: te pediremos un nombre y al menos una etiqueta para poder encontrarla después.'}
           </div>

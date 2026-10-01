@@ -6,7 +6,7 @@ import { btn, colors } from '@/components/deck/studio/ui';
 import { useToast } from '@/components/ui/Toast';
 import { deleteImage, imageUsage } from '@/lib/decks/api';
 import type { ImageUse } from '@/lib/decks/types';
-import { isLegacy } from '@/lib/images/view';
+import { errorText, isLegacy } from '@/lib/images/view';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
@@ -79,7 +79,7 @@ export function ImageDeleteModal({
       toast.show('Imagen eliminada');
       onDeleted(image.id);
     } catch (e) {
-      toast.show(e instanceof Error ? e.message : 'No se pudo eliminar la imagen.');
+      toast.show(errorText(e, 'No se ha podido eliminar la imagen. Revisa la conexión y vuelve a intentarlo.'));
       onClose();
     } finally {
       setDeleting(false);
@@ -92,6 +92,7 @@ export function ImageDeleteModal({
       message={`Se borrará «${image.name}»${isLegacy(image) ? '' : ', con su original y su versión ligera'}. Ningún deck ni formulario la usa. Esta acción no se puede deshacer.`}
       confirmLabel={deleting ? 'Eliminando' : 'Eliminar'}
       danger
+      busy={deleting}
       onConfirm={confirm}
       onClose={() => !deleting && onClose()}
     />

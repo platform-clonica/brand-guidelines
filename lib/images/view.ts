@@ -78,3 +78,8 @@ export function downloads(row: Row, urlFor: (path: string) => string, natural?: 
   });
   return out;
 }
+
+/* El texto de un error para un aviso. Los de la API ya vienen en castellano y se enseñan; el fallo de red
+   de `fetch` es un TypeError del navegador, en inglés («Failed to fetch»), y se cambia por `fallback`. */
+export const errorText = (e: unknown, fallback: string) =>
+  e instanceof Error && !(e instanceof TypeError) && e.message ? e.message : fallback;

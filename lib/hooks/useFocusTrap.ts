@@ -60,8 +60,9 @@ export function useFocusTrap(
         (el) => el.offsetParent !== null || el === document.activeElement,
       );
 
-    // 2 · foco inicial dentro del panel
-    focusables()[0]?.focus();
+    // 2 · foco inicial dentro del panel. Sin desplazar la página: el panel es fijo y la página no debe moverse
+    //     (en desarrollo React monta el efecto dos veces y el foco pasa un instante por el disparador).
+    focusables()[0]?.focus({ preventScroll: true });
 
     // 4 · el resto del documento queda inerte
     const siblings: HTMLElement[] = [];
@@ -108,8 +109,9 @@ export function useFocusTrap(
       window.removeEventListener('keydown', onKey);
       for (const el of siblings) el.removeAttribute('inert');
       document.documentElement.style.overflow = prevOverflow;
-      // 1 · devolver el foco a quien lo tenía
-      previouslyFocused?.focus?.();
+      // 1 · devolver el foco a quien lo tenía, sin desplazar la página: si era el buscador de la cabecera, la
+      //     galería saltaba arriba al cerrar el detalle y se perdía el scroll (check 13 de IMG_r).
+      previouslyFocused?.focus?.({ preventScroll: true });
     };
   }, [ref, active]);
 }

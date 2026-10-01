@@ -5,7 +5,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LEGACY_NOTE, downloads, factLines, formatDate, isLegacy, thumbSrc } from '../view.ts';
+import { LEGACY_NOTE, downloads, errorText, factLines, formatDate, isLegacy, thumbSrc } from '../view.ts';
 
 const ID = '3f2b8c1e-9a4d-4c3b-8f7e-1a2b3c4d5e6f';
 const urlFor = (path: string) => `https://x.supabase.co/storage/v1/object/public/deck-images/${path}`;
@@ -88,4 +88,12 @@ test('una antigua solo ofrece la ligera, y la nota lo explica', () => {
 test('la ligera de un original pequeño dice su lado largo real', () => {
   const pequena = { ...nueva, width: 1200, height: 800 };
   assert.equal(downloads(pequena, urlFor)[1].toast, 'Descargando la versión ligera · JPEG 1200 px');
+});
+
+test('errorText: el mensaje de la API sí; el fallo de red del navegador, en inglés, no', () => {
+  assert.equal(errorText(new Error('Esa imagen ya no está en el banco.'), 'No se pudo.'), 'Esa imagen ya no está en el banco.');
+  // fetch rechaza con TypeError («Failed to fetch», «Load failed»…): eso no se enseña.
+  assert.equal(errorText(new TypeError('Failed to fetch'), 'No se pudo.'), 'No se pudo.');
+  assert.equal(errorText('algo', 'No se pudo.'), 'No se pudo.');
+  assert.equal(errorText(new Error(''), 'No se pudo.'), 'No se pudo.');
 });

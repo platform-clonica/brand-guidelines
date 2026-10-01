@@ -20,6 +20,7 @@ import {
   foldSearch,
   isFiltered,
   keysetFilter,
+  narrows,
   matchesFilter,
   pageOf,
   parseListQuery,
@@ -93,6 +94,17 @@ test('«Quitar filtros» lo limpia todo, e isFiltered dice cuándo mostrarlo', (
   assert.ok(isFiltered({ ...none, q: 'p' }));
   assert.ok(isFiltered({ ...none, tags: ['luz'] }));
   assert.ok(isFiltered({ ...none, untagged: true }));
+});
+
+test('narrows: solo acota lo que de verdad filtra (la búsqueda cuenta desde el tercer carácter)', () => {
+  // Con el banco vacío y «ab» escrito, la página no está filtrada: debe decir que el banco está vacío,
+  // no que «ninguna imagen coincide».
+  assert.ok(!narrows(none));
+  assert.ok(!narrows({ ...none, q: 'ab' }));
+  assert.ok(!narrows({ ...none, q: '   ' }));
+  assert.ok(narrows({ ...none, q: 'abc' }));
+  assert.ok(narrows({ ...none, tags: ['luz'] }));
+  assert.ok(narrows({ ...none, untagged: true }));
 });
 
 test('parseListQuery normaliza lo que llega por la URL', () => {

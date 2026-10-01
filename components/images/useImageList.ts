@@ -88,10 +88,14 @@ export function useImageList() {
     refreshFacets();
   }, [refreshFacets]);
 
-  /* Recién subidas: van primero, si cumplen el filtro activo (detalle 27). */
+  /* Recién subidas: van primero, si cumplen el filtro activo (detalle 27). Llegan en el orden de subida y
+     se ponen al revés, la última delante, que es como las ordena el servidor: al recargar no cambian de sitio. */
   const prepend = useCallback((records: ImageRecord[]) => {
     const f = filterRef.current;
-    const fresh = records.filter((r) => matchesFilter(r, f)).map((r) => ({ ...r, use_count: 0 }));
+    const fresh = [...records]
+      .reverse()
+      .filter((r) => matchesFilter(r, f))
+      .map((r) => ({ ...r, use_count: 0 }));
     setItems((prev) => {
       const ids = new Set(fresh.map((r) => r.id));
       return [...fresh, ...(prev ?? []).filter((i) => !ids.has(i.id))];

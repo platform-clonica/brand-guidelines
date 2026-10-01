@@ -73,3 +73,8 @@ export function FormLogo({ height = 30, title = 'FormMakr' }: { height?: number;
 export function DsLogo({ height = 30, title = 'DSMakr' }: { height?: number; title?: string }) {
   return <Wordmark before="DSMak" after="r" height={height} title={title} />;
 }
+
+/* IMG_r, el banco de imágenes. Gestiona, no fabrica: por eso no lleva `Mak`. */
+export function ImgLogo({ height = 30, title = 'IMGr' }: { height?: number; title?: string }) {
+  return <Wordmark before="IMG" after="r" height={height} title={title} />;
+}
