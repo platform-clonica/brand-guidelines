@@ -24,6 +24,7 @@ import {
   pageOf,
   parseListQuery,
   searchText,
+  suggestTags,
   tagFacets,
   toggleTag,
   toggleUntagged,
@@ -157,4 +158,13 @@ test('pageOf corta la página y da el cursor de la última solo si hay más', ()
   assert.deepEqual(decodeCursor(page.nextCursor), { createdAt: rows[1].created_at, id: rows[1].id });
   assert.equal(pageOf(rows, 3).nextCursor, null);
   assert.deepEqual(pageOf([], 60), { items: [], nextCursor: null });
+});
+
+test('suggestTags propone las existentes que empiezan por lo escrito, sin tildes y sin las ya puestas', () => {
+  const all = ['presentación', 'oficina', 'portada', 'pasillo', 'luz', 'proyecto', 'prensa', 'premio', 'personas'];
+  assert.deepEqual(suggestTags('PRES', all, []), ['presentación']);
+  assert.deepEqual(suggestTags('p', all, ['portada']), ['presentación', 'pasillo', 'proyecto', 'prensa', 'premio', 'personas']);
+  assert.deepEqual(suggestTags('ofi', all, ['oficina']), []);
+  assert.deepEqual(suggestTags('  ', all, []), []);
+  assert.deepEqual(suggestTags('fic', all, []), [], 'por prefijo, no por subcadena');
 });

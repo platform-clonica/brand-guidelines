@@ -107,22 +107,6 @@ export function addClient(input: ClientCreateInput): Promise<ClientRecord> {
 export { uploadLogo } from '@/lib/storage/logos';
 
 // ---- Images (banco, IMG_r: docs/features/img-r.md) ----
-/* ANTIGUA: la ruta con marca de tiempo del popup de antes de IMG_r. Se retira en el bloque 3, cuando el
-   popup pasa a la subida compartida (components/images/ImageUploadModal). */
-export async function uploadImage(file: Blob, name: string): Promise<{ path: string; url: string }> {
-  const sb = supabaseBrowser();
-  const safe = name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const path = `images/${Date.now()}-${safe}`;
-  const { error } = await sb.storage.from(IMAGE_BUCKET).upload(path, file, {
-    cacheControl: '3600',
-    contentType: file.type || 'image/jpeg',
-    upsert: false,
-  });
-  if (error) throw new Error(error.message);
-  const url = sb.storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl;
-  return { path, url };
-}
-
 /* Sube un fichero del banco a su ruta definitiva (`images/<id>/…`, lib/images/upload.ts). Esas rutas
    son únicas y no se sobrescriben nunca —la fase 2 sobrescribe con rutas nuevas—, así que la caché
    puede ser de un año (plan IMG_r, D11). */

@@ -1,244 +1,150 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import type { ImageCreateInput, ImageRecord } from '@/lib/decks/types';
-import { deleteImage, imageUsage, listImages, registerImage, uploadImage, type ImageUse } from '@/lib/decks/api';
-import { optimizeImage } from '@/lib/deck/optimizeImage';
+import { ImageCard } from '@/components/images/ImageCard';
+import { ImageDeleteModal } from '@/components/images/ImageDeleteModal';
+import { ImageFilters } from '@/components/images/ImageFilters';
+import { ImageUploadModal } from '@/components/images/ImageUploadModal';
+import { useImageList } from '@/components/images/useImageList';
+import { SearchField } from '@/components/studio/GalleryFilters';
+import { ToastProvider } from '@/components/ui/Toast';
+import { isFiltered } from '@/lib/images/filter';
+import type { ImageListItem } from '@/lib/decks/types';
 import { Modal } from './Modal';
-import { ConfirmModal } from './ConfirmModal';
-import { btn, btnGhost, colors } from './ui';
+import { btn, btnGhost, colors, linkBtn } from './ui';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
-/* Confirmation copy, warning when the image is still referenced.
-   Cuenta presentaciones Y formularios: la galería la comparten las dos herramientas. */
-function deleteMessage(usage: { count: number; uses: ImageUse[] } | null): string {
-  const permanent = 'Esta acción no se puede deshacer.';
-  if (!usage) return `Comprobando si la imagen se usa en algún sitio… ${permanent}`;
-  if (usage.count === 0) {
-    return `Esta imagen se eliminará de la galería de forma permanente. ${permanent}`;
-  }
+/* El popup de imágenes de DeckMak_r y FormMak_r: elegir una imagen del banco para un documento, o subir
+   una nueva (detalle 38 de IMG_r). `onSelect` devuelve la URL pública de la versión LIGERA, que es la
+   que va en el markdown.
 
-  const decks = usage.uses.filter((u) => u.kind === 'deck').length;
-  const forms = usage.uses.filter((u) => u.kind === 'form').length;
-  const parts: string[] = [];
-  if (decks) parts.push(decks === 1 ? 'una presentación' : `${decks} presentaciones`);
-  if (forms) parts.push(forms === 1 ? 'un formulario' : `${forms} formularios`);
-
-  const names = Array.from(new Set(usage.uses.map((u) => u.name)));
-  const listed = names.length ? ` (${names.join(', ')})` : '';
-  return `⚠ Esta imagen ya se usa en ${parts.join(' y ')}${listed}. Si la eliminas, mostrarán la imagen rota. ${permanent}`;
+   Es el mismo banco que gestiona IMG_r (/workspace/img_r) y monta sus mismas piezas
+   (components/images): la misma subida, que pide nombre y etiquetas; la misma tarjeta; los mismos
+   filtros, completos; y el mismo borrado, bloqueado si la imagen se usa en algún documento. */
+export function ImageGallery({ onSelect, onClose }: { onSelect: (url: string) => void; onClose: () => void }) {
+  return (
+    <ToastProvider>
+      <Gallery onSelect={onSelect} onClose={onClose} />
+    </ToastProvider>
+  );
 }
 
-/* Reusable image gallery: pick an already-uploaded image or upload a new one.
-   Uploads are optimised client-side, stored in Supabase Storage and indexed in `images`,
-   so every image stays available across slides and decks. onSelect returns the public URL. */
-export function ImageGallery({
-  onSelect,
-  onClose,
-}: {
-  onSelect: (url: string) => void;
-  onClose: () => void;
-}) {
-  const [images, setImages] = useState<ImageRecord[]>([]);
+function Gallery({ onSelect, onClose }: { onSelect: (url: string) => void; onClose: () => void }) {
+  const list = useImageList();
   const [selected, setSelected] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hovered, setHovered] = useState<string | null>(null);
-  const [toDelete, setToDelete] = useState<ImageRecord | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [usage, setUsage] = useState<{ count: number; uses: ImageUse[] } | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [toDelete, setToDelete] = useState<ImageListItem | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
 
+  // La página siguiente se pide al acercarse al final de la rejilla, que tiene su propio scroll.
+  const { hasMore, loadMore } = list;
   useEffect(() => {
-    listImages()
-      .then((page) => setImages(page.items))
-      .catch((e) => setError(e instanceof Error ? e.message : 'No se pudieron cargar las imágenes'))
-      .finally(() => setLoading(false));
-  }, []);
+    const end = endRef.current;
+    if (!end || !hasMore) return;
+    const io = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && void loadMore(), {
+      root: scrollRef.current,
+      rootMargin: '300px',
+    });
+    io.observe(end);
+    return () => io.disconnect();
+  }, [hasMore, loadMore]);
 
-  const onFile = async (file: File) => {
-    setUploading(true);
-    setError(null);
-    try {
-      const dataUrl = await optimizeImage(file);
-      const blob = await (await fetch(dataUrl)).blob();
-      const base = file.name.replace(/\.[^.]+$/, '');
-      const { path, url } = await uploadImage(blob, `${base}.jpg`);
-      /* Bloque 2 → 3 del plan de IMG_r: esta subida pasa a ImageUploadModal en el bloque 3. Hasta
-         entonces el POST exige nombre, etiquetas y los tres ficheros, y la rechaza con un 400. */
-      const rec = await registerImage({ storage_path: path, url, alt: base } as unknown as ImageCreateInput);
-      setImages((prev) => [rec, ...prev]);
-      setSelected(url);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo subir la imagen');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!toDelete) {
-      setUsage(null);
-      return;
-    }
-    let live = true;
-    const id = toDelete.id;
-    imageUsage(id)
-      .then((u) => live && setUsage(u))
-      .catch(() => live && setUsage(null));
-    return () => {
-      live = false;
-    };
-  }, [toDelete]);
-
-  const onDelete = async (img: ImageRecord) => {
-    setDeleting(true);
-    setError(null);
-    try {
-      const res = await deleteImage(img.id);
-      if (!res.ok) {
-        setError('Esta imagen se usa en algún documento y no se puede eliminar.');
-        setToDelete(null);
-        return;
-      }
-      setImages((prev) => prev.filter((i) => i.id !== img.id));
-      if (selected === img.url) setSelected(null);
-      setToDelete(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo eliminar la imagen');
-    } finally {
-      setDeleting(false);
-    }
-  };
+  const items = list.items;
 
   return (
-    <Modal title="Galería de Imágenes" onClose={onClose} width={960}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <span style={{ font: `400 12px/1.4 ${MONO}`, color: colors.ash }}>
-          {loading ? 'Cargando…' : `${images.length} ${images.length === 1 ? 'imagen' : 'imágenes'}`}
-        </span>
-        <button style={btn} onClick={() => fileRef.current?.click()} disabled={uploading}>
-          {uploading ? 'Subiendo…' : 'Subir'}
+    <Modal title="Galería de imágenes" onClose={onClose} width={960}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <SearchField
+            value={list.filter.q}
+            onChange={(q) => list.setFilter({ ...list.filter, q })}
+            label="Buscar imágenes por nombre o etiqueta"
+            width={960}
+          />
+        </div>
+        <button type="button" className="hover-wipe-underline" style={linkBtn} onClick={() => setUploading(true)}>
+          Subir imágenes
         </button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) onFile(f);
-            e.target.value = '';
-          }}
-        />
       </div>
 
-      {error && (
-        <div style={{ font: `400 11px/1.4 ${MONO}`, color: '#99335F', marginBottom: 12 }}>{error}</div>
+      <ImageFilters filter={list.filter} facets={list.facets} onChange={list.setFilter} marginBottom={14} />
+
+      {list.error && (
+        <div role="alert" style={{ font: `400 12px/1.5 ${MONO}`, color: colors.bordeaux, marginBottom: 12 }}>
+          No se ha podido cargar el banco de imágenes. Recarga la página; si sigue fallando, avisa en el canal de herramientas.
+        </div>
       )}
 
       <div
+        ref={scrollRef}
         style={{
-          minHeight: 200,
-          maxHeight: '52vh',
-          overflowY: 'auto',
-          border: `1px solid ${colors.warmDark}`,
-          padding: 14,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-          gap: 12,
-          alignContent: 'start',
+          minHeight: 200, maxHeight: '52vh', overflowY: 'auto', border: `1px solid ${colors.warmDark}`, padding: 14,
+          display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12, alignContent: 'start',
         }}
       >
-        {!loading && images.length === 0 && (
-          <div style={{ gridColumn: '1 / -1', font: `400 12px/1.5 ${MONO}`, color: colors.ash, padding: '24px 4px', textAlign: 'center' }}>
-            Aún no hay imágenes. Pulsa «Subir» para añadir la primera.
+        {items === null && <div style={empty}>Cargando</div>}
+        {items?.length === 0 && !list.error && (
+          <div style={empty}>
+            {isFiltered(list.filter)
+              ? 'Ninguna imagen coincide.'
+              : 'Aún no hay imágenes en el banco. Sube la primera con el botón de arriba: te pediremos un nombre y al menos una etiqueta para poder encontrarla después.'}
           </div>
         )}
-        {images.map((img) => {
-          const isSel = selected === img.url;
-          const showBin = hovered === img.id;
-          return (
-            <div
-              key={img.id}
-              style={{ position: 'relative', aspectRatio: '4 / 3' }}
-              onMouseEnter={() => setHovered(img.id)}
-              onMouseLeave={() => setHovered((h) => (h === img.id ? null : h))}
-            >
-              <button
-                type="button"
-                onClick={() => setSelected(img.url)}
-                title={img.alt ?? ''}
-                style={{
-                  appearance: 'none',
-                  padding: 0,
-                  cursor: 'pointer',
-                  width: '100%',
-                  height: '100%',
-                  display: 'block',
-                  backgroundImage: `url('${img.url}')`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  border: isSel ? `2px solid ${colors.dark}` : `1px solid ${colors.warmDark}`,
-                  outline: isSel ? `2px solid ${colors.dark}` : 'none',
-                }}
-              />
-              <button
-                type="button"
-                aria-label="Eliminar imagen"
-                title="Eliminar imagen"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setToDelete(img);
-                }}
-                style={{
-                  position: 'absolute',
-                  top: 6,
-                  right: 6,
-                  display: 'grid',
-                  placeItems: 'center',
-                  width: 26,
-                  height: 26,
-                  padding: 0,
-                  cursor: 'pointer',
-                  color: '#fff',
-                  background: 'rgba(28, 26, 23, 0.72)',
-                  border: 'none',
-                  borderRadius: 4,
-                  opacity: showBin ? 1 : 0,
-                  transform: showBin ? 'scale(1)' : 'scale(0.85)',
-                  transition: 'opacity 120ms ease, transform 120ms ease',
-                  pointerEvents: showBin ? 'auto' : 'none',
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" />
-                  <path d="M10 11v6M14 11v6" />
-                </svg>
-              </button>
-            </div>
-          );
-        })}
+        {items?.map((item) => (
+          <ImageCard
+            key={item.id}
+            item={item}
+            variant="pick"
+            selected={selected === item.url}
+            onOpen={() => setSelected(item.url)}
+            actions={[{ icon: 'trash', label: `Eliminar «${item.name}»`, onClick: () => setToDelete(item) }]}
+          />
+        ))}
+        <div ref={endRef} style={{ gridColumn: '1 / -1', height: 1 }} />
       </div>
 
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-        <button style={btnGhost} onClick={onClose}>Cancelar</button>
-        <button style={btn} onClick={() => selected && onSelect(selected)} disabled={!selected}>
+        <button type="button" style={btnGhost} onClick={onClose}>
+          Cancelar
+        </button>
+        <button
+          type="button"
+          style={{ ...btn, ...(selected ? null : { opacity: 0.45, cursor: 'not-allowed' }) }}
+          onClick={() => selected && onSelect(selected)}
+          disabled={!selected}
+        >
           Aceptar
         </button>
       </div>
 
+      {uploading && (
+        <ImageUploadModal
+          allTags={list.facets.tags.map((t) => t.tag)}
+          onClose={() => setUploading(false)}
+          onUploaded={(records) => {
+            list.prepend(records);
+            list.refreshFacets();
+            // Tras subir queda seleccionada la primera nueva.
+            if (records[0]) setSelected(records[0].url);
+          }}
+        />
+      )}
+
       {toDelete && (
-        <ConfirmModal
-          title="Eliminar imagen"
-          message={deleteMessage(usage)}
-          confirmLabel={deleting ? 'Eliminando…' : 'Eliminar'}
-          danger
-          onConfirm={() => !deleting && onDelete(toDelete)}
-          onClose={() => !deleting && setToDelete(null)}
+        <ImageDeleteModal
+          image={toDelete}
+          onClose={() => setToDelete(null)}
+          onDeleted={(id) => {
+            list.remove(id);
+            list.refreshFacets();
+            if (selected === toDelete.url) setSelected(null);
+            setToDelete(null);
+          }}
         />
       )}
     </Modal>
   );
 }
+
+const empty = { gridColumn: '1 / -1', font: `400 12px/1.5 ${MONO}`, color: colors.ash, padding: '24px 4px', textAlign: 'center' as const };

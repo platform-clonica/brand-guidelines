@@ -127,7 +127,9 @@ section[id] {
   font-family: var(--font-ibm-plex-mono);
   font-size: 12px;
   letter-spacing: 0.02em;
-  z-index: 80;
+  /* Por encima del velo de los modales del workspace (90, studio/ui.ts): los avisos de IMG_r salen con un
+     modal abierto. Por debajo del velo de «Traduciendo» (100). En la web de marca las capas llegan a 50. */
+  z-index: 95;
   border-radius: 2px;
   opacity: 0;
   pointer-events: none;

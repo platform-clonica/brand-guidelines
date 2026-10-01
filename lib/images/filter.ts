@@ -34,8 +34,9 @@ export const clearFilter = (): ImageFilter => ({ q: '', tags: [], untagged: fals
 
 export const isFiltered = (f: ImageFilter) => f.q.trim() !== '' || f.tags.length > 0 || f.untagged;
 
-/* La búsqueda efectiva: plegada, o vacía si no llega al mínimo. */
-const effectiveSearch = (q: string) => {
+/* La búsqueda efectiva: plegada, o vacía si no llega al mínimo. Si no cambia, no hay que volver a
+   pedir la página: teclear «pa» después de «p» no busca nada nuevo. */
+export const effectiveSearch = (q: string) => {
   const s = foldSearch(q.trim());
   return s.length >= SEARCH_MIN ? s : '';
 };
@@ -56,6 +57,15 @@ export function toggleTag(f: ImageFilter, tag: string): ImageFilter {
 
 export function toggleUntagged(f: ImageFilter): ImageFilter {
   return { ...f, tags: [], untagged: !f.untagged };
+}
+
+/* Sugerencias del campo de etiquetas (detalle 20): las que ya existen y EMPIEZAN por lo escrito, sin
+   distinguir tildes ni mayúsculas, sin las que ya están puestas, en el orden recibido (el de uso) y como
+   mucho `max`. Las usa TagInput, que comparten todas las tools: la búsqueda sin tildes es una sola. */
+export function suggestTags(draft: string, existing: readonly string[], selected: readonly string[], max = 6): string[] {
+  const d = foldSearch(draft.trim());
+  if (!d) return [];
+  return existing.filter((t) => !selected.includes(t) && foldSearch(t).startsWith(d)).slice(0, max);
 }
 
 /* ── Paginación por cursor ──

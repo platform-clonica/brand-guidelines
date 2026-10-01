@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, type RefObject } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
+import { modalStack } from './modalStack';
 
 /* Trampa de foco para diálogos modales.
  *
@@ -23,6 +24,12 @@ import { useEffect, type RefObject } from 'react';
  *  5. Bloquea el scroll del documento mientras está abierto, y lo restaura siempre — incluso si el
  *     componente se desmonta abierto, que es como `lib/store/menu.ts` dejaba la página sin scroll
  *     de forma irrecuperable al navegar entre idiomas con el menú abierto.
+ *  6. Con varios modales abiertos, solo el de arriba atiende Escape y Tab (./modalStack.ts). Antes
+ *     cada trampa escuchaba por su cuenta: Escape cerraba todos a la vez.
+ *
+ * `onEscape` se lee de una ref y no es dependencia del efecto. Si lo fuera, un modal que recibe un
+ * `onClose` nuevo en cada render (una función en línea) reiniciaría la trampa a cada tecla: devolvería
+ * el foco, lo llevaría al primer campo y desharía lo que se estaba escribiendo.
  */
 
 const FOCUSABLE =
@@ -34,10 +41,17 @@ export function useFocusTrap(
   active: boolean,
   onEscape?: () => void,
 ) {
+  const escapeRef = useRef(onEscape);
+  escapeRef.current = onEscape;
+
   useEffect(() => {
     if (!active) return;
     const panel = ref.current;
     if (!panel) return;
+
+    // 6 · esta trampa pasa a ser la de arriba
+    const entry = {};
+    modalStack.push(entry);
 
     const previouslyFocused = document.activeElement as HTMLElement | null;
 
@@ -65,8 +79,9 @@ export function useFocusTrap(
     document.documentElement.style.overflow = 'hidden';
 
     const onKey = (e: KeyboardEvent) => {
+      if (!modalStack.isTop(entry)) return;
       if (e.key === 'Escape') {
-        onEscape?.();
+        escapeRef.current?.();
         return;
       }
       if (e.key !== 'Tab') return;
@@ -86,11 +101,12 @@ export function useFocusTrap(
     document.addEventListener('keydown', onKey);
 
     return () => {
+      modalStack.remove(entry);
       document.removeEventListener('keydown', onKey);
       for (const el of siblings) el.removeAttribute('inert');
       document.documentElement.style.overflow = prevOverflow;
       // 1 · devolver el foco a quien lo tenía
       previouslyFocused?.focus?.();
     };
-  }, [ref, active, onEscape]);
+  }, [ref, active]);
 }

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { colors } from '@/components/deck/studio/ui';
 
 /* Buscador y filtros de una galería. Compartidos por DeckMaker y FormMaker: el gesto de
@@ -55,7 +55,12 @@ export function SearchField({
    inversión al estar activo — porque hace lo mismo que ellas: acotar la rejilla.
 
    El estado es opcional y de valor único: pulsar el activo lo apaga. Lo pasa DSMak_r; DeckMak_r y
-   FormMak_r no, y no cambian. */
+   FormMak_r no, y no cambian.
+
+   IMG_r añade dos huecos opcionales, que las demás no pasan y por tanto no cambian:
+   - `special`: una píldora con borde discontinuo detrás de las etiquetas («Sin etiquetas»). Es la misma
+     `Pill` con la prop `dashed`, no una copia.
+   - `trailing`: lo que va al final de la fila («Quitar filtros», un enlace). */
 export function FilterBar({
   clients,
   client,
@@ -67,6 +72,9 @@ export function FilterBar({
   statuses = [],
   status = null,
   onStatus,
+  special,
+  trailing,
+  marginBottom = 40,
 }: {
   clients: string[];
   client: string | null;
@@ -78,12 +86,15 @@ export function FilterBar({
   statuses?: { value: string; label: string }[];
   status?: string | null;
   onStatus?: (s: string | null) => void;
+  special?: { label: string; active: boolean; onToggle: () => void };
+  trailing?: ReactNode;
+  marginBottom?: number;
 }) {
-  if (!clients.length && !allTags.length && !statuses.length) return null;
+  if (!clients.length && !allTags.length && !statuses.length && !special && !trailing) return null;
   const on = client !== null;
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 40 }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', justifyContent: 'center', marginBottom }}>
       {clients.length > 0 && (
         <ClientDropdown
           clients={clients}
@@ -105,6 +116,14 @@ export function FilterBar({
           {t}
         </Pill>
       ))}
+
+      {special && (
+        <Pill active={special.active} onClick={special.onToggle} dashed>
+          {special.label}
+        </Pill>
+      )}
+
+      {trailing && <span style={{ marginLeft: 6 }}>{trailing}</span>}
     </div>
   );
 }
@@ -215,7 +234,19 @@ function ClientDropdown({
   );
 }
 
-function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+/* `dashed`: la variante discontinua de «Sin etiquetas» en IMG_r. El estilo va siempre declarado (sólido o
+   discontinuo) para no quitar ni poner una propiedad entre renders. */
+function Pill({
+  active,
+  onClick,
+  children,
+  dashed = false,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  dashed?: boolean;
+}) {
   return (
     <button
       onClick={onClick}
@@ -223,6 +254,7 @@ function Pill({ active, onClick, children }: { active: boolean; onClick: () => v
       style={{
         ...chip,
         cursor: 'pointer',
+        borderStyle: dashed ? 'dashed' : 'solid',
         borderColor: active ? colors.dark : colors.warmDark,
         background: active ? colors.dark : colors.white,
         color: active ? colors.warmLight : colors.ash,

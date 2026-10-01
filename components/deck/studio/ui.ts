@@ -14,6 +14,12 @@ export const colors = {
   ash: '#75706B',
   white: '#fff',
   brick: '#C24B36',
+  /* Añadidos con IMG_r para no escribir hex a mano en los componentes. Mismos valores que
+     lib/tokens.ts; lib/__tests__/studioColors.test.ts avisa si se separan. Burdeos, solo como alerta:
+     es su `uiRole`. */
+  grey: '#E8E6E3',
+  ashDark: '#46433F',
+  bordeaux: '#99335F',
 } as const;
 
 export const btn: CSSProperties = {
@@ -21,7 +27,7 @@ export const btn: CSSProperties = {
   font: `500 11px/1 ${MONO}`, letterSpacing: '.04em', padding: '10px 12px', cursor: 'pointer',
 };
 export const btnGhost: CSSProperties = { ...btn, background: 'transparent', color: colors.dark };
-export const btnDanger: CSSProperties = { ...btn, border: '1px solid #99335F', background: 'transparent', color: '#99335F' };
+export const btnDanger: CSSProperties = { ...btn, border: `1px solid ${colors.bordeaux}`, background: 'transparent', color: colors.bordeaux };
 
 export const toolbarBtn: CSSProperties = {
   appearance: 'none', border: `1px solid ${colors.warmDark}`, background: colors.white, color: colors.dark,
@@ -77,4 +83,19 @@ export const menuMeta: CSSProperties = { font: `400 10px/1.4 ${MONO}`, color: co
 export const iconBtn: CSSProperties = {
   appearance: 'none', border: 'none', background: 'transparent', cursor: 'pointer', color: colors.ash,
   font: `500 12px/1 ${MONO}`, padding: 4,
+};
+
+/* Enlace de acción: las CTA de página y de detalle de IMG_r («Quitar filtros», «Descargar original»…).
+   El subrayado, la opacidad y el barrido al pasar los pone la clase canónica `.hover-wipe-underline` de
+   app/globals.css, que se aplica junto a esto; aquí solo va la tipografía y el reseteo de botón. */
+export const linkBtn: CSSProperties = {
+  appearance: 'none', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer',
+  font: `500 12px/1.2 ${MONO}`, color: colors.dark,
+};
+export const linkDanger: CSSProperties = { ...linkBtn, color: colors.bordeaux };
+
+/* Se lee con lector de pantalla pero no se ve. */
+export const srOnly: CSSProperties = {
+  position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden',
+  clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0,
 };
