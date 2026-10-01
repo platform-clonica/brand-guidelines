@@ -1,0 +1,167 @@
+/* IMG_r — subida: qué se acepta, dónde va cada fichero, cuándo un lote está listo y qué dice la
+   interfaz en cada momento. Los textos son los del prototipo validado (img-r-prototype.html) y los
+   aprobados en el plan (§ 9.4): se comprueban literalmente. */
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  MAX_BYTES,
+  effectiveTags,
+  formatBytes,
+  publicObjectUrl,
+  rowProblem,
+  unreadableMessage,
+  uploadButtonLabel,
+  uploadSummary,
+  validateCreateInput,
+  validateFile,
+  validateUpdateInput,
+  variantPaths,
+} from '../upload.ts';
+
+const ID = '3f2b8c1e-9a4d-4c3b-8f7e-1a2b3c4d5e6f';
+const MB = 1024 * 1024;
+
+test('acepta JPEG, PNG y WebP', () => {
+  for (const type of ['image/jpeg', 'image/png', 'image/webp']) {
+    assert.equal(validateFile({ name: 'a', type, size: 1000 }), null);
+  }
+});
+
+test('rechaza el resto con el mensaje exacto', () => {
+  assert.equal(validateFile({ name: 'x.gif', type: 'image/gif', size: 1000 }), 'x.gif: no es JPEG, PNG ni WebP.');
+  assert.equal(validateFile({ name: 'logo.svg', type: 'image/svg+xml', size: 1000 }), 'logo.svg: no es JPEG, PNG ni WebP.');
+  assert.equal(validateFile({ name: 'foto.heic', type: 'image/heic', size: 1000 }), 'foto.heic: no es JPEG, PNG ni WebP.');
+});
+
+test('rechaza más de 25 MB con el peso formateado; 25 MB justos pasan, como en el bucket', () => {
+  assert.equal(MAX_BYTES, 26214400);
+  assert.equal(validateFile({ name: 'x.jpg', type: 'image/jpeg', size: Math.round(31.2 * MB) }), 'x.jpg: pesa 31,2 MB y el límite es 25 MB.');
+  assert.equal(validateFile({ name: 'x.jpg', type: 'image/jpeg', size: MAX_BYTES }), null);
+  assert.match(validateFile({ name: 'x.jpg', type: 'image/jpeg', size: MAX_BYTES + 1 })!, /el límite es 25 MB\.$/);
+});
+
+test('formatBytes: KB por debajo de 1 MB y un decimal con coma en MB', () => {
+  assert.equal(formatBytes(300 * 1024), '300 KB');
+  assert.equal(formatBytes(Math.round(14.2 * MB)), '14,2 MB');
+  assert.equal(formatBytes(3 * MB), '3,0 MB');
+});
+
+test('las tres variantes viven en images/<id>/', () => {
+  assert.deepEqual(variantPaths(ID, 'image/jpeg'), {
+    original: `images/${ID}/original.jpg`,
+    light: `images/${ID}/light.jpg`,
+    thumb: `images/${ID}/thumb.jpg`,
+  });
+  assert.equal(variantPaths(ID, 'image/png').original, `images/${ID}/original.png`);
+  assert.equal(variantPaths(ID, 'image/webp').original, `images/${ID}/original.webp`);
+});
+
+test('variantPaths no fabrica rutas con un id que no es uuid ni con un tipo no admitido', () => {
+  assert.throws(() => variantPaths('../logos', 'image/jpeg'));
+  assert.throws(() => variantPaths(ID, 'image/gif'));
+});
+
+test('la URL pública tiene el formato de Supabase Storage', () => {
+  assert.equal(
+    publicObjectUrl('https://x.supabase.co', 'deck-images', `images/${ID}/light.jpg`),
+    `https://x.supabase.co/storage/v1/object/public/deck-images/images/${ID}/light.jpg`,
+  );
+});
+
+test('etiquetas efectivas: comunes y propias, normalizadas y sin repetir', () => {
+  assert.deepEqual(effectiveTags(['oficina', 'Luz'], ['luz', 'sala grande']), ['oficina', 'luz', 'sala-grande']);
+});
+
+test('una fila del lote necesita nombre y al menos una etiqueta, propia o común', () => {
+  assert.equal(rowProblem({ name: '  ', tags: ['luz'] }, []), 'Falta el nombre.');
+  assert.equal(rowProblem({ name: 'Pasillo', tags: [] }, []), 'Falta al menos una etiqueta, propia o común.');
+  assert.equal(rowProblem({ name: 'Pasillo', tags: [] }, ['oficina']), null);
+  assert.equal(rowProblem({ name: 'Pasillo', tags: ['luz'] }, []), null);
+});
+
+test('el botón dice Subir, Subir N imágenes o Subiendo X de N', () => {
+  assert.equal(uploadButtonLabel(1), 'Subir');
+  assert.equal(uploadButtonLabel(0), 'Subir');
+  assert.equal(uploadButtonLabel(3), 'Subir 3 imágenes');
+  assert.equal(uploadButtonLabel(3, { current: 2, total: 3 }), 'Subiendo 2 de 3');
+});
+
+test('el aviso al terminar, en singular, plural y con errores', () => {
+  assert.equal(uploadSummary(1, 0), 'Imagen subida');
+  assert.equal(uploadSummary(3, 0), '3 imágenes subidas');
+  assert.equal(uploadSummary(2, 1), '2 subidas · 1 con error');
+  assert.equal(uploadSummary(1, 2), '1 subida · 2 con error');
+  assert.equal(uploadSummary(0, 3), 'No se ha subido ninguna · 3 con error');
+});
+
+test('el mensaje de una imagen que no se puede leer', () => {
+  assert.equal(unreadableMessage('x.jpg'), 'x.jpg: no se ha podido leer la imagen. Prueba con otro archivo.');
+});
+
+const urlFor = (path: string) => `https://x.supabase.co/storage/v1/object/public/deck-images/${path}`;
+const body = {
+  id: ID,
+  name: '  Pasillo de la oficina ',
+  tags: ['Oficina', 'luz natural'],
+  original_type: 'image/png',
+  original_bytes: 10 * MB,
+  original_width: 6000,
+  original_height: 4000,
+  width: 1600,
+  height: 1067,
+};
+
+test('validateCreateInput recalcula rutas y URL en servidor y normaliza nombre y etiquetas', () => {
+  const r = validateCreateInput(body, urlFor);
+  assert.ok(r.ok);
+  assert.deepEqual(r.value, {
+    id: ID,
+    name: 'Pasillo de la oficina',
+    alt: 'Pasillo de la oficina',
+    tags: ['oficina', 'luz-natural'],
+    source: 'upload',
+    storage_path: `images/${ID}/light.jpg`,
+    url: urlFor(`images/${ID}/light.jpg`),
+    thumb_path: `images/${ID}/thumb.jpg`,
+    original_path: `images/${ID}/original.png`,
+    original_bytes: 10 * MB,
+    original_width: 6000,
+    original_height: 4000,
+    width: 1600,
+    height: 1067,
+  });
+});
+
+test('validateCreateInput rechaza lo que no cuadra, con su motivo', () => {
+  const bad = (patch: Record<string, unknown>) => {
+    const r = validateCreateInput({ ...body, ...patch }, urlFor);
+    assert.ok(!r.ok, JSON.stringify(patch));
+    return r.error;
+  };
+  assert.equal(bad({ id: 'x' }), 'Id no válido.');
+  assert.equal(bad({ name: '   ' }), 'Falta el nombre.');
+  assert.equal(bad({ name: 'a'.repeat(141) }), 'El nombre es demasiado largo.');
+  assert.equal(bad({ tags: [' ', ''] }), 'Falta al menos una etiqueta.');
+  assert.equal(bad({ tags: Array.from({ length: 21 }, (_, i) => `t${i}`) }), 'Demasiadas etiquetas.');
+  assert.equal(bad({ original_type: 'image/gif' }), 'Tipo de imagen no admitido.');
+  assert.equal(bad({ original_bytes: MAX_BYTES + 1 }), 'Peso no válido.');
+  assert.equal(bad({ width: 0 }), 'Medidas no válidas.');
+  assert.equal(bad({ original_height: 1.5 }), 'Medidas no válidas.');
+  assert.equal(validateCreateInput(null, urlFor).ok, false);
+});
+
+test('validateUpdateInput exige nombre, una etiqueta y el updated_at que se leyó', () => {
+  const ok = validateUpdateInput({ name: ' Pasillo ', tags: ['Luz'], expectedUpdatedAt: '2026-10-01T10:00:00.123456+00:00' });
+  assert.ok(ok.ok);
+  assert.deepEqual(ok.value, { name: 'Pasillo', tags: ['luz'], expectedUpdatedAt: '2026-10-01T10:00:00.123456+00:00' });
+  const err = (b: unknown) => {
+    const r = validateUpdateInput(b);
+    assert.ok(!r.ok);
+    return r.error;
+  };
+  assert.equal(err({ name: '', tags: ['luz'], expectedUpdatedAt: '2026-10-01T10:00:00Z' }), 'Falta el nombre.');
+  assert.equal(err({ name: 'a', tags: [], expectedUpdatedAt: '2026-10-01T10:00:00Z' }), 'Falta al menos una etiqueta.');
+  assert.equal(err({ name: 'a', tags: ['luz'] }), 'Falta la fecha de la versión que se editó.');
+  assert.equal(err('x'), 'Cuerpo no válido.');
+});

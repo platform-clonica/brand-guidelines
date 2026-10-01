@@ -12,11 +12,13 @@ import { composeTokens, ENGINE_VERSION } from './engine/index.ts';
 import { mirrorFrom, paletteStrip } from './mirror.ts';
 import { brandSchema, configsSchema, overridesSchema } from './schema.ts';
 import type { DesignSystemListItem, DsStatus } from './types.ts';
+import { isUuid } from '../uuid.ts';
 
 type Obj = Record<string, unknown>;
 const isObject = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
 
-export const isUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+/* Vive en lib/uuid.ts, compartido con IMG_r; se reexporta para no mover a ningún consumidor. */
+export { isUuid };
 
 export type InsertRow = {
   name: string;
