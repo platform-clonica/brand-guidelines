@@ -1,5 +1,12 @@
 # Galería de imágenes reutilizables para decks
 
+> **Desde octubre de 2026 el banco se gestiona en IMG_r** (`/workspace/img_r`, ver
+> `docs/features/img-r.md`). El popup de DeckMak_r y FormMak_r monta las piezas de
+> `components/images/`: la subida pide nombre y al menos una etiqueta y guarda tres ficheros por
+> imagen en `images/<id>/` (original, ligera de 1600 px y miniatura de 480 px), y una imagen que usa
+> algún deck o formulario no se puede borrar (la API responde `409`). Lo que sigue es el diseño de
+> junio de 2026 y queda como historia: `uploadImage` ya no existe.
+
 > **Estado (2026-06-17):** implementado en la branch `feature/deck-image-gallery`.
 > BD: tabla `public.images` + bucket público `deck-images` (RLS MVP permisiva, igual que
 > `decks`/`clients`). Capa de datos en `lib/decks/api.ts` (`uploadImage`, `publicImageUrl`,

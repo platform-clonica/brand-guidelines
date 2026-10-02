@@ -53,6 +53,16 @@ app ya comprueba la unicidad antes de escribir, así que el índice es la garant
 primera línea de defensa — el código funciona igual antes y después de aplicarla. **Si hubiera
 slugs duplicadas en la tabla, el índice fallará al crearse**: resolverlas primero.
 
+`20261001100000_images_bank.sql` (IMG_r) es **aditiva** y ya está aplicada: el 1 de octubre de 2026,
+registrada en remoto como `20261001131350 images_bank`. Añade columnas a `images` con `name` todavía
+nullable, las funciones `image_uses` y `team_member_names`, y los límites del bucket `deck-images`
+(25 MB; JPEG, PNG y WebP). El código anterior sigue funcionando con ella.
+
+`20261001100100_images_name_not_null.sql` (IMG_r) es **restrictiva**: vuelve a rellenar `name` y lo
+pone `not null`. El popup de imágenes del código anterior inserta sin `name`, así que se aplica
+**después** de que esté desplegado IMG_r. Aplicarla antes rompe la subida desde DeckMak_r y
+FormMak_r; una vez aplicada, ya no se puede volver al código anterior.
+
 `20260817121000_tighten_rls.sql` y `20260817122000_tighten_storage.sql` son **restrictivas** y
 rompen el código que había antes. Se aplican **después** de que esté desplegado el commit que
 migra los handlers a `supabaseAuthServer()` y el visor público a las RPC. Aplicarlas antes deja

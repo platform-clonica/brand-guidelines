@@ -8,6 +8,7 @@ export function ConfirmModal({
   message,
   confirmLabel = 'Aceptar',
   danger = false,
+  busy = false,
   onConfirm,
   onClose,
 }: {
@@ -15,6 +16,8 @@ export function ConfirmModal({
   message: string;
   confirmLabel?: string;
   danger?: boolean;
+  /** Mientras la acción corre: los dos botones se apagan (el de confirmar ya dice qué está pasando). */
+  busy?: boolean;
   onConfirm: () => void;
   onClose: () => void;
 }) {
@@ -24,9 +27,13 @@ export function ConfirmModal({
         {message}
       </div>
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-        <button style={btnGhost} onClick={onClose}>Cancelar</button>
-        <button style={danger ? btnDanger : btn} onClick={onConfirm}>{confirmLabel}</button>
+        <button style={{ ...btnGhost, ...(busy ? off : null) }} onClick={onClose} disabled={busy}>Cancelar</button>
+        <button style={{ ...(danger ? btnDanger : btn), ...(busy ? off : null) }} onClick={onConfirm} disabled={busy}>
+          {confirmLabel}
+        </button>
       </div>
     </Modal>
   );
 }
+
+const off = { opacity: 0.45, cursor: 'not-allowed' } as const;

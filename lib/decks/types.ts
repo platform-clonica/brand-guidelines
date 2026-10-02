@@ -60,8 +60,14 @@ export interface DeckSignature {
 
 export type SignInput = { signer_name: string; signer_email: string; signature_png: string };
 
-/* A reusable image in the gallery. `source` distinguishes manual uploads from
-   AI-generated ones (future); `prompt` records the style-guide prompt used to generate it. */
+/* Una imagen del banco (IMG_r, docs/features/img-r.md). `source` distingue lo subido de lo generado
+   y, en la fase 2, de lo editado; `prompt` guarda la indicación usada.
+
+   Tres ficheros por imagen: `storage_path`/`url` son la versión LIGERA (la que va en el `md` de decks y
+   formularios), `original_path` el original y `thumb_path` la miniatura. Las imágenes subidas antes de
+   IMG_r solo tienen la ligera: original y miniatura en null, `width`/`height` desconocidos. */
+export type ImageSource = 'upload' | 'generated' | 'edited';
+
 export interface ImageRecord {
   id: string;
   storage_path: string;
@@ -69,17 +75,47 @@ export interface ImageRecord {
   alt: string | null;
   width: number | null;
   height: number | null;
-  source: 'upload' | 'generated';
+  source: ImageSource;
   prompt: string | null;
+  name: string;
+  tags: string[];
+  original_path: string | null;
+  original_bytes: number | null;
+  original_width: number | null;
+  original_height: number | null;
+  thumb_path: string | null;
+  /** Fase 2: la imagen de la que sale una copia editada. */
+  parent_id: string | null;
+  /** Fase 2: el original anterior a sobrescribir, para «Volver al original». */
+  prior_original_path: string | null;
+  created_by: string | null;
   created_at: string;
+  updated_at: string;
 }
 
-export type ImageCreateInput = {
-  storage_path: string;
-  url: string;
-  alt?: string | null;
-  width?: number | null;
-  height?: number | null;
-  source?: 'upload' | 'generated';
-  prompt?: string | null;
+/* Lo que se edita de una imagen, y lo que se compara cuando otra pestaña guardó antes. */
+export type ImageMeta = { name: string; tags: string[] };
+
+/* Un documento que usa la imagen (por la URL de su versión ligera en el `md`). */
+export type ImageUse = { kind: 'deck' | 'form'; id: string; name: string };
+
+/* Tarjeta de la rejilla: la fila más cuántos documentos la usan. */
+export type ImageListItem = ImageRecord & { use_count: number };
+
+/* Detalle: la fila, dónde se usa y quién la subió. */
+export type ImageDetail = ImageRecord & { uses: ImageUse[]; uploaded_by: string | null };
+
+export type ImageUpdateInput = ImageMeta & { expectedUpdatedAt: string };
+
+/* Lo que el navegador manda a POST /api/images después de subir los tres ficheros a `images/<id>/`.
+   Las rutas y la URL las recalcula el servidor desde el id y el tipo (lib/images/upload.ts). */
+export type ImageCreateInput = ImageMeta & {
+  id: string;
+  original_type: string;
+  original_bytes: number;
+  original_width: number;
+  original_height: number;
+  /** Medidas de la versión ligera. */
+  width: number;
+  height: number;
 };

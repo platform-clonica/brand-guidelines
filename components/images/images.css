@@ -1,0 +1,46 @@
+/* IMG_r — solo el movimiento de las piezas del banco de imágenes. El resto de estilos va en línea con
+   components/deck/studio/ui.ts, como en las otras galerías del workspace. Esto va aparte porque un estilo
+   en línea no puede reaccionar al `:hover` de un padre, ni declarar `@keyframes`, ni leer
+   `prefers-reduced-motion`, ni cambiar de columnas con el ancho. */
+
+/* Detalle 11: leve zoom de la miniatura al pasar el ratón, con la curva de la casa. */
+.ixi-zoom img {
+  transition: transform 0.4s cubic-bezier(0.45, 0, 0.15, 1);
+}
+.ixi-zoom:hover img,
+.ixi-zoom:focus-visible img {
+  transform: scale(1.03);
+}
+
+/* Detalle 14: las tarjetas fantasma laten mientras carga. */
+@keyframes ixi-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+.ixi-pulse {
+  animation: ixi-pulse 1.2s ease-in-out infinite;
+}
+
+/* Detalle 28: imagen y datos en dos columnas desde 820 px; debajo, una sola. */
+.ixi-detail {
+  display: grid;
+  gap: 24px;
+}
+@media (min-width: 820px) {
+  .ixi-detail {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ixi-zoom img,
+  .ixi-pulse {
+    animation: none;
+    transition: none;
+  }
+  .ixi-zoom:hover img,
+  .ixi-zoom:focus-visible img {
+    transform: none;
+  }
+}

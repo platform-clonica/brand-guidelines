@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, type RefObject } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
+import { modalStack } from './modalStack';
 
 /* Trampa de foco para diálogos modales.
  *
@@ -23,6 +24,12 @@ import { useEffect, type RefObject } from 'react';
  *  5. Bloquea el scroll del documento mientras está abierto, y lo restaura siempre — incluso si el
  *     componente se desmonta abierto, que es como `lib/store/menu.ts` dejaba la página sin scroll
  *     de forma irrecuperable al navegar entre idiomas con el menú abierto.
+ *  6. Con varios modales abiertos, solo el de arriba atiende Escape y Tab (./modalStack.ts). Antes
+ *     cada trampa escuchaba por su cuenta: Escape cerraba todos a la vez.
+ *
+ * `onEscape` se lee de una ref y no es dependencia del efecto. Si lo fuera, un modal que recibe un
+ * `onClose` nuevo en cada render (una función en línea) reiniciaría la trampa a cada tecla: devolvería
+ * el foco, lo llevaría al primer campo y desharía lo que se estaba escribiendo.
  */
 
 const FOCUSABLE =
@@ -34,10 +41,17 @@ export function useFocusTrap(
   active: boolean,
   onEscape?: () => void,
 ) {
+  const escapeRef = useRef(onEscape);
+  escapeRef.current = onEscape;
+
   useEffect(() => {
     if (!active) return;
     const panel = ref.current;
     if (!panel) return;
+
+    // 6 · esta trampa pasa a ser la de arriba
+    const entry = {};
+    modalStack.push(entry);
 
     const previouslyFocused = document.activeElement as HTMLElement | null;
 
@@ -46,8 +60,9 @@ export function useFocusTrap(
         (el) => el.offsetParent !== null || el === document.activeElement,
       );
 
-    // 2 · foco inicial dentro del panel
-    focusables()[0]?.focus();
+    // 2 · foco inicial dentro del panel. Sin desplazar la página: el panel es fijo y la página no debe moverse
+    //     (en desarrollo React monta el efecto dos veces y el foco pasa un instante por el disparador).
+    focusables()[0]?.focus({ preventScroll: true });
 
     // 4 · el resto del documento queda inerte
     const siblings: HTMLElement[] = [];
@@ -65,8 +80,9 @@ export function useFocusTrap(
     document.documentElement.style.overflow = 'hidden';
 
     const onKey = (e: KeyboardEvent) => {
+      if (!modalStack.isTop(entry)) return;
       if (e.key === 'Escape') {
-        onEscape?.();
+        escapeRef.current?.();
         return;
       }
       if (e.key !== 'Tab') return;
@@ -83,14 +99,19 @@ export function useFocusTrap(
         first.focus();
       }
     };
-    document.addEventListener('keydown', onKey);
+    /* En window y no en document: React (Next lo monta sobre document) atiende sus eventos en
+       document, así que un campo que se queda el Escape con stopPropagation —la lista de TagInput—
+       solo puede pararlo antes de window. En document la trampa lo recibía igual y cerraba el modal. */
+    window.addEventListener('keydown', onKey);
 
     return () => {
-      document.removeEventListener('keydown', onKey);
+      modalStack.remove(entry);
+      window.removeEventListener('keydown', onKey);
       for (const el of siblings) el.removeAttribute('inert');
       document.documentElement.style.overflow = prevOverflow;
-      // 1 · devolver el foco a quien lo tenía
-      previouslyFocused?.focus?.();
+      // 1 · devolver el foco a quien lo tenía, sin desplazar la página: si era el buscador de la cabecera, la
+      //     galería saltaba arriba al cerrar el detalle y se perdía el scroll (check 13 de IMG_r).
+      previouslyFocused?.focus?.({ preventScroll: true });
     };
-  }, [ref, active, onEscape]);
+  }, [ref, active]);
 }

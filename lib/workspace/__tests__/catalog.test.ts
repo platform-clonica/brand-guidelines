@@ -72,6 +72,7 @@ test('appsIn respeta el orden de declaración', () => {
     'formmakr',
     'rewritr',
     'dsmakr',
+    'imgr',
     'socialmakr',
   ]);
   assert.deepEqual(appsIn('links').map((a) => a.id), ['starmeapp', 'timer']);
@@ -83,6 +84,7 @@ test('las herramientas que ya existen apuntan a sus rutas reales', () => {
   assert.equal(byId.get('formmakr')?.href, '/workspace/formmak_r');
   assert.equal(byId.get('rewritr')?.href, '/workspace/rewrit_r');
   assert.equal(byId.get('dsmakr')?.href, '/workspace/dsmak_r');
+  assert.equal(byId.get('imgr')?.href, '/workspace/img_r');
   assert.equal(byId.get('timer')?.href, '/timer');
   assert.equal(byId.get('socialmakr')?.href, null);
 });

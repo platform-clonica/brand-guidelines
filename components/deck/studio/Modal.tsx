@@ -9,11 +9,14 @@ export function Modal({
   onClose,
   children,
   width,
+  titleHidden = false,
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
   width?: number;
+  /** El título queda como nombre accesible y no se pinta: el detalle de IMG_r se titula con la imagen. */
+  titleHidden?: boolean;
 }) {
   /* Declaraba role="dialog" aria-modal y tenía el mismo hueco que el overlay del menú: Escape sí,
      pero sin foco inicial, sin ciclado del Tab, sin `inert` fuera y sin devolver el foco al
@@ -24,7 +27,7 @@ export function Modal({
   return (
     <div style={overlay} onMouseDown={onClose}>
       <div ref={panelRef} style={{ ...card, ...(width ? { width: `min(${width}px, 100%)` } : {}) }} role="dialog" aria-modal aria-label={title} onMouseDown={(e) => e.stopPropagation()}>
-        <div style={cardTitle}>{title}</div>
+        {!titleHidden && <div style={cardTitle}>{title}</div>}
         {children}
       </div>
     </div>

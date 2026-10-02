@@ -72,6 +72,14 @@ export const APPS: AppEntry[] = [
     wordmark: { before: 'DSMak', after: 'r' },
   },
   {
+    id: 'imgr',
+    label: 'IMGr',
+    group: 'tools',
+    href: '/workspace/img_r',
+    description: 'Banco de imágenes',
+    wordmark: { before: 'IMG', after: 'r' },
+  },
+  {
     id: 'socialmakr',
     label: 'SocialMakr',
     group: 'tools',

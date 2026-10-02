@@ -20,6 +20,8 @@ se mueve nunca: sus enlaces ya están enviados.
 | `/workspace/rewrit_r` | Reescritura de correos y textos con la voz de marca |
 | `/workspace/dsmak_r` | Galería de design systems |
 | `/workspace/dsmak_r/[id]` | Editor de un design system |
+| `/workspace/img_r` | Banco de imágenes: galería, subida, búsqueda y filtros |
+| `/workspace/img_r/[id]` | La galería con el detalle de una imagen abierto (modal con URL propia) |
 
 Todo `/workspace/*` lo protege [middleware.ts](../../middleware.ts): **sin sesión de equipo**
 —sesión Y cuenta `@interactius.com`, ver [workspace-login-google.md](workspace-login-google.md)—

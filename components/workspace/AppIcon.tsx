@@ -98,6 +98,29 @@ const ICONS: Record<string, ReactElement> = {
     </svg>
   ),
 
+  /* Borrador de octubre de 2026 con la gramática de los demás, pendiente de que lo vea Alberto. */
+  imgr: (
+    <svg viewBox="0 0 400 400" fill="none" aria-hidden="true" focusable="false" className="ixw-tile__icon">
+      {/* Estructura secundaria: la foto de atrás, desplazada, del montón del banco */}
+      <g stroke="#B0B5B0" strokeWidth="6" strokeLinecap="square" strokeLinejoin="miter">
+        <path d="M110 110 V50 H360 V250 H300" />
+      </g>
+
+      {/* Estructura principal: la foto de delante y su horizonte */}
+      <g stroke="#1C1A17" strokeWidth="6" strokeLinecap="square" strokeLinejoin="miter">
+        <path d="M40 110 H300 V320 H40 Z" />
+        <path d="M40 285 L120 205 L180 255 L220 220 L300 290" />
+      </g>
+
+      {/* Acento: el sol de la foto y la etiqueta que la hace encontrable */}
+      <g stroke="#EC4899" strokeWidth="6" strokeLinecap="square" strokeLinejoin="miter">
+        <circle cx="225" cy="165" r="24" fill="#EC4899" fillOpacity="0.15" />
+        <path d="M280 300 H340 L365 325 L340 350 H280 Z" fill="#EC4899" fillOpacity="0.15" />
+        <path d="M300 325 H320" />
+      </g>
+    </svg>
+  ),
+
   dsmakr: (
     <svg viewBox="0 0 400 400" fill="none" aria-hidden="true" focusable="false" className="ixw-tile__icon">
       {/* Estructura secundaria: ejes de retícula, jerarquía y enlace de sistema */}
