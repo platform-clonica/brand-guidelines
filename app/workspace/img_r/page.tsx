@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getSessionUser } from '@/lib/auth/sessionUser';
 import { ImageBank } from '@/components/images/ImageBank';
 
 export const metadata: Metadata = {
@@ -7,6 +8,7 @@ export const metadata: Metadata = {
 };
 
 // IMG_r: el banco de imágenes del equipo. El detalle de una imagen vive en /workspace/img_r/[id].
-export default function ImageBankPage() {
-  return <ImageBank />;
+export default async function ImageBankPage() {
+  const user = await getSessionUser();
+  return <ImageBank user={user} />;
 }

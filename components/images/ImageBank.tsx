@@ -2,10 +2,11 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
 import { SearchField } from '@/components/studio/GalleryFilters';
-import { LogoutButton } from '@/components/studio/LogoutButton';
+import { UserMenu } from '@/components/studio/UserMenu';
 import { ImgLogo } from '@/components/studio/Wordmark';
 import { colors, srOnly } from '@/components/deck/studio/ui';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
+import type { SessionUser } from '@/lib/auth/sessionUser';
 import type { ImageRecord } from '@/lib/decks/types';
 import { narrows } from '@/lib/images/filter';
 import { ImageCard } from './ImageCard';
@@ -38,15 +39,15 @@ type Detail = { id: string; initial?: ImageRecord; pushed: boolean };
 
    Mismas piezas que el popup de los editores (components/images): lista, filtros, tarjeta, subida y
    borrado. Cabecera, contenedor y rejilla, los de las otras galerías del workspace (D3). */
-export function ImageBank({ initialId }: { initialId?: string }) {
+export function ImageBank({ user, initialId }: { user: SessionUser; initialId?: string }) {
   return (
     <ToastProvider>
-      <Bank initialId={initialId ?? null} />
+      <Bank user={user} initialId={initialId ?? null} />
     </ToastProvider>
   );
 }
 
-function Bank({ initialId }: { initialId: string | null }) {
+function Bank({ user, initialId }: { user: SessionUser; initialId: string | null }) {
   const toast = useToast();
   const list = useImageList();
   const [upload, setUpload] = useState<{ files: File[] } | null>(null);
@@ -138,7 +139,7 @@ function Bank({ initialId }: { initialId: string | null }) {
         <MarkDivider />
         <ImgLogo height={22} />
         <span style={{ marginLeft: 'auto' }} />
-        <LogoutButton />
+        <UserMenu user={user} />
 
         {/* Centrado respecto a la cabecera, no al hueco que queda. Igual que en las otras galerías. */}
         <div
