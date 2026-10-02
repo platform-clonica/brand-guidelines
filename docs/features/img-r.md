@@ -808,68 +808,66 @@ fallos separados de las observaciones. Marca los checks A y B como pendientes: n
 ## Prompt para Claude Code · fase 2
 
 ```markdown
-Trabajas en `interactius-brandguidelines` (repo `platform-clonica/brand-guidelines`). La fase 1 de
-IMG_r, el banco de imágenes, ya está implementada y verificada. Vamos con la **fase 2**: edición con
-Gemini, propuesta de nombre y etiquetas, y análisis de estilo Interactius. El contrato es la sección
-«Fase 2 — IA» de `docs/features/img-r.md`, con su tabla de detalles F1 a F30, y el prototipo
-`img-r-prototype.html` con el interruptor «Fase 2» activado.
+IMG_r · fase 2 (IA). Repo `brand-guidelines`, rama `feat/img-r`. Si la fase 1 ya está mergeada y la rama
+borrada, crea `feat/img-r` de nuevo desde `main` actualizado.
 
-## Fase 1 — análisis y plan. NO escribas código todavía.
+**Contrato:** `docs/features/img-r.md`, sección «Fase 2 — IA» (detalles F1–F30 y F2a–F2c, checks 24–38),
+y `img-r-prototype.html` con el interruptor «Fase 2» activado. Lo que ya existe está en «Fase 1:
+implementada» y en `docs/features/img-r-fase-1-plan.md`. El documento manda: léelo, no te lo repito aquí.
 
-Estudia lo que dejó la fase 1 (`components/images/`, `app/api/images/**`, `lib/images/`), `lib/prompts.ts`,
-`lib/rateLimit.ts` y la migración `20260817130000_rate_limits.sql`, `lib/eval.ts` y una ruta que ya use
-`@anthropic-ai/sdk` con structured outputs. Devuelve un plan que cubra:
+**Paso 0.** `git status`. Commitea solo `docs/features/img-r.md` e `img-r-prototype.html` como
+`docs(imgr): definicion de la fase 2 y la entrega 3`. El resto de cambios del árbol no son tuyos: no los toques.
 
-1. **Gemini.** Modelo exacto, precio vigente por imagen, resolución de salida, latencia y condiciones de
-   uso de datos de la API de pago. Prueba dos o tres fotos reales del banco y enséñame el resultado
-   antes de fijar el modelo. Diseña el adaptador para que cambiar de proveedor sea tocar un fichero.
-2. **Prompts.** Cómo usas `getImagePrompt()` completo en sus dos variantes y cómo declaras junto a él los
-   seis criterios (el sexto depende de la variante), **sin cambiar ningún texto** de los prompts. Cómo compones
-   el prompt de edición y el de análisis, y qué sale de `lib/tokens.ts`.
-3. **Datos.** Las columnas de estilo, `peek_rate_limit` y `refund_rate_limit`, la clave mensual y qué NO se toca.
-4. **Endpoints.** Los siete de la definición, con sus códigos de error. Dónde purgas `_tmp/`. Cómo evitas
-   que una petición de edición se acerque a los 60 s, y cuál es el plan si aparecen `504`.
-5. **Interacción.** Recorre F1 a F30 (con F2a, F2b y F2c) uno a uno y confirma que se implementan, incluidos los pequeños: textos
-   exactos, el contador, el bloqueo del modal mientras edita, comparar con teclado, el tooltip con teclado.
-   Si alguno no se va a implementar, dilo ahora.
-6. **La decisión abierta** de «Volver al original» en una imagen en uso, con tu recomendación.
-7. **Arquitectura de ficheros**, **reutilización** y **plan de tests** (glob de `package.json` incluido).
-8. **Cumplimiento de marca** de la copy nueva: sin `!`, sin `…`, sin vocabulario prohibido por raíz; Burdeos solo
-   como alerta.
-9. **Riesgos**, con tu recomendación para cada uno.
+## 1 · Plan, sin código
 
-Si algo choca con `lib/tokens.ts`, `lib/typeScale.ts` o `CLAUDE.md`, dilo en esta fase con la norma en la mano.
+Devuélveme un plan corto con **solo lo que el documento no decide o lo que vas a cambiar**:
 
-**Gate: no escribas ni una línea de código hasta que apruebe el plan.**
+1. **Gemini:** modelo, precio vigente, resolución, latencia y uso de datos de la API de pago. Prueba 2 o 3
+   fotos reales del banco y enséñame el resultado antes de fijar el modelo.
+2. **Prompts:** cómo usas `getImagePrompt()` en sus dos variantes y declaras los seis criterios a su lado
+   **sin cambiar ningún texto**.
+3. **Migración:** columnas nuevas, `peek_rate_limit` y `refund_rate_limit`. Confirma que es aditiva.
+4. **Latencia:** cómo evitas los 504 y qué haces si aparecen.
+5. **Contrato:** de F1–F30 y F2a–F2c, solo los que no vayas a implementar tal cual, con el motivo.
+6. **Decisión abierta** de «Volver al original» en una imagen en uso: tu recomendación.
+7. **Ficheros y tests**, con el glob de `package.json`.
+8. **Choques** con `lib/tokens.ts`, `lib/typeScale.ts` o `CLAUDE.md`.
 
-## Fase 2 — implementación
+**Para aquí hasta que apruebe el plan.**
 
-Por bloques, en este orden. Para entre bloques para que revise:
+## 2 · Implementación
 
-1. Migración, exportaciones de `lib/prompts.ts`, criterios, esquema, cuota, con sus tests.
-2. Análisis: `POST /api/images/analyze` y `POST /api/images/[id]/analyze`, `StyleVerdict`, la propuesta y el
-   veredicto en la subida, el bloque de estilo del detalle, la cruz con tooltip y la píldora del filtro.
-3. Edición: adaptador de Gemini, `edit`, `commit`, `revert`, `quota`, `AiEditModal` y `HoldToCompare`, y el
-   detalle de las editadas y sobrescritas.
-4. `.env.example` con `GEMINI_API_KEY` y quién la usa, y `docs/features/img-r.md` al día.
+Cuatro bloques. Un commit por bloque (`feat(imgr): <qué> (bloque N)`) y paras entre bloques:
 
-Reglas mientras implementas:
+1. Migración, exportaciones de `lib/prompts.ts`, criterios, esquema y cuota, con sus tests. Aplica la
+   migración solo si es aditiva.
+2. Análisis: los dos endpoints `analyze`, `StyleVerdict`, propuesta y veredicto en la subida, bloque de
+   estilo en el detalle, cruz con tooltip y píldora del filtro.
+3. Edición: adaptador de Gemini, `edit`, `commit`, `revert`, `quota`, `AiEditModal` con el selector de
+   prompt, `HoldToCompare` y el detalle de las editadas y sobrescritas.
+4. `.env.example` con `GEMINI_API_KEY` y `docs/features/img-r.md` al día.
 
-- Castellano en toda la interfaz, sin next-intl.
-- No cambies el texto de `getImagePrompt()`: se usa tal cual, en sus dos variantes.
-- `GEMINI_API_KEY` y `ANTHROPIC_API_KEY` son server-only.
-- Nada de valores de marca a mano: salen de `lib/tokens.ts`, `lib/typeScale.ts` y `studio/ui.ts`.
-- `npm run test`, `npm run type-check` y `npm run build` limpios al cerrar cada bloque.
+Antes de cada commit, en limpio y en este orden: `npm run type-check`, `npm test`, `npm run lint`,
+`npm run eval:content`, `npm run build`. Si algo falla, no commitees. `git add` con rutas explícitas,
+nunca `-A`.
 
-## Fase 3 — cierre y verificación
+Reglas: castellano sin next-intl; el texto de `getImagePrompt()` no se toca; las claves son server-only;
+los valores de marca salen de `lib/tokens.ts`, `lib/typeScale.ts` y `studio/ui.ts`.
 
-Actualiza `docs/features/img-r.md` (estado **fase 2 implementada**, decisiones que se movieron y pendientes
-reales). Ejecuta los checks 24 a 38, la fidelidad a F1–F30 y la no regresión, con datos «prueba-…», y
-contrasta contra la tabla `images`, `rate_limits` y `storage.objects`, no contra la pantalla. Deja los
-contadores de cuota como estaban, borra los datos de prueba y entrégame el informe con los fallos separados
-de las observaciones. Marca C y D como pendientes: no los simules.
+## 3 · Verificación y PR
+
+- Ejecuta los checks 24–38, la fidelidad a F1–F30 y F2a–F2c y la no regresión, con datos «prueba-…».
+  Contrasta contra `images`, `rate_limits` y `storage.objects`, no contra la pantalla.
+- Deja las cuotas como estaban y borra los datos de prueba. Los checks C y D quedan pendientes, sin simular.
+- Entrégame el informe con los fallos separados de las observaciones.
+- Abre el PR a `main`, o actualiza el de la fase 1 si sigue abierto. Debe decir:
+  - qué entra;
+  - la migración y su orden;
+  - `GEMINI_API_KEY` en Netlify, y en los secretos de GitHub Actions si el build la necesita;
+  - los checks que me necesitan a mí;
+  - el plan de vuelta atrás.
+- **No mergees.**
 ```
-
 
 ---
 
