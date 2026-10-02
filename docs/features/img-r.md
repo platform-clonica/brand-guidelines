@@ -4,10 +4,50 @@
 > su trabajo, cada una con nombre y etiquetas. Lo que se sube aquí aparece en los decks y en los formularios.
 > No es un almacén nuevo: es la pantalla de gestión del banco que DeckMak_r y FormMak_r ya comparten.
 
-Estado: **definido** · pendiente de implementar. Dos fases: banco (fase 1) y edición con IA (fase 2).
+Estado: **fase 1 implementada** · fase 2 pendiente. Dos fases: banco (fase 1) y edición con IA (fase 2).
 
 Prototipo: `img-r-prototype.html` en la raíz del repo, junto a `deck-prototype.html`. Publicado en
 https://claude.ai/artifact/3uMePFsfmqiLpxTjvgdeKW. Es el contrato de interacción de la fase 1.
+
+## Fase 1: implementada
+
+Rama `feat/img-r`, octubre de 2026. El plan, con las decisiones D1 a D16 y los cinco bloques, está en
+`docs/features/img-r-fase-1-plan.md`.
+
+**Qué hay.**
+
+- `/workspace/img_r` (galería) y `/workspace/img_r/[id]` (la galería con el detalle abierto). La tarjeta
+  de IMG_r sale en `/workspace` detrás de Clock_r, con acento magenta.
+- El popup de DeckMak_r y FormMak_r monta las mismas piezas (`components/images/`): la misma subida, la
+  misma tarjeta, los mismos filtros y el mismo borrado bloqueado.
+- API: `/api/images` (listado paginado y alta), `/api/images/tags`, `/api/images/[id]` (detalle, edición
+  con control de versión y borrado, que responde `409` si la imagen está en uso) y `/api/images/[id]/usage`.
+- Base de datos: `20261001100000_images_bank.sql`, aplicada el 1 de octubre de 2026 (66 filas antes y
+  después, ninguna sin nombre).
+
+**Lo que cambió respecto a esta definición** (decisiones aprobadas en el plan):
+
+- D1: la migración va en dos pasos. `name not null` (M2) se aplica después de desplegar.
+- D2: el nombre de las antiguas sale de `alt`, no de la ruta.
+- D3: rejilla de 240 px con hueco de 28, como las otras galerías, y cabecera no fija.
+- D4: el nombre del detalle va en Serif 400 a 24 px (`title-sm`).
+- D5: la búsqueda empieza en el tercer carácter, como en las otras galerías.
+- D6 y D13: columna `search_text` (nombre y etiquetas sin tildes) y funciones SQL `image_uses` (qué
+  documentos usan una imagen) y `team_member_names` (quién la subió).
+- D7: `TagInput` mejorado para todas las tools; los guiones en las etiquetas, solo en IMG_r.
+- D8 y D9: los avisos salen por encima de los modales y, con modales apilados, Escape cierra solo el de arriba.
+- D10 y D11: las variantes JPEG de un PNG transparente van sobre blanco y los ficheros nuevos se cachean un año.
+- D15: la papelera se queda en el popup, con el mismo borrado bloqueado.
+
+**Pendiente.**
+
+- Aplicar M2 (`20261001100100_images_name_not_null.sql`) justo después de desplegar. Mientras producción
+  tenga el código antiguo, lo que se sube desde su popup entra sin nombre: IMG_r lo enseña con el nombre
+  del fichero, pero la búsqueda no lo encuentra hasta que M2 lo rellena (3 imágenes el 1 de octubre).
+- Check A, el relleno de las miniaturas de las antiguas: lo tiene que lanzar Carlos, porque el script usa
+  la clave `service_role`.
+- Check B, el corte de red a mitad de una subida múltiple: sin verificar, porque requiere cortar la red.
+- El icono de IMG_r es un borrador: falta que lo vea Alberto.
 
 ## Contexto
 
