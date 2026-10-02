@@ -4,7 +4,7 @@
    medidas guardadas. Todo lo que cambia por eso se decide aquí, con test, y no repartido por los
    componentes. Sin SDK: las URLs llegan por `urlFor`. */
 
-import { downloadName } from './naming.ts';
+import { downloadName, legacyName } from './naming.ts';
 import { formatBytes } from './upload.ts';
 
 type Row = {
@@ -83,3 +83,8 @@ export function downloads(row: Row, urlFor: (path: string) => string, natural?: 
    de `fetch` es un TypeError del navegador, en inglés («Failed to fetch»), y se cambia por `fallback`. */
 export const errorText = (e: unknown, fallback: string) =>
   e instanceof Error && !(e instanceof TypeError) && e.message ? e.message : fallback;
+
+/* El nombre con el que se abre «Editar» (detalle 32). Una antigua empieza vacía, con el actual de pista,
+   mientras conserve el nombre del fichero; una vez renombrada en IMG_r se edita su nombre como cualquiera. */
+export const editableName = (row: { name: string; alt: string | null; storage_path: string; original_path: string | null }) =>
+  isLegacy(row) && row.name === legacyName(row.alt, row.storage_path) ? '' : row.name;

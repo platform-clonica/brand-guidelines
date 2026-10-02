@@ -6,7 +6,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   MAX_BYTES,
+  afterFailure,
   effectiveTags,
+  failureReason,
+  leftAfterRemove,
   formatBytes,
   missingVariants,
   objectPaths,
@@ -181,4 +184,40 @@ test('objectPaths da todos los ficheros de una imagen para borrarla, sin nulos',
   assert.deepEqual(objectPaths({ ...nueva, prior_original_path: `images/${ID}/original-1.png` }).length, 4);
   const antigua = { original_path: null, storage_path: 'images/1789503530988-BLANC_MAD_02-215.jpg', thumb_path: null, prior_original_path: null };
   assert.deepEqual(objectPaths(antigua), ['images/1789503530988-BLANC_MAD_02-215.jpg']);
+});
+
+/* Revisión final, puntos 1 a 3: qué se hace con los ficheros de un intento que falla. Borrar los de una
+   fila que existe la deja rota; no borrar los de una que no existe deja huérfanos. */
+test('afterFailure: sin registrar se borra; registrada se devuelve; sin poder comprobarlo no se toca nada', () => {
+  assert.equal(afterFailure(false, null), 'remove');
+  assert.equal(afterFailure(true, 'exists'), 'keep-row');
+  assert.equal(afterFailure(true, 'missing'), 'remove');
+  // La respuesta del registro se perdió y la comprobación también falla: la fila puede existir.
+  assert.equal(afterFailure(true, 'unknown'), 'keep-files');
+});
+
+test('leftAfterRemove: lo que queda por borrar en el siguiente intento', () => {
+  const all = ['images/x/original.jpg', 'images/x/light.jpg', 'images/x/thumb.jpg'];
+  // Storage no respondió: se reintentan las tres rutas (borrar una que no existe no hace daño).
+  assert.deepEqual(leftAfterRemove(all, ['images/x/original.jpg'], null), all);
+  // Respondió: lo que no aparece como borrado y no llegó a subirse, simplemente no existe.
+  assert.deepEqual(leftAfterRemove(all, ['images/x/original.jpg'], ['images/x/original.jpg']), []);
+  // Subido y no borrado: queda pendiente.
+  assert.deepEqual(leftAfterRemove(all, ['images/x/original.jpg', 'images/x/light.jpg'], ['images/x/light.jpg']), ['images/x/original.jpg']);
+});
+
+test('failureReason: el texto de la API en el registro sí; la red y los errores de Storage, no', () => {
+  assert.equal(failureReason(new Error('Demasiadas etiquetas.'), true), 'Demasiadas etiquetas.');
+  assert.equal(failureReason(new Error('No autorizado.'), true), 'No autorizado.');
+  assert.equal(failureReason(new TypeError('Failed to fetch'), true), null);
+  assert.equal(failureReason(new Error('Request failed (502)'), true), null);
+  // Antes del registro los errores son de Storage, en inglés.
+  assert.equal(failureReason(new Error('The object exceeded the maximum allowed size'), false), null);
+});
+
+test('rowProblem avisa antes de subir si entre comunes y propias pasan de 20 etiquetas', () => {
+  const many = Array.from({ length: 12 }, (_, i) => `a${i}`);
+  const more = Array.from({ length: 9 }, (_, i) => `b${i}`);
+  assert.equal(rowProblem({ name: 'x', tags: more }, many), 'Demasiadas etiquetas.');
+  assert.equal(rowProblem({ name: 'x', tags: more.slice(0, 8) }, many), null);
 });

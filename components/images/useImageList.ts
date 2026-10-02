@@ -19,6 +19,10 @@ export function useImageList() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(false);
+  /* Una página siguiente que falla no se vuelve a pedir sola: con la red caída, cada fallo recreaba el
+     observador del final de la rejilla, que volvía a pedirla al momento, en bucle. Se reanuda al cambiar
+     el filtro o al recargar, que es lo que dice el aviso. */
+  const [stalled, setStalled] = useState(false);
   const [facets, setFacets] = useState<TagFacets>({ tags: [], untagged: 0 });
 
   /* Lo que de verdad cambia la consulta: la búsqueda efectiva (plegada, desde el tercer carácter) y las
@@ -37,6 +41,7 @@ export function useImageList() {
   const loadFirst = useCallback(async (q: typeof query) => {
     const n = ++request.current;
     setError(false);
+    setStalled(false);
     try {
       const page = await listImages(q);
       if (n !== request.current) return;
@@ -72,7 +77,10 @@ export function useImageList() {
       });
       setNextCursor(page.nextCursor);
     } catch {
-      if (n === request.current) setError(true);
+      if (n === request.current) {
+        setError(true);
+        setStalled(true);
+      }
     } finally {
       setLoadingMore(false);
     }
@@ -119,7 +127,7 @@ export function useImageList() {
     setFilter,
     items,
     error,
-    hasMore: nextCursor !== null,
+    hasMore: nextCursor !== null && !stalled,
     loadingMore,
     loadMore,
     facets,

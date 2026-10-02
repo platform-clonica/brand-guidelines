@@ -5,7 +5,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LEGACY_NOTE, downloads, errorText, factLines, formatDate, isLegacy, thumbSrc } from '../view.ts';
+import { LEGACY_NOTE, downloads, editableName, errorText, factLines, formatDate, isLegacy, thumbSrc } from '../view.ts';
 
 const ID = '3f2b8c1e-9a4d-4c3b-8f7e-1a2b3c4d5e6f';
 const urlFor = (path: string) => `https://x.supabase.co/storage/v1/object/public/deck-images/${path}`;
@@ -96,4 +96,13 @@ test('errorText: el mensaje de la API sí; el fallo de red del navegador, en ing
   assert.equal(errorText(new TypeError('Failed to fetch'), 'No se pudo.'), 'No se pudo.');
   assert.equal(errorText('algo', 'No se pudo.'), 'No se pudo.');
   assert.equal(errorText(new Error(''), 'No se pudo.'), 'No se pudo.');
+});
+
+test('editableName: una antigua empieza vacía solo mientras conserva el nombre del fichero', () => {
+  const legacy = { name: 'ChatGPT Image 21 sept 2026, 18_48_07', alt: 'ChatGPT Image 21 sept 2026, 18_48_07', storage_path: 'images/1790-ChatGPT_Image.jpg', original_path: null };
+  assert.equal(editableName(legacy), '');
+  // Ya renombrada en IMG_r: se edita su nombre, no se vuelve a escribir.
+  assert.equal(editableName({ ...legacy, name: 'Mesa de trabajo con portátil' }), 'Mesa de trabajo con portátil');
+  // Las nuevas siempre con su nombre.
+  assert.equal(editableName({ ...legacy, name: 'Pasillo', original_path: 'images/x/original.jpg' }), 'Pasillo');
 });

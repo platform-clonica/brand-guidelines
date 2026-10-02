@@ -7,7 +7,7 @@ import { useToast } from '@/components/ui/Toast';
 import { updateImage } from '@/lib/decks/api';
 import type { ImageRecord } from '@/lib/decks/types';
 import { NAME_MAX, describeChanges, normalizeTag } from '@/lib/images/naming';
-import { errorText, isLegacy } from '@/lib/images/view';
+import { editableName, errorText, isLegacy } from '@/lib/images/view';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
@@ -41,7 +41,7 @@ export function ImageMetaModal({
 }) {
   const toast = useToast();
   const legacy = isLegacy(image);
-  const [name, setName] = useState(legacy ? '' : image.name);
+  const [name, setName] = useState(editableName(image));
   const [tags, setTags] = useState<string[]>(image.tags);
   const [bad, setBad] = useState({ name: false, tags: false });
   const [conflict, setConflict] = useState<ImageRecord | null>(null);
@@ -105,7 +105,7 @@ export function ImageMetaModal({
           id="imgr-editar-nombre"
           style={{ ...input, border: `1px solid ${bad.name ? colors.bordeaux : colors.warmDark}` }}
           value={name}
-          placeholder={legacy ? image.name : undefined}
+          placeholder={legacy && !editableName(image) ? image.name : undefined}
           maxLength={NAME_MAX}
           onChange={(e) => {
             setName(e.target.value);

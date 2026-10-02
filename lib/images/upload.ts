@@ -72,8 +72,39 @@ export const effectiveTags = (common: readonly string[], own: readonly string[])
 /* Qué le falta a una fila para poder subirse (detalle 23), o null. */
 export function rowProblem(row: { name: string; tags: readonly string[] }, common: readonly string[]): string | null {
   if (!row.name.trim()) return 'Falta el nombre.';
-  if (!effectiveTags(common, row.tags).length) return 'Falta al menos una etiqueta, propia o común.';
+  const tags = effectiveTags(common, row.tags);
+  if (!tags.length) return 'Falta al menos una etiqueta, propia o común.';
+  // El mismo texto que da el servidor, pero antes de subir los tres ficheros.
+  if (tags.length > TAGS_MAX) return 'Demasiadas etiquetas.';
   return null;
+}
+
+/* Qué hacer con los ficheros de un intento que falla (plan § 2.2 y revisión final). Si el registro llegó a
+   enviarse, la fila puede existir aunque la respuesta se perdiera: se comprueba antes de borrar, y si ni
+   siquiera se puede comprobar, no se toca nada. Una fila sin ficheros se ve rota; un fichero huérfano no se ve. */
+export type RegisterCheck = 'exists' | 'missing' | 'unknown';
+
+export function afterFailure(registering: boolean, check: RegisterCheck | null): 'remove' | 'keep-row' | 'keep-files' {
+  if (!registering) return 'remove';
+  if (check === 'exists') return 'keep-row';
+  if (check === 'missing') return 'remove';
+  return 'keep-files';
+}
+
+/* Lo que queda por borrar tras pedir a Storage que borre `paths`. `removed` son los nombres que Storage dice
+   haber borrado, o null si no respondió. Sin respuesta, se reintentan todas las rutas (borrar una que no
+   existe no hace daño). Con respuesta, lo que no aparece y no llegó a subirse simplemente no existe. */
+export function leftAfterRemove(paths: readonly string[], uploaded: readonly string[], removed: readonly string[] | null): string[] {
+  if (removed === null) return [...paths];
+  const gone = new Set(removed);
+  return uploaded.filter((p) => !gone.has(p));
+}
+
+/* El motivo que se enseña en la fila cuando falla una subida. Solo el texto de la API en el registro, que
+   viene en castellano y dice qué corregir; un fallo de red o de Storage (en inglés) deja el texto general. */
+export function failureReason(e: unknown, registering: boolean): string | null {
+  if (!registering || !(e instanceof Error) || e instanceof TypeError) return null;
+  return e.message && !e.message.startsWith('Request failed') ? e.message : null;
 }
 
 export function uploadButtonLabel(pending: number, progress?: { current: number; total: number }): string {

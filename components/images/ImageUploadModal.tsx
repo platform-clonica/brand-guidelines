@@ -5,8 +5,9 @@ import { TagInput } from '@/components/studio/TagInput';
 import { btn, btnGhost, colors, field, input, linkBtn, srOnly } from '@/components/deck/studio/ui';
 import { useToast } from '@/components/ui/Toast';
 import type { ImageRecord } from '@/lib/decks/types';
-import { UnreadableImageError, uploadToBank } from '@/lib/images/client';
-import { normalizeTag } from '@/lib/images/naming';
+import { removeImageObjects } from '@/lib/decks/api';
+import { UnreadableImageError, UploadFailedError, uploadToBank } from '@/lib/images/client';
+import { NAME_MAX, normalizeTag } from '@/lib/images/naming';
 import {
   effectiveTags,
   formatBytes,
@@ -73,6 +74,12 @@ export function ImageUploadModal({
   const keyRef = useRef(0);
   const busyRef = useRef(false);
   busyRef.current = busy;
+  /* Rutas de intentos fallidos que Storage no confirmó haber borrado (sin red, por ejemplo). Se vuelven a
+     intentar borrar al pulsar Subir otra vez y al cerrar: así un corte no deja originales huérfanos. */
+  const leftovers = useRef<string[]>([]);
+  const sweep = async () => {
+    if (leftovers.current.length) leftovers.current = await removeImageObjects(leftovers.current, []);
+  };
 
   const addFiles = (list: FileList | File[]) => {
     if (busyRef.current) return;
@@ -134,6 +141,7 @@ export function ImageUploadModal({
     }
 
     setBusy(true);
+    await sweep();
     const todo = pending;
     const records: ImageRecord[] = [];
     let failed = 0;
@@ -147,7 +155,15 @@ export function ImageUploadModal({
         update(row.key, { state: 'done' });
       } catch (e) {
         failed++;
-        update(row.key, { state: 'err', error: e instanceof UnreadableImageError ? unreadableMessage(row.file.name) : NETWORK_ERROR });
+        if (e instanceof UploadFailedError) leftovers.current.push(...e.leftovers);
+        update(row.key, {
+          state: 'err',
+          error:
+            e instanceof UnreadableImageError
+              ? unreadableMessage(row.file.name)
+              : // Si la API dijo qué falla (sesión caducada, un dato que no vale), eso; si no, la red.
+                (e instanceof UploadFailedError && e.reason) || NETWORK_ERROR,
+        });
       }
     }
     setProgress(null);
@@ -159,7 +175,9 @@ export function ImageUploadModal({
   };
 
   const close = () => {
-    if (!busy) onClose();
+    if (busy) return;
+    void sweep();
+    onClose();
   };
 
   return (
@@ -342,6 +360,7 @@ function UploadRow({
           style={{ ...input, border: `1px solid ${missingName ? colors.bordeaux : colors.warmDark}` }}
           value={row.name}
           placeholder="Nombre: qué se ve en la imagen"
+          maxLength={NAME_MAX}
           onChange={(e) => onName(e.target.value)}
           disabled={locked}
           aria-invalid={missingName || undefined}

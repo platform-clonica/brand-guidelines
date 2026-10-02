@@ -2,7 +2,7 @@
 --
 -- ⚠️ SE APLICA DESPUÉS DE DESPLEGAR IMG_r, no antes. La versión anterior del popup de imágenes inserta
 -- sin `name`; con esto aplicado, cada subida desde DeckMak_r y FormMak_r respondería 500 hasta el
--- despliegue (plan docs/superpowers/plans/2026-10-01-img-r-fase-1.md, D1).
+-- despliegue (plan docs/features/img-r-fase-1-plan.md, D1).
 --
 -- Repite el relleno de 20261001100000_images_bank.sql para las imágenes que el código anterior haya
 -- subido entre las dos migraciones, con la misma función. Idempotente.

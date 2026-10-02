@@ -214,19 +214,6 @@ function Bank({ initialId }: { initialId: string | null }) {
         )}
       </div>
 
-      {upload && (
-        <ImageUploadModal
-          ref={uploadRef}
-          initialFiles={upload.files}
-          allTags={allTags}
-          onClose={() => setUpload(null)}
-          onUploaded={(records) => {
-            list.prepend(records);
-            list.refreshFacets();
-          }}
-        />
-      )}
-
       {detail && (
         <ImageDetailModal
           key={detail.id}
@@ -247,6 +234,20 @@ function Bank({ initialId }: { initialId: string | null }) {
             toast.show('Esa imagen ya no está en el banco.');
             list.remove(detail.id);
             closeDetail();
+          }}
+        />
+      )}
+
+      {/* Después del detalle: soltar ficheros con el detalle abierto abre la subida encima, no debajo. */}
+      {upload && (
+        <ImageUploadModal
+          ref={uploadRef}
+          initialFiles={upload.files}
+          allTags={allTags}
+          onClose={() => setUpload(null)}
+          onUploaded={(records) => {
+            list.prepend(records);
+            list.refreshFacets();
           }}
         />
       )}

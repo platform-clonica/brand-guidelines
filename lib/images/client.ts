@@ -1,19 +1,21 @@
 'use client';
 /* IMG_r — subir una imagen al banco desde el navegador: generar las variantes y subirlas con su limpieza.
 
-   Plan docs/superpowers/plans/2026-10-01-img-r-fase-1.md, § 2. Por imagen, en este orden:
+   Plan docs/features/img-r-fase-1-plan.md, § 2. Por imagen, en este orden:
      1. original, tal cual (el más pesado: si falla, falla antes de que exista nada)
      2. ligera, 1600 px, JPEG 0,82
      3. miniatura, 480 px, JPEG 0,82
      4. registro en POST /api/images
-   Si algo falla, se borran los objetos que ESTE intento llegó a subir. El reintento usa un id nuevo, así
-   que un resto del intento anterior nunca choca con `upsert: false`. */
+   Si algo falla, se borran las tres rutas de ESTE intento, salvo que el registro llegara a enviarse y no se
+   pueda saber si la fila existe (lib/images/upload.ts, `afterFailure`). Lo que Storage no confirma haber
+   borrado vuelve en el error (`leftovers`) para que la subida lo reintente en la siguiente pasada o al
+   cerrar. El reintento usa un id nuevo, así que un resto del intento anterior nunca choca con `upsert: false`. */
 
 import { colors } from '@/components/deck/studio/ui';
 import { renderJpeg } from '@/lib/deck/optimizeImage';
 import { getImage, registerImage, removeImageObjects, uploadImageObject } from '@/lib/decks/api';
 import type { ImageMeta, ImageRecord } from '@/lib/decks/types';
-import { variantPaths } from './upload';
+import { afterFailure, failureReason, variantPaths, type RegisterCheck } from './upload';
 
 const LIGHT_EDGE = 1600;
 const THUMB_EDGE = 480;
@@ -24,6 +26,18 @@ export class UnreadableImageError extends Error {
   constructor() {
     super('No se ha podido leer la imagen.');
     this.name = 'UnreadableImageError';
+  }
+}
+
+/* Un intento que falló: el motivo para la fila, si la API dijo cuál, y las rutas que pueden haber quedado en
+   Storage, para borrarlas en el siguiente intento o al cerrar la subida. */
+export class UploadFailedError extends Error {
+  constructor(
+    readonly reason: string | null,
+    readonly leftovers: string[],
+  ) {
+    super(reason ?? 'No se pudo subir.');
+    this.name = 'UploadFailedError';
   }
 }
 
@@ -73,12 +87,26 @@ export async function uploadToBank(file: File, meta: ImageMeta): Promise<ImageRe
     });
   } catch (e) {
     /* Si lo que falló fue la respuesta del registro y no el registro, la fila existe: borrar sus ficheros
-       la dejaría rota. Se comprueba antes de limpiar. */
+       la dejaría rota. Se comprueba antes de limpiar, y si la comprobación también falla no se toca nada. */
+    let existing: ImageRecord | null = null;
+    let check: RegisterCheck | null = null;
     if (registering) {
-      const existing = await getImage(id).catch(() => null);
-      if (existing) return existing;
+      try {
+        existing = await getImage(id);
+        check = existing ? 'exists' : 'missing';
+      } catch {
+        check = 'unknown';
+      }
     }
-    await removeImageObjects(uploaded);
-    throw e;
+    const action = afterFailure(registering, check);
+    if (action === 'keep-row' && existing) return existing;
+    let leftovers: string[] = [];
+    if (action === 'remove') {
+      // Las tres rutas: un objeto puede haberse creado aunque su respuesta no llegara.
+      leftovers = await removeImageObjects([paths.original, paths.light, paths.thumb], uploaded);
+    } else {
+      console.error('[storage:images] no se pudo comprobar el registro; ficheros sin tocar', uploaded);
+    }
+    throw new UploadFailedError(failureReason(e, registering), leftovers);
   }
 }

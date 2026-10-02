@@ -17,6 +17,7 @@ import type {
   SignInput,
 } from './types';
 import type { ImageFilter, TagFacets } from '@/lib/images/filter';
+import { leftAfterRemove } from '@/lib/images/upload';
 
 /* Los constructores de URL pública, el desempaquetado de errores y la firma viven en
    ./publicApi.ts, que NO importa el SDK. El visor de propuestas tira de ahí directamente para no
@@ -120,14 +121,19 @@ export async function uploadImageObject(path: string, file: Blob, contentType: s
   if (error) throw new Error(error.message);
 }
 
-/* Limpieza de una subida que no llegó a registrarse. Devuelve lo que no se pudo borrar, que queda como
-   huérfano en la consola, igual que en el DELETE del servidor. */
-export async function removeImageObjects(paths: string[]): Promise<string[]> {
+/* Limpieza de una subida que no llegó a registrarse. `uploaded` son las rutas que se sabe que existen; las
+   demás pueden no existir, y borrarlas no hace daño. Devuelve lo que queda por borrar (lib/images/upload.ts,
+   `leftAfterRemove`) para reintentarlo; los que se sabe que existen y no se borraron quedan como huérfanos en
+   la consola, igual que en el DELETE del servidor. */
+export async function removeImageObjects(paths: string[], uploaded: string[] = paths): Promise<string[]> {
   if (!paths.length) return [];
-  const { data, error } = await supabaseBrowser().storage.from(IMAGE_BUCKET).remove(paths);
-  const gone = new Set((data ?? []).map((o) => o.name));
-  const left = error ? paths : paths.filter((p) => !gone.has(p));
-  if (left.length) console.error('[storage:images] huérfano', left, error?.message ?? '');
+  const { data, error } = await supabaseBrowser()
+    .storage.from(IMAGE_BUCKET)
+    .remove(paths)
+    .catch((e: unknown) => ({ data: null, error: e instanceof Error ? e : new Error(String(e)) }));
+  const left = leftAfterRemove(paths, uploaded, error ? null : (data ?? []).map((o) => o.name));
+  const orphans = left.filter((p) => uploaded.includes(p));
+  if (orphans.length) console.error('[storage:images] huérfano', orphans, error?.message ?? '');
   return left;
 }
 
