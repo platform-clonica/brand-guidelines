@@ -63,6 +63,11 @@ pone `not null`. El popup de imágenes del código anterior inserta sin `name`, 
 **después** de que esté desplegado IMG_r. Aplicarla antes rompe la subida desde DeckMak_r y
 FormMak_r; una vez aplicada, ya no se puede volver al código anterior.
 
+`20261002120000_images_ai.sql` (IMG_r, fase 2) es **aditiva** y se puede aplicar en cualquier momento:
+seis columnas nulas en `images` (estilo y prompt de la edición) y dos funciones nuevas para la cuota de
+«Editar con IA», `peek_rate_limit` y `refund_rate_limit`, que solo aceptan la cuota de quien llama. No toca
+filas, columnas ni funciones existentes.
+
 `20260817121000_tighten_rls.sql` y `20260817122000_tighten_storage.sql` son **restrictivas** y
 rompen el código que había antes. Se aplican **después** de que esté desplegado el commit que
 migra los handlers a `supabaseAuthServer()` y el visor público a las RPC. Aplicarlas antes deja
