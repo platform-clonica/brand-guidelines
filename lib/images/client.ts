@@ -14,7 +14,7 @@
 import { colors } from '@/components/deck/studio/ui';
 import { renderJpeg } from '@/lib/deck/optimizeImage';
 import { getImage, registerImage, removeImageObjects, uploadImageObject } from '@/lib/decks/api';
-import type { ImageMeta, ImageRecord } from '@/lib/decks/types';
+import type { ImageMeta, ImageRecord, ImageStyle } from '@/lib/decks/types';
 import { afterFailure, failureReason, variantPaths, type RegisterCheck } from './upload';
 
 const LIGHT_EDGE = 1600;
@@ -41,7 +41,35 @@ export class UploadFailedError extends Error {
   }
 }
 
-export async function uploadToBank(file: File, meta: ImageMeta): Promise<ImageRecord> {
+/* La imagen que se manda a analizar (fase 2, F21): la misma ligera de 1600 px que se subirá, en base64. Se
+   genera al añadir la fila, antes de subir nada; la subida vuelve a generar la suya. Pintarla dos veces es
+   más barato que repartir la ligera entre dos momentos que no tienen por qué coincidir. */
+export async function analysisImage(file: File): Promise<{ data: string; mediaType: 'image/jpeg' }> {
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch {
+    throw new UnreadableImageError();
+  }
+  let light: Awaited<ReturnType<typeof renderJpeg>>;
+  try {
+    light = await renderJpeg(bitmap, LIGHT_EDGE, QUALITY, colors.white);
+  } catch {
+    throw new UnreadableImageError();
+  } finally {
+    bitmap.close();
+  }
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(light.blob);
+  });
+  return { data: dataUrl.slice(dataUrl.indexOf(',') + 1), mediaType: 'image/jpeg' };
+}
+
+/* `style`: el análisis de la fila, si llegó a tiempo (fase 2). */
+export async function uploadToBank(file: File, meta: ImageMeta, style?: ImageStyle): Promise<ImageRecord> {
   let bitmap: ImageBitmap;
   try {
     bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
@@ -84,6 +112,7 @@ export async function uploadToBank(file: File, meta: ImageMeta): Promise<ImageRe
       original_height: original.height,
       width: light.width,
       height: light.height,
+      style,
     });
   } catch (e) {
     /* Si lo que falló fue la respuesta del registro y no el registro, la fila existe: borrar sus ficheros

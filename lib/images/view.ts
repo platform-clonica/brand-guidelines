@@ -4,6 +4,9 @@
    medidas guardadas. Todo lo que cambia por eso se decide aquí, con test, y no repartido por los
    componentes. Sin SDK: las URLs llegan por `urlFor`. */
 
+import { IMAGE_STYLE_CRITERIA, IMAGE_SUBJECT_CRITERION } from '../prompts.ts';
+import type { StoredStyle } from './analyze/schema.ts';
+import type { StyleChecks, StyleVerdict } from './analyze/verdict.ts';
 import { downloadName, legacyName } from './naming.ts';
 import { formatBytes } from './upload.ts';
 
@@ -88,3 +91,31 @@ export const errorText = (e: unknown, fallback: string) =>
    mientras conserve el nombre del fichero; una vez renombrada en IMG_r se edita su nombre como cualquiera. */
 export const editableName = (row: { name: string; alt: string | null; storage_path: string; original_path: string | null }) =>
   isLegacy(row) && row.name === legacyName(row.alt, row.storage_path) ? '' : row.name;
+
+/* ── Estilo Interactius (fase 2) ── */
+
+type StyleCols = {
+  style_verdict: StyleVerdict | null;
+  style_checks: StyleChecks | null;
+  style_reason: string | null;
+  people_present: boolean | null;
+};
+
+/* El estilo de una fila, o null si está sin analizar. */
+export function styleOf(row: StyleCols): StoredStyle | null {
+  if (!row.style_verdict || !row.style_checks) return null;
+  return { verdict: row.style_verdict, checks: row.style_checks, reason: row.style_reason, people_present: !!row.people_present };
+}
+
+export type StyleRow = { label: string; value: 'Sí' | 'No' | 'No aplica' };
+
+/* Las seis filas del banner desplegado (F25): los cinco criterios comunes y el sexto según haya personas.
+   Las etiquetas son las de lib/prompts.ts, junto a las líneas del prompt de las que salen. */
+export function styleRows(style: StoredStyle): StyleRow[] {
+  const subject = style.people_present ? IMAGE_SUBJECT_CRITERION.people : IMAGE_SUBJECT_CRITERION.standard;
+  const rows: { label: string; v: boolean | null }[] = [
+    ...IMAGE_STYLE_CRITERIA.map((c) => ({ label: c.label as string, v: style.checks[c.key] })),
+    { label: subject.label, v: style.checks.subject },
+  ];
+  return rows.map(({ label, v }) => ({ label, value: v === null ? 'No aplica' : v ? 'Sí' : 'No' }));
+}

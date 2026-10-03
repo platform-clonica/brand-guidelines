@@ -46,18 +46,26 @@ Comparativas en `Claude outputs/img-r-fase-2-prueba-gemini/` (fuera del repo).
 - Pro en 4K tarda 45 s: no cabe en una petición de 60 s con el resto de pasos (§ 4).
 - La prueba entera costó alrededor de 1 $.
 
-**Recomendación tras la prueba: Pro en 2K para todas.**
+**Decisión de Carlos (3 de octubre de 2026): Nano Banana 2 por defecto y Pro a elección de quien edita.**
 
-- Editó las tres; Nano Banana 2 rechazó una.
-- Su resultado se parece más a la guía.
-- Tarda de 23 a 26 s, dentro del límite de 40 s del § 4.
-- Cuesta 0,134 $, frente a 0,101 $.
+- **En el modal, debajo de «Prompt de la guía»:** «Modelo», con los segmentos «Nano Banana 2» y
+  «Nano Banana Pro». Sale marcado Nano Banana 2 y, como el prompt, no se puede cambiar mientras edita.
+- **Nano Banana 2** pide 2K si el lado mayor de la foto no pasa de 2048 px, y 4K si es mayor.
+- **Pro** pide siempre 2K: en 4K tarda 45 s y no cabe en la petición.
+- **Cada intento cuenta uno**, sea cual sea el modelo. La diferencia de precio es de unos 0,03 $ por
+  edición, y la cuota sigue siendo de 25 al mes.
+- **Los nombres y el `id` de cada modelo viven en el adaptador** (§ Adaptador). La interfaz los lee de
+  allí, así que cambiar de modelo o de proveedor sigue siendo tocar un fichero.
 
-Lo que se pierde es la salida en 4K: con un original grande, la editada sale a unos 2500 px de lado.
-F18 ya lo avisa en el detalle.
+**Añadidos aprobados por Carlos el 3 de octubre** (entran en el bloque 3):
 
-**La alternativa:** Nano Banana 2, en 2K o 4K según la foto. Es más rápido y llega a 4K, pero puede
-rechazar fotos conocidas. **Elige tú** con las comparativas delante. El adaptador es el mismo para las dos.
+- **Columna `edit_model`.** Guarda el modelo que hizo cada edición. Va en una migración aditiva propia,
+  y el detalle lo enseña junto a «Prompt».
+- **Pista cuando Nano Banana 2 rechace una foto.** Debajo del aviso de F16: «Prueba con Nano Banana Pro:
+  a veces edita fotos que este rechaza.»
+- **La purga** (§ 3), en su propio fichero y aplicada con el bloque 3:
+  - se quita el permiso de ejecución a `anon` y a `authenticated`;
+  - las cuotas mensuales solo se borran cuando su mes lleva dos meses cerrado.
 
 **Modelos que ve la clave**, según `ListModels` y la documentación oficial del 1 de octubre de 2026:
 

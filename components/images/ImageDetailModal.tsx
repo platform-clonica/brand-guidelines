@@ -3,13 +3,14 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Modal } from '@/components/deck/studio/Modal';
 import { btnGhost, colors, label, linkBtn, linkDanger } from '@/components/deck/studio/ui';
 import { useToast } from '@/components/ui/Toast';
-import { getImage, publicImageUrl } from '@/lib/decks/api';
+import { analyzeBankImage, getImage, publicImageUrl } from '@/lib/decks/api';
 import type { ImageDetail, ImageRecord, ImageUse } from '@/lib/decks/types';
-import { LEGACY_NOTE, downloads, errorText, factLines, isLegacy } from '@/lib/images/view';
+import { LEGACY_NOTE, downloads, errorText, factLines, isLegacy, styleOf } from '@/lib/images/view';
 import { isUuid } from '@/lib/uuid';
 import { TagChips } from './ImageCard';
 import { ImageDeleteModal, UsesList } from './ImageDeleteModal';
 import { ImageMetaModal } from './ImageMetaModal';
+import { StyleVerdict } from './StyleVerdict';
 import './images.css';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
@@ -26,7 +27,10 @@ type Size = { width: number; height: number };
    lo que la tarjeta no trae (dónde se usa y quién la subió). Entrando por el enlace no hay `initial` y se
    espera a la petición. Si la imagen no existe, `onGone`.
 
-   Las antiguas no guardaron medidas: se leen de la imagen ya cargada. */
+   Las antiguas no guardaron medidas: se leen de la imagen ya cargada.
+
+   Fase 2 (F27): debajo de «Se usa en», el estilo Interactius. Si la imagen no se ha analizado, «Analizar
+   estilo» lo pide y lo guarda en la fila; mientras tanto, «Analizando la imagen». */
 export function ImageDetailModal({
   id,
   initial,
@@ -50,6 +54,7 @@ export function ImageDetailModal({
   const [natural, setNatural] = useState<Size | undefined>();
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
 
   // Las salidas y el aviso se leen de una ref: si fueran dependencias, cada render del padre (o cada aviso,
   // que vuelve a pintar el proveedor) volvería a pedir la imagen.
@@ -90,6 +95,20 @@ export function ImageDetailModal({
 
   const legacy = isLegacy(row);
   const facts = factLines(row, extra?.uploadedBy ?? null, natural);
+  const style = styleOf(row);
+
+  const analyze = async () => {
+    setAnalyzing(true);
+    try {
+      const next = await analyzeBankImage(row.id);
+      setRow(next);
+      onChanged(next);
+    } catch {
+      toast.show('No se ha podido analizar la imagen. Vuelve a intentarlo.');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
   return (
     <Modal title={row.name} titleHidden onClose={onClose} width={1000}>
@@ -131,6 +150,28 @@ export function ImageDetailModal({
                 <p style={muted}>Ningún deck ni formulario la usa.</p>
               )}
             </div>
+          </div>
+
+          <div style={{ borderTop: `1px solid ${colors.warmDark}`, paddingTop: 14 }}>
+            {style && !analyzing ? (
+              <StyleVerdict style={style} />
+            ) : (
+              <>
+                <span style={label}>Estilo Interactius</span>
+                {analyzing ? (
+                  <p role="status" className="ixi-pulse" style={{ ...muted, font: `500 11px/1.5 ${MONO}`, color: colors.dark }}>
+                    Analizando la imagen
+                  </p>
+                ) : (
+                  <>
+                    <p style={{ ...muted, marginBottom: 8 }}>Esta imagen aún no se ha analizado.</p>
+                    <button type="button" className="hover-wipe-underline" style={linkBtn} onClick={analyze}>
+                      Analizar estilo
+                    </button>
+                  </>
+                )}
+              </>
+            )}
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '18px 22px', paddingTop: 4 }}>

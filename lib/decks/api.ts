@@ -12,6 +12,7 @@ import type {
   ImageDetail,
   ImageListItem,
   ImageRecord,
+  ImageStyle,
   ImageUpdateInput,
   ImageUse,
   SignInput,
@@ -145,6 +146,7 @@ export function listImages(p: Partial<ImageFilter> & { cursor?: string | null } 
   if (p.q?.trim()) qs.set('q', p.q.trim());
   if (p.untagged) qs.set('untagged', '1');
   else if (p.tags?.length) qs.set('tags', p.tags.join(','));
+  if (p.style) qs.set('style', 'si');
   if (p.cursor) qs.set('cursor', p.cursor);
   const s = qs.toString();
   return fetch(`/api/images${s ? `?${s}` : ''}`, { cache: 'no-store' }).then((r) => json<ImagePage>(r));
@@ -208,4 +210,23 @@ export function imageUsage(id: string): Promise<{ count: number; uses: ImageUse[
   return fetch(`/api/images/${id}/usage`, { cache: 'no-store' }).then((r) =>
     json<{ count: number; uses: ImageUse[] }>(r),
   );
+}
+
+// ---- Análisis de estilo (IMG_r, fase 2) ----
+
+/* Propuesta de nombre y etiquetas de una imagen que aún no está en el banco, y su estilo. `name` es null
+   si el propuesto no pasó evalText(). */
+export type ImageAnalysis = { proposal: { name: string | null; tags: string[] }; style: ImageStyle };
+
+export function analyzeUpload(image: { data: string; mediaType: string }): Promise<ImageAnalysis> {
+  return fetch('/api/images/analyze', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ image: image.data, mediaType: image.mediaType }),
+  }).then((r) => json<ImageAnalysis>(r));
+}
+
+/* «Analizar estilo» de una imagen del banco: devuelve la fila con el estilo guardado. */
+export function analyzeBankImage(id: string): Promise<ImageRecord> {
+  return fetch(`/api/images/${id}/analyze`, { method: 'POST' }).then((r) => json<ImageRecord>(r));
 }

@@ -5,9 +5,10 @@ import { TagInput } from '@/components/studio/TagInput';
 import { btn, btnGhost, colors, field, input, linkBtn, srOnly } from '@/components/deck/studio/ui';
 import { useToast } from '@/components/ui/Toast';
 import type { ImageRecord } from '@/lib/decks/types';
-import { removeImageObjects } from '@/lib/decks/api';
-import { UnreadableImageError, UploadFailedError, uploadToBank } from '@/lib/images/client';
-import { NAME_MAX, normalizeTag } from '@/lib/images/naming';
+import { analyzeUpload, removeImageObjects, type ImageAnalysis } from '@/lib/decks/api';
+import { UnreadableImageError, UploadFailedError, analysisImage, uploadToBank } from '@/lib/images/client';
+import { createLimiter } from '@/lib/images/limit';
+import { NAME_MAX, TAGS_MAX, normalizeTag, normalizeTags } from '@/lib/images/naming';
 import {
   effectiveTags,
   formatBytes,
@@ -17,11 +18,17 @@ import {
   uploadSummary,
   validateFile,
 } from '@/lib/images/upload';
+import { StyleVerdict } from './StyleVerdict';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
 const TAGS_HINT = 'Por ejemplo: oficina, presentación, equipo';
 const NETWORK_ERROR = 'No se pudo subir. Revisa la conexión y vuelve a pulsar Subir.';
+
+/* Fase 2, F21: propuestas a la vez, como máximo. */
+const ANALYSES_AT_ONCE = 3;
+/* Al subir, lo que se espera a un análisis que aún no ha llegado antes de subir la fila sin estilo. */
+const STYLE_WAIT_MS = 8000;
 
 type RowState = 'idle' | 'up' | 'done' | 'err';
 
@@ -36,6 +43,10 @@ type Row = {
   error: string | null;
   /** Se pulsó Subir sin nombre o sin etiqueta. */
   bad: boolean;
+  /** Fase 2: la propuesta y el estilo de la fila, mientras se piden ('wait') o si fallaron ('err'). */
+  analysis: 'wait' | 'err' | ImageAnalysis;
+  /** Se pulsó «Usar propuesta»: ya solo queda el veredicto. */
+  used: boolean;
 };
 
 /* Para que la galería añada a una subida ya abierta los ficheros que se sueltan sobre la página. */
@@ -49,7 +60,11 @@ export type UploadHandle = { addFiles: (files: FileList | File[]) => void };
    tocan. Si una falla, las buenas quedan subidas y volver a pulsar Subir solo reintenta las fallidas.
 
    `onUploaded` recibe las que se subieron en cada pasada, también si alguna falló, para que la rejilla las
-   enseñe ya. Si no falló ninguna, el modal se cierra solo. */
+   enseñe ya. Si no falló ninguna, el modal se cierra solo.
+
+   Fase 2 (F21 a F23): al añadir una imagen se pide su propuesta de nombre y etiquetas y su estilo, tres a la
+   vez como máximo. La propuesta solo entra si se pulsa «Usar propuesta»; el estilo se guarda con la fila al
+   subir, si ha llegado a tiempo. */
 export function ImageUploadModal({
   initialFiles,
   allTags,
@@ -72,6 +87,9 @@ export function ImageUploadModal({
   const [over, setOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const keyRef = useRef(0);
+  const [limit] = useState(() => createLimiter(ANALYSES_AT_ONCE));
+  /* El análisis de cada fila, para esperarlo al subir. Resuelve a null si falló. */
+  const analyses = useRef(new Map<number, Promise<ImageAnalysis | null>>());
   const busyRef = useRef(false);
   busyRef.current = busy;
   /* Rutas de intentos fallidos que Storage no confirmó haber borrado (sin red, por ejemplo). Se vuelven a
@@ -98,10 +116,45 @@ export function ImageUploadModal({
           state: 'idle',
           error: null,
           bad: false,
+          analysis: 'wait',
+          used: false,
         });
     }
     if (bad.length) setRejected((prev) => [...prev, ...bad]);
     if (fresh.length) setRows((prev) => [...prev, ...fresh]);
+    for (const row of fresh) {
+      const job = limit(() => analysisImage(row.file).then(analyzeUpload)).then(
+        (a) => {
+          update(row.key, { analysis: a });
+          return a;
+        },
+        () => {
+          update(row.key, { analysis: 'err' });
+          return null;
+        },
+      );
+      analyses.current.set(row.key, job);
+    }
+  };
+
+  /* El estilo con el que se registra la fila: el de su análisis, si llega antes de STYLE_WAIT_MS. */
+  const styleFor = async (key: number) => {
+    const job = analyses.current.get(key);
+    if (!job) return undefined;
+    const a = await Promise.race([job, new Promise<null>((r) => setTimeout(() => r(null), STYLE_WAIT_MS))]);
+    return a?.style;
+  };
+
+  /* «Usar propuesta» rellena el nombre y añade las etiquetas propuestas a las de la fila. */
+  const applyProposal = (row: Row) => {
+    if (typeof row.analysis !== 'object') return;
+    const { name, tags } = row.analysis.proposal;
+    update(row.key, {
+      name: name ?? row.name,
+      tags: normalizeTags([...row.tags, ...tags]).slice(0, TAGS_MAX),
+      used: true,
+      bad: false,
+    });
   };
 
   useImperativeHandle(ref, () => ({ addFiles }));
@@ -150,7 +203,7 @@ export function ImageUploadModal({
       setProgress({ current: i + 1, total: todo.length });
       update(row.key, { state: 'up', error: null });
       try {
-        const rec = await uploadToBank(row.file, { name: row.name.trim(), tags: effectiveTags(common, row.tags) });
+        const rec = await uploadToBank(row.file, { name: row.name.trim(), tags: effectiveTags(common, row.tags) }, await styleFor(row.key));
         records.push(rec);
         update(row.key, { state: 'done' });
       } catch (e) {
@@ -264,6 +317,7 @@ export function ImageUploadModal({
               locked={busy || row.state === 'done' || row.state === 'up'}
               onName={(name) => update(row.key, { name, bad: false })}
               onTags={(tags) => update(row.key, { tags, bad: false })}
+              onUseProposal={() => applyProposal(row)}
               onRemove={() => removeRow(row)}
             />
           ))}
@@ -294,6 +348,7 @@ function UploadRow({
   locked,
   onName,
   onTags,
+  onUseProposal,
   onRemove,
 }: {
   row: Row;
@@ -302,6 +357,7 @@ function UploadRow({
   locked: boolean;
   onName: (name: string) => void;
   onTags: (tags: string[]) => void;
+  onUseProposal: () => void;
   onRemove: () => void;
 }) {
   const nameId = `imgr-nombre-${row.key}`;
@@ -379,8 +435,49 @@ function UploadRow({
             disabled={locked}
           />
         </div>
+        {row.state !== 'done' && row.state !== 'up' && <Proposal row={row} locked={locked} onUse={onUseProposal} />}
         {state && <div style={{ font: `500 11px/1.4 ${MONO}`, marginTop: 6, color: state.color }}>{state.text}</div>}
       </div>
+    </div>
+  );
+}
+
+/* F21 a F23: «Proponiendo nombre y etiquetas» mientras se pide; después, el veredicto compacto y la propuesta
+   con «Usar propuesta». Usada, solo queda el veredicto. */
+function Proposal({ row, locked, onUse }: { row: Row; locked: boolean; onUse: () => void }) {
+  const line: CSSProperties = { font: `500 11px/1.5 ${MONO}`, marginTop: 8 };
+  if (row.analysis === 'wait') {
+    return (
+      <div role="status" className="ixi-pulse" style={{ ...line, color: colors.dark }}>
+        Proponiendo nombre y etiquetas
+      </div>
+    );
+  }
+  if (row.analysis === 'err') {
+    return <div style={{ ...line, color: colors.ash }}>No se ha podido proponer. Escribe tú el nombre y las etiquetas.</div>;
+  }
+  const { proposal, style } = row.analysis;
+  const offer = !row.used && (proposal.name || proposal.tags.length > 0);
+  return (
+    <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
+      <StyleVerdict style={style} compact />
+      {offer && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px', alignItems: 'baseline', font: `400 11px/1.5 ${MONO}`, color: colors.ash }}>
+          <span>Propuesta:</span>
+          <span style={{ color: colors.ashDark, overflowWrap: 'anywhere' }}>
+            {[proposal.name && `«${proposal.name}»`, proposal.tags.join(', ')].filter(Boolean).join(' · ')}
+          </span>
+          <button
+            type="button"
+            className="hover-wipe-underline"
+            style={{ ...linkBtn, fontSize: 11, ...(locked ? disabledLink : null) }}
+            onClick={onUse}
+            disabled={locked}
+          >
+            Usar propuesta
+          </button>
+        </div>
+      )}
     </div>
   );
 }

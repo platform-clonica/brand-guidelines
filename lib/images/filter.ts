@@ -28,11 +28,13 @@ export function searchText(name: string, tags: readonly string[]): string {
   return foldSearch(`${name} ${tags.join(' ')}`);
 }
 
-export type ImageFilter = { q: string; tags: string[]; untagged: boolean };
+/* `style`: la píldora «Estilo Interactius» (fase 2, F30), que deja solo las que encajan. No es una etiqueta:
+   se combina en Y con todo, también con «Sin etiquetas». */
+export type ImageFilter = { q: string; tags: string[]; untagged: boolean; style: boolean };
 
-export const clearFilter = (): ImageFilter => ({ q: '', tags: [], untagged: false });
+export const clearFilter = (): ImageFilter => ({ q: '', tags: [], untagged: false, style: false });
 
-export const isFiltered = (f: ImageFilter) => f.q.trim() !== '' || f.tags.length > 0 || f.untagged;
+export const isFiltered = (f: ImageFilter) => f.q.trim() !== '' || f.tags.length > 0 || f.untagged || f.style;
 
 /* La búsqueda efectiva: plegada, o vacía si no llega al mínimo. Si no cambia, no hay que volver a
    pedir la página: teclear «pa» después de «p» no busca nada nuevo. */
@@ -43,13 +45,17 @@ export const effectiveSearch = (q: string) => {
 
 /* Si el filtro acota de verdad la rejilla: «ab» todavía no busca. Decide qué vacío se enseña: el del
    banco vacío o el de «ninguna coincide». `isFiltered` decide otra cosa, si hay algo que quitar. */
-export const narrows = (f: ImageFilter) => effectiveSearch(f.q) !== '' || f.tags.length > 0 || f.untagged;
+export const narrows = (f: ImageFilter) => effectiveSearch(f.q) !== '' || f.tags.length > 0 || f.untagged || f.style;
 
 /* Si una imagen pasa el filtro. Es la regla del servidor, para decidir en el navegador si una imagen
    recién subida o editada se queda en la rejilla filtrada. «Sin etiquetas» excluye a las demás. */
-export function matchesFilter(img: { name: string; tags: readonly string[] }, f: ImageFilter): boolean {
+export function matchesFilter(
+  img: { name: string; tags: readonly string[]; style_verdict?: string | null },
+  f: ImageFilter,
+): boolean {
   const s = effectiveSearch(f.q);
   if (s && !searchText(img.name, img.tags).includes(s)) return false;
+  if (f.style && img.style_verdict !== 'si') return false;
   if (f.untagged) return img.tags.length === 0;
   return f.tags.every((t) => img.tags.includes(t));
 }
@@ -61,6 +67,10 @@ export function toggleTag(f: ImageFilter, tag: string): ImageFilter {
 
 export function toggleUntagged(f: ImageFilter): ImageFilter {
   return { ...f, tags: [], untagged: !f.untagged };
+}
+
+export function toggleStyle(f: ImageFilter): ImageFilter {
+  return { ...f, style: !f.style };
 }
 
 /* Sugerencias del campo de etiquetas (detalle 20): las que ya existen y EMPIEZAN por lo escrito, sin
@@ -104,7 +114,7 @@ export function pageOf<T extends { id: string; created_at: string }>(rows: reado
   return { items, nextCursor: rows.length > limit && last ? encodeCursor({ createdAt: last.created_at, id: last.id }) : null };
 }
 
-export type ListQuery = { search: string; tags: string[]; untagged: boolean; cursor: Cursor | null; limit: number };
+export type ListQuery = { search: string; tags: string[]; untagged: boolean; style: boolean; cursor: Cursor | null; limit: number };
 
 export function parseListQuery(p: URLSearchParams): ListQuery {
   const untagged = p.get('untagged') === '1';
@@ -113,6 +123,7 @@ export function parseListQuery(p: URLSearchParams): ListQuery {
     search: effectiveSearch(p.get('q') ?? ''),
     tags: untagged ? [] : normalizeTags((p.get('tags') ?? '').split(',')),
     untagged,
+    style: p.get('style') === 'si',
     cursor: decodeCursor(p.get('cursor')),
     limit: Number.isNaN(raw) ? PAGE_SIZE : Math.min(PAGE_SIZE, Math.max(1, raw)),
   };

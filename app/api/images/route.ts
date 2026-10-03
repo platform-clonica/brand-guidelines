@@ -5,6 +5,8 @@ import { escapeLike, keysetFilter, pageOf, parseListQuery } from '@/lib/images/f
 import { withName } from '@/lib/images/naming';
 import { missingVariants, publicObjectUrl, validateCreateInput } from '@/lib/images/upload';
 import { IMAGE_COLUMNS, imageUses } from '@/lib/images/usage';
+import { storedStyleSchema } from '@/lib/images/analyze/schema';
+import { styleColumns } from '@/lib/images/analyze/result';
 import type { ImageListItem, ImageRecord } from '@/lib/decks/types';
 
 export const dynamic = 'force-dynamic';
@@ -12,7 +14,8 @@ export const dynamic = 'force-dynamic';
 /* GET /api/images — el banco, recientes primero, 60 por página.
 
    `q` busca en nombre y etiquetas sin tildes (columna generada `search_text`), `tags` filtra en Y,
-   `untagged=1` deja solo las que no tienen ninguna, y `cursor` pide la página siguiente: cursor y no
+   `untagged=1` deja solo las que no tienen ninguna, `style=si` solo las que encajan con el estilo
+   Interactius (fase 2), y `cursor` pide la página siguiente: cursor y no
    desplazamiento, para que una subida mientras alguien baja por la rejilla no repita tarjetas. Cada
    tarjeta lleva `use_count`, calculado en UNA llamada a `image_uses` para toda la página. */
 export async function GET(req: Request) {
@@ -33,6 +36,7 @@ export async function GET(req: Request) {
   if (q.search) query = query.ilike('search_text', `%${escapeLike(q.search)}%`);
   if (q.untagged) query = query.eq('tags', '{}');
   else if (q.tags.length) query = query.contains('tags', q.tags);
+  if (q.style) query = query.eq('style_verdict', 'si');
   if (q.cursor) query = query.or(keysetFilter(q.cursor));
 
   const { data, error } = await query;
@@ -53,7 +57,10 @@ export async function GET(req: Request) {
 /* POST /api/images — registra una imagen cuyos tres ficheros ya están en `images/<id>/`.
 
    No se fía del navegador: recalcula rutas y URL desde el id y el tipo, normaliza nombre y etiquetas,
-   y comprueba en Storage que los tres ficheros existen. Sin ellos no hay fila. */
+   y comprueba en Storage que los tres ficheros existen. Sin ellos no hay fila.
+
+   Fase 2: si el análisis de la fila de subida llegó a tiempo, viene en `style`. El veredicto se recalcula
+   desde los criterios y el motivo se vuelve a auditar (styleColumns). Sin `style`, queda sin analizar. */
 export async function POST(req: Request) {
   const unauth = await requireUser();
   if (unauth) return unauth;
@@ -70,7 +77,10 @@ export async function POST(req: Request) {
 
   const parsed = validateCreateInput(body, (path) => publicObjectUrl(base, IMAGE_BUCKET, path));
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
-  const row = parsed.value;
+  const raw = (body as { style?: unknown }).style;
+  const style = raw === undefined || raw === null ? null : storedStyleSchema.safeParse(raw);
+  if (style && !style.success) return NextResponse.json({ error: 'Estilo no válido.' }, { status: 400 });
+  const row = style ? { ...parsed.value, ...styleColumns(style.data) } : parsed.value;
 
   const sb = await supabaseAuthServer();
 

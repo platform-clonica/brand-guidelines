@@ -5,7 +5,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LEGACY_NOTE, downloads, editableName, errorText, factLines, formatDate, isLegacy, thumbSrc } from '../view.ts';
+import { LEGACY_NOTE, downloads, editableName, errorText, factLines, formatDate, isLegacy, styleOf, styleRows, thumbSrc } from '../view.ts';
 
 const ID = '3f2b8c1e-9a4d-4c3b-8f7e-1a2b3c4d5e6f';
 const urlFor = (path: string) => `https://x.supabase.co/storage/v1/object/public/deck-images/${path}`;
@@ -105,4 +105,24 @@ test('editableName: una antigua empieza vacía solo mientras conserva el nombre 
   assert.equal(editableName({ ...legacy, name: 'Mesa de trabajo con portátil' }), 'Mesa de trabajo con portátil');
   // Las nuevas siempre con su nombre.
   assert.equal(editableName({ ...legacy, name: 'Pasillo', original_path: 'images/x/original.jpg' }), 'Pasillo');
+});
+
+/* Fase 2: el estilo de una fila, y las seis filas del banner desplegado (F25). */
+test('styleOf: sin veredicto o sin criterios, la imagen está sin analizar', () => {
+  const checks = { film: true, dof: false, light: true, motion: null, not_stock: true, subject: true };
+  assert.equal(styleOf({ style_verdict: null, style_checks: null, style_reason: null, people_present: null }), null);
+  assert.equal(styleOf({ style_verdict: 'si', style_checks: null, style_reason: null, people_present: null }), null);
+  assert.deepEqual(styleOf({ style_verdict: 'parcial', style_checks: checks, style_reason: 'Motivo.', people_present: true }), {
+    verdict: 'parcial', checks, reason: 'Motivo.', people_present: true,
+  });
+});
+
+test('styleRows: los seis criterios con Sí, No o No aplica, y el sexto según haya personas', () => {
+  const checks = { film: true, dof: false, light: true, motion: null, not_stock: true, subject: true };
+  const rows = styleRows({ verdict: 'parcial', checks, reason: null, people_present: true });
+  assert.deepEqual(rows.map((r) => r.value), ['Sí', 'No', 'Sí', 'No aplica', 'Sí', 'Sí']);
+  assert.equal(rows[0].label, 'Película analógica: grano fino y color tipo Portra');
+  assert.equal(rows[5].label, 'Personas sin posar, sin mirar a cámara ni sonreír de forma corporativa');
+  const sinPersonas = styleRows({ verdict: 'parcial', checks, reason: null, people_present: false });
+  assert.equal(sinPersonas[5].label, 'El sujeto es el espacio, los objetos o la luz, sin figuras humanas');
 });

@@ -58,8 +58,8 @@ export function SearchField({
    FormMak_r no, y no cambian.
 
    IMG_r añade dos huecos opcionales, que las demás no pasan y por tanto no cambian:
-   - `special`: una píldora con borde discontinuo detrás de las etiquetas («Sin etiquetas»). Es la misma
-     `Pill` con la prop `dashed`, no una copia.
+   - `specials`: píldoras detrás de las etiquetas que no son etiquetas: «Sin etiquetas», con borde
+     discontinuo (`dashed`), y «Estilo Interactius» (fase 2). Son la misma `Pill`, no una copia.
    - `trailing`: lo que va al final de la fila («Quitar filtros», un enlace). */
 export function FilterBar({
   clients,
@@ -72,7 +72,7 @@ export function FilterBar({
   statuses = [],
   status = null,
   onStatus,
-  special,
+  specials = [],
   trailing,
   marginBottom = 40,
 }: {
@@ -86,11 +86,11 @@ export function FilterBar({
   statuses?: { value: string; label: string }[];
   status?: string | null;
   onStatus?: (s: string | null) => void;
-  special?: { label: string; active: boolean; onToggle: () => void };
+  specials?: { label: string; active: boolean; onToggle: () => void; dashed?: boolean }[];
   trailing?: ReactNode;
   marginBottom?: number;
 }) {
-  if (!clients.length && !allTags.length && !statuses.length && !special && !trailing) return null;
+  if (!clients.length && !allTags.length && !statuses.length && !specials.length && !trailing) return null;
   const on = client !== null;
 
   return (
@@ -117,11 +117,11 @@ export function FilterBar({
         </Pill>
       ))}
 
-      {special && (
-        <Pill active={special.active} onClick={special.onToggle} dashed>
-          {special.label}
+      {specials.map((s) => (
+        <Pill key={`special:${s.label}`} active={s.active} onClick={s.onToggle} dashed={s.dashed}>
+          {s.label}
         </Pill>
-      )}
+      ))}
 
       {trailing && <span style={{ marginLeft: 6 }}>{trailing}</span>}
     </div>
