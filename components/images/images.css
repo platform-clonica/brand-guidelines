@@ -33,6 +33,17 @@
   }
 }
 
+/* Fase 2, F2: el modal «Editar con IA», imagen a la izquierda y controles a la derecha desde 820 px. */
+.ixi-ai {
+  display: grid;
+  gap: 22px;
+}
+@media (min-width: 820px) {
+  .ixi-ai {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+}
+
 /* Fase 2, F25: el banner del estilo se ilumina al pasar y su flecha gira al desplegarse. */
 .ixi-vhead:hover {
   background: var(--c-warm-light);

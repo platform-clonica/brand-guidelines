@@ -16,6 +16,7 @@ import { renderJpeg } from '@/lib/deck/optimizeImage';
 import { getImage, registerImage, removeImageObjects, uploadImageObject } from '@/lib/decks/api';
 import type { ImageMeta, ImageRecord, ImageStyle } from '@/lib/decks/types';
 import { afterFailure, failureReason, variantPaths, type RegisterCheck } from './upload';
+import { tmpPaths } from './edit/files';
 
 const LIGHT_EDGE = 1600;
 const THUMB_EDGE = 480;
@@ -138,4 +139,32 @@ export async function uploadToBank(file: File, meta: ImageMeta, style?: ImageSty
     }
     throw new UploadFailedError(failureReason(e, registering), leftovers);
   }
+}
+
+/* Fase 2: la ligera y la miniatura de una edición —o del original previo, al volver a él—, fabricadas aquí con
+   las mismas funciones que la subida y subidas a images/_tmp/ junto al resultado. El servidor las copia a su
+   sitio al guardar (plan de la fase 2, § 4: así no hace falta `sharp` en Netlify). Devuelve las medidas del
+   fichero de partida y de la ligera. */
+export async function uploadEditVariants(sourceUrl: string, tmpId: string) {
+  const res = await fetch(sourceUrl, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`No se ha podido leer la imagen (${res.status}).`);
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(await res.blob(), { imageOrientation: 'from-image' });
+  } catch {
+    throw new UnreadableImageError();
+  }
+  const original = { width: bitmap.width, height: bitmap.height };
+  let light: Awaited<ReturnType<typeof renderJpeg>>;
+  let thumb: Awaited<ReturnType<typeof renderJpeg>>;
+  try {
+    light = await renderJpeg(bitmap, LIGHT_EDGE, QUALITY, colors.white);
+    thumb = await renderJpeg(bitmap, THUMB_EDGE, QUALITY, colors.white);
+  } finally {
+    bitmap.close();
+  }
+  const paths = tmpPaths(tmpId, 'jpg');
+  await uploadImageObject(paths.light, light.blob, 'image/jpeg');
+  await uploadImageObject(paths.thumb, thumb.blob, 'image/jpeg');
+  return { original, light: { width: light.width, height: light.height } };
 }

@@ -103,6 +103,8 @@ export interface ImageRecord {
   people_present: boolean | null;
   /** Fase 2: el prompt de la guía con el que se hizo una edición. */
   prompt_variant: 'standard' | 'people' | null;
+  /** Fase 2: el modelo de la edición, id de lib/images/edit/models.ts. */
+  edit_model: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -117,8 +119,12 @@ export type ImageUse = { kind: 'deck' | 'form'; id: string; name: string };
 /* Tarjeta de la rejilla: la fila más cuántos documentos la usan. */
 export type ImageListItem = ImageRecord & { use_count: number };
 
-/* Detalle: la fila, dónde se usa y quién la subió. */
-export type ImageDetail = ImageRecord & { uses: ImageUse[]; uploaded_by: string | null };
+/* Detalle: la fila, dónde se usa, quién la subió y, si es una copia editada, de qué imagen sale (F18). */
+export type ImageDetail = ImageRecord & {
+  uses: ImageUse[];
+  uploaded_by: string | null;
+  parent: { id: string; name: string; url: string } | null;
+};
 
 export type ImageUpdateInput = ImageMeta & { expectedUpdatedAt: string };
 

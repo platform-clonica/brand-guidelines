@@ -68,6 +68,14 @@ seis columnas nulas en `images` (estilo y prompt de la edición) y dos funciones
 «Editar con IA», `peek_rate_limit` y `refund_rate_limit`, que solo aceptan la cuota de quien llama. No toca
 filas, columnas ni funciones existentes.
 
+`20261003100000_images_edit_model.sql` (IMG_r, fase 2) es **aditiva**: una columna nula en `images` con el
+modelo que hizo cada edición.
+
+`20261003100100_purge_keeps_monthly.sql` **no es aditiva**: cambia `purge_rate_limits()`, que dejaba vaciar
+la cuota mensual de «Editar con IA» y la podía ejecutar `anon`. Ahora guarda tres meses las claves
+`imgr-edit:` y solo la ejecuta la clave de servicio. No borra datos y nadie la llamaba; se deshace con la
+definición y los permisos de `20260817130000_rate_limits.sql`.
+
 `20260817121000_tighten_rls.sql` y `20260817122000_tighten_storage.sql` son **restrictivas** y
 rompen el código que había antes. Se aplican **después** de que esté desplegado el commit que
 migra los handlers a `supabaseAuthServer()` y el visor público a las RPC. Aplicarlas antes deja

@@ -230,3 +230,91 @@ export function analyzeUpload(image: { data: string; mediaType: string }): Promi
 export function analyzeBankImage(id: string): Promise<ImageRecord> {
   return fetch(`/api/images/${id}/analyze`, { method: 'POST' }).then((r) => json<ImageRecord>(r));
 }
+
+// ---- Editar con IA (IMG_r, fase 2) ----
+
+export type EditQuota = { limit: number; remaining: number; resetsOn: string; resetLabel: string };
+
+/* Las ediciones que le quedan este mes a quien pregunta. */
+export function getEditQuota(): Promise<EditQuota> {
+  return fetch('/api/images/quota', { cache: 'no-store' }).then((r) => json<EditQuota>(r));
+}
+
+export type EditStart = EditQuota & {
+  tmp: string;
+  previewUrl: string;
+  width: number | null;
+  height: number | null;
+  mime: string;
+};
+
+/* Lo que puede salir de «Aplica el estilo»: el resultado, o un fallo con el mensaje que enseña el modal.
+   `exhausted`: no quedan ediciones (429). `blocked`: el modelo respondió sin imagen. Si el fallo trae la
+   cuota, el intento ya se ha devuelto y el contador dice la verdad. */
+export type EditAttempt =
+  | { ok: true; result: EditStart }
+  | { ok: false; error: string; exhausted?: boolean; blocked?: boolean; quota?: EditQuota };
+
+export async function startEdit(
+  id: string,
+  body: { variant: 'standard' | 'people'; instruction: string; model: string },
+  signal?: AbortSignal,
+): Promise<EditAttempt> {
+  const res = await fetch(`/api/images/${id}/edit`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  });
+  const data = (await res.json().catch(() => null)) as (Partial<EditStart> & { error?: string; exhausted?: boolean; blocked?: boolean }) | null;
+  if (res.ok && data?.tmp) return { ok: true, result: data as EditStart };
+  const quota = typeof data?.remaining === 'number' ? (data as EditQuota) : undefined;
+  return { ok: false, error: data?.error ?? `Request failed (${res.status})`, exhausted: !!data?.exhausted, blocked: !!data?.blocked, quota };
+}
+
+type Size = { width: number; height: number };
+export type CommitInput = {
+  tmp: string;
+  mode: 'copy' | 'overwrite';
+  variant: 'standard' | 'people';
+  model: string;
+  instruction: string;
+  original: Size;
+  light: Size;
+};
+
+/* Guardar la edición como copia o encima. Un 409 no es un error: alguien colocó la imagen entretanto. */
+export async function commitEdit(id: string, input: CommitInput): Promise<{ ok: true; row: ImageRecord } | { ok: false; uses: ImageUse[] }> {
+  const res = await fetch(`/api/images/${id}/edit/commit`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (res.status === 409) return { ok: false, uses: ((await res.json()) as { uses?: ImageUse[] }).uses ?? [] };
+  return { ok: true, row: await json<ImageRecord>(res) };
+}
+
+/* Descartar un resultado: sin esperar ni avisar. Si falla, lo recoge la purga de 24 horas. */
+export function discardEdit(id: string, tmp: string): void {
+  void fetch(`/api/images/${id}/edit/commit`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ tmp, mode: 'discard' }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
+/* Volver al original. `variants` son la ligera y la miniatura del original ya subidas a images/_tmp/ (no
+   hacen falta en una antigua). Un 409 trae dónde se usa. */
+export async function revertImage(
+  id: string,
+  variants?: { tmpId: string; original: Size; light: Size },
+): Promise<{ ok: true; row: ImageRecord } | { ok: false; uses: ImageUse[] }> {
+  const res = await fetch(`/api/images/${id}/revert`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(variants ? { variants: variants.tmpId, original: variants.original, light: variants.light } : {}),
+  });
+  if (res.status === 409) return { ok: false, uses: ((await res.json()) as { uses?: ImageUse[] }).uses ?? [] };
+  return { ok: true, row: await json<ImageRecord>(res) };
+}
