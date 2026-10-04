@@ -4,6 +4,9 @@
 > documento ya lo decide y no cambio nada, pone «según documento». Contrato: sección «Fase 2 — IA»
 > (F1–F30, F2a–F2c, checks 24–38) e `img-r-prototype.html` con «Fase 2» activado.
 
+**Estado (4 de octubre de 2026):** plan aprobado y bloques 1 a 4 implementados (`577182d`, `8dae987`,
+`69f654d` y el commit del bloque 4). Falta la verificación final y el PR.
+
 **Rama.** `feat/img-r-fase-2`, desde `main` con la fase 1 ya fusionada (PR #6). No sigo en `feat/img-r`:
 esa rama cuelga de Clock_r, y su PR llevaría Clock_r a `main`. El paso 0 está hecho: `24f195a
 docs(imgr): definicion de la fase 2 y la entrega 3` (solo cambia el prompt de la fase 2; el prototipo
@@ -308,6 +311,14 @@ versiones vivas y ningún sitio en la interfaz que lo explique. El caso es raro,
 sobrescribir lo que nadie usa, y la salida es clara: quitarla del documento o guardarla como copia.
 
 ## 7 · Ficheros y tests
+
+> **Al implementar** se añadieron módulos que esta lista no preveía:
+> - en `lib/images/edit/`: `models`, `files`, `dimensions`, `server` y `persist`;
+> - en `lib/images/analyze/`: `verdict`, `result` y `server`;
+> - en `lib/images/`: `bankTags` y `limit`.
+>
+> `lib/images/server/variants.ts` no existe: las variantes las hace el navegador (§ 4). La lista final está
+> en `docs/features/img-r.md`, sección *Ficheros*.
 
 **Nuevos**
 
