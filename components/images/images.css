@@ -285,6 +285,12 @@
   align-items: start;
 }
 
+/* G9: mientras la barra de la selección está abierta, los avisos flotantes salen por encima de ella. La barra
+   escribe su altura en `--ixi-bulk-h` (components/images/BulkBar.tsx). */
+body.ixi-bulk-open .toast {
+  bottom: calc(24px + var(--ixi-bulk-h, 44px) + 12px + env(safe-area-inset-bottom, 0px));
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ixi-thumb img,
   .ixi-pulse,

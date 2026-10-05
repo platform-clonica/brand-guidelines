@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
 import { SearchField } from '@/components/studio/GalleryFilters';
 import { UserMenu } from '@/components/studio/UserMenu';
@@ -7,10 +7,23 @@ import { ImgLogo } from '@/components/studio/Wordmark';
 import { colors, srOnly } from '@/components/deck/studio/ui';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
 import type { SessionUser } from '@/lib/auth/sessionUser';
+import { publicImageUrl } from '@/lib/decks/api';
 import type { ImageListItem, ImageRecord } from '@/lib/decks/types';
 import { modalStack } from '@/lib/hooks/modalStack';
+import { downloadDone, downloadStart, zipBlocked, zipEntries, zipName } from '@/lib/images/bulk';
 import { narrows } from '@/lib/images/filter';
-import { dropFromSelection, refreshSelection, toggleSelected, type Selection } from '@/lib/images/selection';
+import {
+  allSelected,
+  dropFromSelection,
+  refreshSelection,
+  selectAll,
+  toggleSelected,
+  type Selection,
+} from '@/lib/images/selection';
+import { downloadZip } from '@/lib/images/zip';
+import { BulkBar } from './BulkBar';
+import { BulkDeleteModal } from './BulkDeleteModal';
+import { BulkTagsModal } from './BulkTagsModal';
 import { ImageCard } from './ImageCard';
 import { ImageDetailModal } from './ImageDetailModal';
 import { ImageFilters } from './ImageFilters';
@@ -75,6 +88,33 @@ function Bank({ user, initialId }: { user: SessionUser; initialId: string | null
   }, []);
   const toggle = (item: ImageListItem) => setSelection((s) => toggleSelected(s, item));
   const forget = (id: string) => setSelection((s) => dropFromSelection(s, [id]));
+  const selected = useMemo(() => [...selection.values()], [selection]);
+
+  /* G9 a G12: las acciones de la barra. */
+  const [bulk, setBulk] = useState<'tags' | 'delete' | null>(null);
+  const [downloading, setDownloading] = useState(false);
+
+  /* G11: el ZIP con los originales (la ligera de las antiguas). Topes de 50 imágenes y 100 MB. */
+  const download = async () => {
+    if (downloading) return;
+    const plan = zipEntries(selected, (path) => publicImageUrl(path) ?? '');
+    const blocked = zipBlocked(plan.files.length, plan.bytes);
+    if (blocked) {
+      toast.show(blocked);
+      return;
+    }
+    toast.show(downloadStart(plan.files.length, plan.legacy));
+    setDownloading(true);
+    try {
+      const { failed } = await downloadZip(plan.files, zipName());
+      const done = downloadDone(plan.files.length, failed);
+      if (done) toast.show(done);
+    } catch {
+      toast.show('No se ha podido preparar el ZIP. Vuelve a intentarlo.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   /* Atrás y Adelante del navegador abren y cierran el detalle. Al llegar a un detalle por el historial,
      debajo queda la galería: cerrarlo es volver atrás. */
@@ -275,6 +315,49 @@ function Bank({ user, initialId }: { user: SessionUser; initialId: string | null
             list.refreshFacets();
             window.history.replaceState({ imgr: row.id }, '', `${BASE}/${row.id}`);
             setDetail((d) => ({ id: row.id, initial: row, pushed: d?.pushed ?? false }));
+          }}
+        />
+      )}
+
+      {selection.size > 0 && (
+        <BulkBar
+          count={selection.size}
+          visible={items?.length ?? 0}
+          allVisible={allSelected(selection, items ?? [])}
+          downloading={downloading}
+          onTags={() => setBulk('tags')}
+          onDownload={() => void download()}
+          onDelete={() => setBulk('delete')}
+          onSelectVisible={() => setSelection((s) => selectAll(s, items ?? []))}
+          onClear={() => setSelection(new Map())}
+        />
+      )}
+
+      {bulk === 'tags' && (
+        <BulkTagsModal
+          ids={selected.map((i) => i.id)}
+          allTags={allTags}
+          onClose={() => setBulk(null)}
+          onDone={(res) => {
+            for (const row of res.rows) list.replace(row);
+            for (const id of res.missing) list.remove(id);
+            setSelection((s) => dropFromSelection(refreshSelection(s, res.rows), res.missing));
+            list.refreshFacets();
+            setBulk(null);
+          }}
+        />
+      )}
+
+      {bulk === 'delete' && (
+        <BulkDeleteModal
+          items={selected}
+          onClose={() => setBulk(null)}
+          onDone={(res) => {
+            const gone = [...res.deleted, ...res.missing];
+            for (const id of gone) list.remove(id);
+            setSelection((s) => dropFromSelection(s, gone));
+            list.refreshFacets();
+            setBulk(null);
           }}
         />
       )}
