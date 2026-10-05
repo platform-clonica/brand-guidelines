@@ -4,7 +4,7 @@ import { CardActions, type CardAction } from '@/components/studio/CardActions';
 import { colors } from '@/components/deck/studio/ui';
 import { publicImageUrl } from '@/lib/decks/api';
 import type { ImageListItem } from '@/lib/decks/types';
-import { isLegacy, thumbSrc } from '@/lib/images/view';
+import { isLegacy, thumbSrc, usesLabel } from '@/lib/images/view';
 import './images.css';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
@@ -13,33 +13,38 @@ const urlFor = (path: string) => publicImageUrl(path) ?? '';
 
 /* La tarjeta de una imagen del banco. Una sola pieza para IMG_r y el popup de DeckMak_r y FormMak_r.
 
-   - `bank`, la de IMG_r (detalles 8 a 11): miniatura 4:3, insignias «En uso · N» y «Solo versión
-     ligera», nombre (en ceniza si es antigua) y etiquetas.
+   - `bank`, la de IMG_r (entrega 3, G1 a G8): solo la miniatura 4:3, con la primera etiqueta dentro, abajo a
+     la izquierda. Arriba a la derecha, el número de usos y, si no encaja con el estilo, la cruz en Burdeos,
+     cada uno con su aviso. Arriba a la izquierda, el selector redondo. Abrir y seleccionar son dos botones
+     hermanos, no uno dentro de otro (G8). El nombre está en el `aria-label` y en la búsqueda (G1).
    - `pick`, la del popup (detalle 38): miniatura y nombre, seleccionable con borde de tinta, y las
-     acciones al pasar el ratón (la papelera, con el borrado bloqueado si está en uso).
+     acciones al pasar el ratón (la papelera, con el borrado bloqueado si está en uso). La cruz de «no
+     encaja» lleva el aspecto de G4, pero abajo a la derecha, porque arriba está la papelera (decisión 1 del
+     plan de la entrega 3).
 
-   Las antiguas no tienen miniatura: se pinta la ligera, que pesa más, con carga diferida.
+   Los avisos de las marcas son también la descripción accesible del botón de abrir. Con el ratón sale el de
+   cada marca; con el foco del teclado, los dos juntos y apilados.
 
-   Fase 2 (F28 y F29): si la imagen no encaja con el estilo Interactius, una cruz en Burdeos sobre una plaquita
-   clara en la esquina inferior derecha, en las dos variantes. Su aviso sale al pasar sobre ella y al llegar a
-   la tarjeta con el teclado, y es también la descripción accesible de la tarjeta. Las que encajan, o encajan
-   en parte, no llevan marca. */
+   Las antiguas no tienen miniatura: se pinta la ligera, que pesa más, con carga diferida. */
 export function ImageCard({
   item,
   variant,
   selected = false,
   onOpen,
+  onToggle,
   actions,
 }: {
   item: ImageListItem;
   variant: 'bank' | 'pick';
   selected?: boolean;
   onOpen: (item: ImageListItem) => void;
+  /** Solo `bank`: marca o desmarca la imagen en la selección de la galería (G6). */
+  onToggle?: (item: ImageListItem) => void;
   actions?: CardAction[];
 }) {
   const [hover, setHover] = useState(false);
   const legacy = isLegacy(item);
-  const markId = useId();
+  const id = useId();
   const noFit = item.style_verdict === 'no';
 
   const img = (
@@ -55,6 +60,7 @@ export function ImageCard({
   );
 
   if (variant === 'pick') {
+    const markId = `${id}-nofit`;
     return (
       <div
         style={{ position: 'relative', minWidth: 0 }}
@@ -76,7 +82,14 @@ export function ImageCard({
         >
           <div style={{ position: 'relative', aspectRatio: '4 / 3', background: colors.grey, overflow: 'hidden' }}>
             {img}
-            {noFit && <StyleMark id={markId} />}
+            {noFit && (
+              <span className="ixi-mark">
+                <CrossIcon />
+                <span id={markId} className="ixi-tip">
+                  {NO_FIT}
+                </span>
+              </span>
+            )}
           </div>
           <div style={{ ...nameStyle(legacy), font: `500 11px/1.35 ${MONO}`, padding: '6px 4px' }}>{item.name}</div>
         </button>
@@ -85,59 +98,68 @@ export function ImageCard({
     );
   }
 
+  const uses = item.use_count > 0 ? usesLabel(item.use_count) : null;
+  const usesId = `${id}-uses`;
+  const markId = `${id}-nofit`;
+  const describedBy = [uses && usesId, noFit && markId].filter(Boolean).join(' ') || undefined;
+  const first = item.tags[0];
+
   return (
-    <button
-      type="button"
-      className="ixi-zoom ixi-card"
-      onClick={() => onOpen(item)}
-      aria-label={`Abrir ${item.name}`}
-      aria-describedby={noFit ? markId : undefined}
-      style={{
-        appearance: 'none', display: 'block', width: '100%', minWidth: 0, padding: 0, border: 'none',
-        background: 'transparent', textAlign: 'left', cursor: 'pointer',
-      }}
-    >
-      <div
-        style={{
-          position: 'relative', aspectRatio: '4 / 3', overflow: 'hidden',
-          background: colors.grey, border: `1px solid ${colors.warmDark}`,
-        }}
-      >
-        {img}
-        {(item.use_count > 0 || legacy) && (
-          <div style={{ position: 'absolute', left: 8, top: 8, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {item.use_count > 0 && <span style={{ ...badge, background: colors.dark, color: colors.warmLight }}>En uso · {item.use_count}</span>}
-            {legacy && <span style={badge}>Solo versión ligera</span>}
-          </div>
-        )}
-        {noFit && <StyleMark id={markId} />}
-      </div>
-      <div style={{ paddingTop: 10, display: 'grid', gap: 6 }}>
-        <div style={{ ...nameStyle(legacy), font: `500 12px/1.35 ${MONO}` }}>{item.name}</div>
-        <TagChips tags={item.tags} />
-      </div>
-    </button>
+    <div className={selected ? 'ixi-cell ixi-selected' : 'ixi-cell'}>
+      <button type="button" className="ixi-open" onClick={() => onOpen(item)} aria-label={`Abrir ${item.name}`} aria-describedby={describedBy}>
+        <span className="ixi-thumb">
+          {img}
+          {first ? <span className="ixi-ontop">{first}</span> : <span className="ixi-ontop ixi-none">Sin etiquetas</span>}
+        </span>
+      </button>
+      {onToggle && (
+        <button
+          type="button"
+          className="ixi-sel"
+          role="checkbox"
+          aria-checked={selected}
+          aria-label={`Seleccionar ${item.name}`}
+          onClick={() => onToggle(item)}
+        >
+          <span className="ixi-dot" aria-hidden="true" />
+        </button>
+      )}
+      {(uses || noFit) && (
+        <div className="ixi-marks">
+          {uses && (
+            <span className="ixi-count">
+              {item.use_count}
+              <span id={usesId} className="ixi-tip" aria-hidden="true">
+                {uses}
+              </span>
+            </span>
+          )}
+          {noFit && (
+            <span className="ixi-nofit">
+              <CrossIcon />
+              <span id={markId} className="ixi-tip" aria-hidden="true">
+                {NO_FIT}
+              </span>
+            </span>
+          )}
+          {/* Con el foco del teclado salen los dos avisos juntos, apilados, en vez de uno encima de otro. */}
+          <span className="ixi-tips" aria-hidden="true">
+            {uses && <span>{uses}</span>}
+            {noFit && <span>{NO_FIT}</span>}
+          </span>
+        </div>
+      )}
+    </div>
   );
 }
 
 const NO_FIT = 'Esta imagen no encaja en nuestras guidelines';
 
-function StyleMark({ id }: { id: string }) {
+function CrossIcon() {
   return (
-    <span
-      className="ixi-mark"
-      style={{
-        position: 'absolute', right: 8, bottom: 8, width: 22, height: 22, display: 'flex', alignItems: 'center',
-        justifyContent: 'center', background: colors.warmLight, color: colors.bordeaux,
-      }}
-    >
-      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-        <path d="M4 4l8 8M12 4l-8 8" strokeLinecap="round" />
-      </svg>
-      <span id={id} className="ixi-tip">
-        {NO_FIT}
-      </span>
-    </span>
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" style={{ display: 'block' }}>
+      <path d="M4 4l8 8M12 4l-8 8" strokeLinecap="round" />
+    </svg>
   );
 }
 
@@ -160,10 +182,6 @@ export function TagChips({ tags }: { tags: string[] }) {
 }
 
 const nameStyle = (legacy: boolean): CSSProperties => ({ color: legacy ? colors.ash : colors.dark, overflowWrap: 'anywhere' });
-
-const badge: CSSProperties = {
-  font: `500 10px/1 ${MONO}`, letterSpacing: '.04em', padding: '5px 6px', background: colors.warmLight, color: colors.dark,
-};
 
 const tag: CSSProperties = {
   font: `400 10px/1 ${MONO}`, color: colors.ashDark, background: colors.white,

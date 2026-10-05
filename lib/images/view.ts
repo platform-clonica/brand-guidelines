@@ -131,6 +131,9 @@ export function usedByText(uses: readonly ImageUse[]): string {
   return `${parts.length > 1 ? 'la usan' : 'la usa'} ${list}`;
 }
 
+/* Entrega 3, G5: el aviso del número de usos de la tarjeta, que es también su descripción accesible. */
+export const usesLabel = (n: number) => `En uso en ${n} documento${n === 1 ? '' : 's'}`;
+
 /* El texto de un error para un aviso. Los de la API ya vienen en castellano y se enseñan; el fallo de red
    de `fetch` es un TypeError del navegador, en inglés («Failed to fetch»), y se cambia por `fallback`. */
 export const errorText = (e: unknown, fallback: string) =>

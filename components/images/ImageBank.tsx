@@ -7,8 +7,10 @@ import { ImgLogo } from '@/components/studio/Wordmark';
 import { colors, srOnly } from '@/components/deck/studio/ui';
 import { ToastProvider, useToast } from '@/components/ui/Toast';
 import type { SessionUser } from '@/lib/auth/sessionUser';
-import type { ImageRecord } from '@/lib/decks/types';
+import type { ImageListItem, ImageRecord } from '@/lib/decks/types';
+import { modalStack } from '@/lib/hooks/modalStack';
 import { narrows } from '@/lib/images/filter';
+import { dropFromSelection, refreshSelection, toggleSelected, type Selection } from '@/lib/images/selection';
 import { ImageCard } from './ImageCard';
 import { ImageDetailModal } from './ImageDetailModal';
 import { ImageFilters } from './ImageFilters';
@@ -38,7 +40,12 @@ type Detail = { id: string; initial?: ImageRecord; pushed: boolean };
    rejilla, o reemplaza la URL si se entró por el enlace. Atrás y Adelante abren y cierran el detalle.
 
    Mismas piezas que el popup de los editores (components/images): lista, filtros, tarjeta, subida y
-   borrado. Cabecera, contenedor y rejilla, los de las otras galerías del workspace (D3). */
+   borrado. La cabecera es la de las otras galerías del workspace; la rejilla va a todo el ancho, con huecos
+   de 6 px (entrega 3, G14).
+
+   Selección múltiple (entrega 3, G13): vive aquí, fuera del listado, así que sobrevive a filtros, búsqueda y
+   páginas. Guarda cada imagen entera (lib/images/selection.ts). Escape la anula si no hay ningún modal
+   abierto; con uno abierto, Escape es suyo. */
 export function ImageBank({ user, initialId }: { user: SessionUser; initialId?: string }) {
   return (
     <ToastProvider>
@@ -53,7 +60,21 @@ function Bank({ user, initialId }: { user: SessionUser; initialId: string | null
   const [upload, setUpload] = useState<{ files: File[] } | null>(null);
   const uploadRef = useRef<UploadHandle>(null);
   const [detail, setDetail] = useState<Detail | null>(initialId ? { id: initialId, pushed: false } : null);
+  const [selection, setSelection] = useState<Selection<ImageListItem>>(() => new Map());
   const endRef = useRef<HTMLDivElement>(null);
+
+  /* G9: Escape anula la selección si no hay ningún modal abierto. Este listener se registra al montar, antes
+     que el de cualquier modal, así que con uno abierto la pila todavía lo cuenta y Escape solo lo cierra. */
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || !modalStack.isEmpty()) return;
+      setSelection((s) => (s.size ? new Map() : s));
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+  const toggle = (item: ImageListItem) => setSelection((s) => toggleSelected(s, item));
+  const forget = (id: string) => setSelection((s) => dropFromSelection(s, [id]));
 
   /* Atrás y Adelante del navegador abren y cierran el detalle. Al llegar a un detalle por el historial,
      debajo queda la galería: cerrarlo es volver atrás. */
@@ -157,7 +178,7 @@ function Bank({ user, initialId }: { user: SessionUser; initialId: string | null
         </div>
       </header>
 
-      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '40px 32px 64px' }}>
+      <div className="ixi-page">
         {/* Sin píldoras mientras carga la primera página o si falló, como en el prototipo: aún no hay rejilla que acotar. */}
         {items !== null && !(list.error && !items.length) && (
           <ImageFilters filter={list.filter} facets={list.facets} onChange={list.setFilter} />
@@ -166,7 +187,7 @@ function Bank({ user, initialId }: { user: SessionUser; initialId: string | null
         {/* Si falla la primera carga, arriba; si falla una página siguiente, al final, donde se está mirando. */}
         {!items?.length && errorLine}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 240px), 1fr))', gap: 28, alignItems: 'start' }}>
+        <div className={selection.size ? 'ixi-grid ixi-selecting' : 'ixi-grid'}>
           <button
             type="button"
             onClick={() => setUpload({ files: [] })}
@@ -191,16 +212,21 @@ function Bank({ user, initialId }: { user: SessionUser; initialId: string | null
               <span role="status" style={srOnly}>
                 Cargando
               </span>
+              {/* G1: la tarjeta es solo la miniatura, así que el esqueleto también. */}
               {Array.from({ length: 5 }, (_, i) => (
-                <div key={i} aria-hidden style={{ minWidth: 0 }}>
-                  <div className="ixi-pulse" style={{ aspectRatio: '4 / 3', background: colors.grey, border: `1px solid ${colors.warmDark}` }} />
-                  <div style={{ paddingTop: 10, font: `500 12px/1.35 ${MONO}`, color: colors.ash }}>Cargando</div>
-                </div>
+                <div
+                  key={i}
+                  aria-hidden
+                  className="ixi-pulse"
+                  style={{ minWidth: 0, aspectRatio: '4 / 3', background: colors.grey, border: `1px solid ${colors.warmDark}` }}
+                />
               ))}
             </>
           )}
 
-          {items?.map((item) => <ImageCard key={item.id} item={item} variant="bank" onOpen={openDetail} />)}
+          {items?.map((item) => (
+            <ImageCard key={item.id} item={item} variant="bank" selected={selection.has(item.id)} onOpen={openDetail} onToggle={toggle} />
+          ))}
         </div>
         <div ref={endRef} style={{ height: 1 }} />
 
@@ -225,15 +251,18 @@ function Bank({ user, initialId }: { user: SessionUser; initialId: string | null
           onChanged={(row) => {
             list.replace(row);
             list.refreshFacets();
+            setSelection((s) => refreshSelection(s, [row]));
           }}
           onDeleted={(id) => {
             list.remove(id);
             list.refreshFacets();
+            forget(id);
             closeDetail();
           }}
           onGone={() => {
             toast.show('Esa imagen ya no está en el banco.');
             list.remove(detail.id);
+            forget(detail.id);
             closeDetail();
           }}
           onOpenImage={(parentId) => {
