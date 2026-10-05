@@ -56,7 +56,8 @@ con las decisiones D1 a D16 y los cinco bloques, está en `docs/features/img-r-f
 ## Fase 2: implementada
 
 Rama `feat/img-r-fase-2`, octubre de 2026, sobre `main` con la fase 1. El plan, con la prueba de Gemini y lo que
-se decidió en cada parada, está en `docs/features/img-r-fase-2-plan.md`.
+se decidió en cada parada, está en `docs/features/img-r-fase-2-plan.md`; la verificación, con sus fallos y
+observaciones, en `docs/features/img-r-fase-2-informe.md`.
 
 **Qué hay.**
 
@@ -121,7 +122,8 @@ se decidió en cada parada, está en `docs/features/img-r-fase-2-plan.md`.
 **Pendiente.**
 
 - `GEMINI_API_KEY` en las variables de Netlify (producción), con la facturación de Google activa.
-- Check C (fallo real del proveedor) y check D (coste real en la consola de Google): `requiere Carlos`.
+- Check D (coste real en la consola de Google): `requiere Carlos`. El check C se verificó con un fallo real de
+  Gemini durante la verificación.
 - Las fotos de menores en el EEE: Google dice que no se pueden editar, pero solo en la página de vídeo.
   Está sin confirmar para estos modelos.
 

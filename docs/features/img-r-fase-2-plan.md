@@ -4,8 +4,9 @@
 > documento ya lo decide y no cambio nada, pone «según documento». Contrato: sección «Fase 2 — IA»
 > (F1–F30, F2a–F2c, checks 24–38) e `img-r-prototype.html` con «Fase 2» activado.
 
-**Estado (4 de octubre de 2026):** plan aprobado y bloques 1 a 4 implementados (`577182d`, `8dae987`,
-`69f654d` y el commit del bloque 4). Falta la verificación final y el PR.
+**Estado (5 de octubre de 2026):** plan aprobado, bloques 1 a 4 implementados (`577182d`, `8dae987`,
+`69f654d`, `1b6c8ba`) y verificados, con dos arreglos de la verificación en `9ba786e`. Informe en
+`docs/features/img-r-fase-2-informe.md`. Falta fusionar el PR.
 
 **Rama.** `feat/img-r-fase-2`, desde `main` con la fase 1 ya fusionada (PR #6). No sigo en `feat/img-r`:
 esa rama cuelga de Clock_r, y su PR llevaría Clock_r a `main`. El paso 0 está hecho: `24f195a
