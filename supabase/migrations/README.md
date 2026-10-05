@@ -76,6 +76,10 @@ la cuota mensual de «Editar con IA» y la podía ejecutar `anon`. Ahora guarda 
 `imgr-edit:` y solo la ejecuta la clave de servicio. No borra datos y nadie la llamaba; se deshace con la
 definición y los permisos de `20260817130000_rate_limits.sql`.
 
+`20261005120000_images_bulk_tags.sql` (IMG_r, entrega 3) es **aditiva** y se puede aplicar en cualquier
+momento: una función nueva, `add_image_tags`, que añade etiquetas a varias imágenes sin pisar las que ya
+tienen. No toca filas, columnas ni funciones existentes.
+
 `20260817121000_tighten_rls.sql` y `20260817122000_tighten_storage.sql` son **restrictivas** y
 rompen el código que había antes. Se aplican **después** de que esté desplegado el commit que
 migra los handlers a `supabaseAuthServer()` y el visor público a las RPC. Aplicarlas antes deja
