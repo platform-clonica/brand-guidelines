@@ -1,5 +1,5 @@
 import { getImagePrompt, IMAGE_STYLE_CRITERIA, IMAGE_SUBJECT_CRITERION } from '../../prompts.ts';
-import { forbiddenVocabulary, punctuationRules } from '../../tokens.ts';
+import { forbiddenVocabularyDetailed, punctuationRules } from '../../tokens.ts';
 
 /* El prompt del análisis de una imagen (docs/features/img-r.md, «Propuesta de nombre y etiquetas, y
    análisis de estilo»): propuesta de nombre y etiquetas, si hay personas, y los seis criterios de estilo.
@@ -13,6 +13,11 @@ import { forbiddenVocabulary, punctuationRules } from '../../tokens.ts';
 /* Las etiquetas del banco van en el prompt para que elija primero entre ellas. Con un banco grande la
    lista no puede crecer sin límite: van las más usadas (llegan ordenadas por uso). */
 export const PROMPT_TAGS_MAX = 150;
+
+/* Todas las formas de cada palabra prohibida, que son las que audita evalText(), y no solo la canónica de
+   `forbiddenVocabulary`. Con la canónica sola, el modelo escribía la variante castellana («de extremo a
+   extremo», familia de «end-to-end») y el motivo no pasaba la auditoría. */
+const FORBIDDEN_FORMS = forbiddenVocabularyDetailed.flatMap((e) => e.family);
 
 export function buildAnalysisPrompt(existingTags: readonly string[]): string {
   const tags = existingTags.slice(0, PROMPT_TAGS_MAX);
@@ -47,5 +52,5 @@ MOTIVO. Una o dos frases en castellano que expliquen qué criterios cumple la fo
 REGLAS DE ESCRITURA para el nombre y el motivo:
 - ${punctuationRules.noExclamation.es}
 - ${punctuationRules.noEllipsis.es}
-- No uses estas palabras ni sus derivados: ${forbiddenVocabulary.join(', ')}.`;
+- No uses ninguna de estas palabras o expresiones: ${FORBIDDEN_FORMS.join(', ')}.`;
 }

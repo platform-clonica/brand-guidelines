@@ -1,6 +1,7 @@
 'use client';
-import { useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties } from 'react';
 import { colors } from '@/components/deck/studio/ui';
+import { nextHold, type HoldEvent, type HoldSource } from '@/lib/images/hold';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
@@ -8,14 +9,20 @@ const MONO = 'var(--font-ibm-plex-mono, monospace)';
    botón dice «Original». Con ratón, táctil y teclado (Espacio o Intro). La misma pieza en el modal de edición
    y en el detalle de una editada o sobrescrita.
 
-   Soltar fuera del botón, perder el foco o que el sistema cancele el gesto también sueltan: nunca se queda
-   enseñando el original sin que nadie pulse. */
+   Al pulsar, el botón encoge («Original» es más corto) y el puntero puede quedar fuera. Por eso captura el
+   puntero y cada gesto suelta solo con su propio final (lib/images/hold.ts). Soltar fuera del botón, perder
+   el foco o que el sistema cancele el gesto también sueltan: nunca se queda enseñando el original sin que
+   nadie pulse. */
 export function HoldToCompare({ onHold, disabled = false, style }: { onHold: (holding: boolean) => void; disabled?: boolean; style?: CSSProperties }) {
   const [holding, setHolding] = useState(false);
-  const set = (v: boolean) => {
-    if (v === holding) return;
-    setHolding(v);
-    onHold(v);
+  const source = useRef<HoldSource>(null);
+  const apply = (event: HoldEvent) => {
+    const was = source.current !== null;
+    source.current = nextHold(source.current, event);
+    const now = source.current !== null;
+    if (now === was) return;
+    setHolding(now);
+    onHold(now);
   };
   return (
     <button
@@ -23,24 +30,29 @@ export function HoldToCompare({ onHold, disabled = false, style }: { onHold: (ho
       disabled={disabled}
       onPointerDown={(e) => {
         e.preventDefault();
-        set(true);
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+          // Sin captura sigue funcionando; solo vuelve a depender de no encoger bajo el puntero.
+        }
+        apply({ type: 'pointerdown', pointerId: e.pointerId });
       }}
-      onPointerUp={() => set(false)}
-      onPointerLeave={() => set(false)}
-      onPointerCancel={() => set(false)}
+      onPointerUp={(e) => apply({ type: 'pointerup', pointerId: e.pointerId })}
+      onPointerLeave={(e) => apply({ type: 'pointerleave', pointerId: e.pointerId })}
+      onPointerCancel={(e) => apply({ type: 'pointercancel', pointerId: e.pointerId })}
       onKeyDown={(e) => {
         if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) {
           e.preventDefault();
-          set(true);
+          apply({ type: 'keydown' });
         }
       }}
       onKeyUp={(e) => {
         if (e.key === ' ' || e.key === 'Enter') {
           e.preventDefault();
-          set(false);
+          apply({ type: 'keyup' });
         }
       }}
-      onBlur={() => set(false)}
+      onBlur={() => apply({ type: 'blur' })}
       onContextMenu={(e) => e.preventDefault()}
       style={{
         appearance: 'none', border: `1px solid ${colors.warmDark}`, background: colors.white, color: colors.dark,

@@ -51,7 +51,7 @@ test('el estilo que se guarda con la imagen solo admite los tres veredictos', ()
 
 import { buildAnalysisPrompt, PROMPT_TAGS_MAX } from '../analyze/prompt.ts';
 import { getImagePrompt } from '../../prompts.ts';
-import { forbiddenVocabulary, punctuationRules } from '../../tokens.ts';
+import { forbiddenVocabulary, forbiddenVocabularyDetailed, punctuationRules } from '../../tokens.ts';
 
 test('el prompt lleva las etiquetas que ya existen, para que elija primero entre ellas', () => {
   const p = buildAnalysisPrompt(['oficina', 'equipo', 'luz-natural']);
@@ -70,6 +70,14 @@ test('el prompt lleva las reglas de puntuación y el vocabulario prohibido de li
   assert.ok(p.includes(punctuationRules.noExclamation.es));
   assert.ok(p.includes(punctuationRules.noEllipsis.es));
   for (const w of forbiddenVocabulary) assert.ok(p.includes(w), w);
+});
+
+/* evalText() rechaza la familia entera de cada palabra, no solo su forma canónica. Si el prompt solo da la
+   canónica, el modelo escribe la variante («nítida de extremo a extremo», de la familia de «end-to-end») y el
+   motivo se pierde: pasó en la verificación de la fase 2. El prompt da la misma lista que se audita. */
+test('el prompt lleva todas las formas del vocabulario prohibido que audita evalText(), no solo la canónica', () => {
+  const p = buildAnalysisPrompt([]);
+  for (const entry of forbiddenVocabularyDetailed) for (const form of entry.family) assert.ok(p.includes(form), form);
 });
 
 test('el prompt lleva las dos variantes de la guía, literales', () => {
