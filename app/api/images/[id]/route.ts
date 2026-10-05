@@ -47,7 +47,17 @@ export async function GET(_req: Request, { params }: Ctx) {
     uploadedBy = (names as { name: string }[] | null)?.[0]?.name ?? null;
   }
 
-  const detail: ImageDetail = { ...withName(row), uses: uses.get(id) ?? [], uploaded_by: uploadedBy };
+  /* F18: de qué imagen sale una copia editada. Si la de origen se borró, `parent_id` ya es null. */
+  let parent: ImageDetail['parent'] = null;
+  if (row.parent_id) {
+    const { data: p } = await sb.from('images').select('id, name, alt, storage_path, url').eq('id', row.parent_id).maybeSingle();
+    if (p) {
+      const named = withName(p as { id: string; name: string | null; alt: string | null; storage_path: string; url: string });
+      parent = { id: named.id, name: named.name, url: named.url };
+    }
+  }
+
+  const detail: ImageDetail = { ...withName(row), uses: uses.get(id) ?? [], uploaded_by: uploadedBy, parent };
   return NextResponse.json(detail, { headers: { 'Cache-Control': 'no-store' } });
 }
 

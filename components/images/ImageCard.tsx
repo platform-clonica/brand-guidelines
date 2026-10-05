@@ -1,5 +1,5 @@
 'use client';
-import { useState, type CSSProperties } from 'react';
+import { useId, useState, type CSSProperties } from 'react';
 import { CardActions, type CardAction } from '@/components/studio/CardActions';
 import { colors } from '@/components/deck/studio/ui';
 import { publicImageUrl } from '@/lib/decks/api';
@@ -18,7 +18,12 @@ const urlFor = (path: string) => publicImageUrl(path) ?? '';
    - `pick`, la del popup (detalle 38): miniatura y nombre, seleccionable con borde de tinta, y las
      acciones al pasar el ratón (la papelera, con el borrado bloqueado si está en uso).
 
-   Las antiguas no tienen miniatura: se pinta la ligera, que pesa más, con carga diferida. */
+   Las antiguas no tienen miniatura: se pinta la ligera, que pesa más, con carga diferida.
+
+   Fase 2 (F28 y F29): si la imagen no encaja con el estilo Interactius, una cruz en Burdeos sobre una plaquita
+   clara en la esquina inferior derecha, en las dos variantes. Su aviso sale al pasar sobre ella y al llegar a
+   la tarjeta con el teclado, y es también la descripción accesible de la tarjeta. Las que encajan, o encajan
+   en parte, no llevan marca. */
 export function ImageCard({
   item,
   variant,
@@ -34,6 +39,8 @@ export function ImageCard({
 }) {
   const [hover, setHover] = useState(false);
   const legacy = isLegacy(item);
+  const markId = useId();
+  const noFit = item.style_verdict === 'no';
 
   const img = (
     // <img> y no next/image, como BrandMark: la URL pública de Storage ya es el fichero que se quiere.
@@ -57,15 +64,20 @@ export function ImageCard({
         <button
           type="button"
           onClick={() => onOpen(item)}
+          className="ixi-card"
           aria-pressed={selected}
           aria-label={item.name}
+          aria-describedby={noFit ? markId : undefined}
           title={item.name}
           style={{
             appearance: 'none', display: 'block', width: '100%', padding: 0, textAlign: 'left', cursor: 'pointer',
             background: 'transparent', border: `2px solid ${selected ? colors.dark : 'transparent'}`,
           }}
         >
-          <div style={{ aspectRatio: '4 / 3', background: colors.grey, overflow: 'hidden' }}>{img}</div>
+          <div style={{ position: 'relative', aspectRatio: '4 / 3', background: colors.grey, overflow: 'hidden' }}>
+            {img}
+            {noFit && <StyleMark id={markId} />}
+          </div>
           <div style={{ ...nameStyle(legacy), font: `500 11px/1.35 ${MONO}`, padding: '6px 4px' }}>{item.name}</div>
         </button>
         {actions && actions.length > 0 && <CardActions visible={hover} actions={actions} />}
@@ -76,9 +88,10 @@ export function ImageCard({
   return (
     <button
       type="button"
-      className="ixi-zoom"
+      className="ixi-zoom ixi-card"
       onClick={() => onOpen(item)}
       aria-label={`Abrir ${item.name}`}
+      aria-describedby={noFit ? markId : undefined}
       style={{
         appearance: 'none', display: 'block', width: '100%', minWidth: 0, padding: 0, border: 'none',
         background: 'transparent', textAlign: 'left', cursor: 'pointer',
@@ -97,12 +110,34 @@ export function ImageCard({
             {legacy && <span style={badge}>Solo versión ligera</span>}
           </div>
         )}
+        {noFit && <StyleMark id={markId} />}
       </div>
       <div style={{ paddingTop: 10, display: 'grid', gap: 6 }}>
         <div style={{ ...nameStyle(legacy), font: `500 12px/1.35 ${MONO}` }}>{item.name}</div>
         <TagChips tags={item.tags} />
       </div>
     </button>
+  );
+}
+
+const NO_FIT = 'Esta imagen no encaja en nuestras guidelines';
+
+function StyleMark({ id }: { id: string }) {
+  return (
+    <span
+      className="ixi-mark"
+      style={{
+        position: 'absolute', right: 8, bottom: 8, width: 22, height: 22, display: 'flex', alignItems: 'center',
+        justifyContent: 'center', background: colors.warmLight, color: colors.bordeaux,
+      }}
+    >
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <path d="M4 4l8 8M12 4l-8 8" strokeLinecap="round" />
+      </svg>
+      <span id={id} className="ixi-tip">
+        {NO_FIT}
+      </span>
+    </span>
   );
 }
 

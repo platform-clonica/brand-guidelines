@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { getImagePrompt } from '../prompts.ts';
 
 /* Guardia de regresión del prompt de imagen.
 
@@ -9,9 +11,10 @@ import { readFileSync } from 'node:fs';
    las imágenes, así que estos literales están congelados: si alguien los edita, este test cae y
    obliga a que sea una decisión y no un descuido.
 
-   Se lee el fichero como TEXTO en vez de importarlo: lib/prompts.ts usa alias `@/…` y el runner
-   (`node --test --experimental-strip-types`) no los resuelve. Para lo que hace falta aquí —que unos
-   literales no cambien— leer el fuente basta y no arrastra dependencias. */
+   Los literales se buscan en el fuente leído como TEXTO, que es lo que dice cada test: «esta línea
+   sigue ahí». Desde IMG_r (fase 2) el fichero también se importa —ya no usa el alias `@/` para
+   lib/tokens— y el último test congela la SALIDA de getImagePrompt(), que es lo que reciben el
+   cliente y el editor de imágenes. */
 
 const SRC = readFileSync(new URL('../prompts.ts', import.meta.url), 'utf8');
 
@@ -72,4 +75,32 @@ test('la variante estándar excluye personas de forma explícita, no por omisió
 test('la variante estándar nombra un sujeto no humano (no solo prohíbe)', () => {
   // Un prompt que solo niega deja al modelo sin nada que retratar.
   assert.ok(SRC.includes('Espacios y objetos sin presencia humana'));
+});
+
+/* La salida entera, congelada. IMG_r (fase 2) manda este texto tal cual a Gemini para editar fotos y lo
+   usa para juzgar el estilo; el cliente lo copia a diario. Un cambio en cualquiera de las seis
+   combinaciones —también en inglés y en catalán, que no se usan en IMG_r— es una decisión, no un
+   retoque: si es deliberado, se actualiza la huella aquí y se revisan los criterios de estilo
+   (styleCriteria.test.ts). Huellas tomadas el 2 de octubre de 2026, antes de tocar el fichero. */
+test('getImagePrompt devuelve el mismo texto que antes, en sus dos variantes y sus tres idiomas', () => {
+  const FROZEN = {
+    es: {
+      standard: '14de4ca1db16d8b63247d63805613a013c81cf964e6b40f69d2c7ffc9037e51e',
+      people: 'a7c3ce8853aca4c91c8756f47a34cd335750b7616847880b5b1915771aae7b59',
+    },
+    en: {
+      standard: '5535233bb475f34e26dc6856d07d1ca21779e887e04624c2763f5efbae1f6a71',
+      people: '2c8212072aa46f22440f2f6723b14bacb159579c418d07606c743b9bbb6213fd',
+    },
+    ca: {
+      standard: '8c6fb7e5eab4cddcf5bd03bcedc2cdd8db42975271ac428f22eba3021c84e758',
+      people: '8714be2e5a2dc2fa6adbe3901f9d1e7e65bac45a7f004fbe2145eb009bae3ecf',
+    },
+  } as const;
+  for (const locale of ['es', 'en', 'ca'] as const) {
+    for (const variant of ['standard', 'people'] as const) {
+      const hash = createHash('sha256').update(getImagePrompt(locale, variant)).digest('hex');
+      assert.equal(hash, FROZEN[locale][variant], `getImagePrompt('${locale}', '${variant}') ha cambiado`);
+    }
+  }
 });

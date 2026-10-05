@@ -4,9 +4,9 @@
 > su trabajo, cada una con nombre y etiquetas. Lo que se sube aquí aparece en los decks y en los formularios.
 > No es un almacén nuevo: es la pantalla de gestión del banco que DeckMak_r y FormMak_r ya comparten.
 
-Estado: **fase 1 implementada** · fase 2 y entrega 3 definidas, pendientes de implementar. La fase 2
-(edición con un modelo externo, propuestas de nombre y etiquetas, y análisis de estilo) parte de la 1. Después va
-una tercera entrega, más pequeña: **parrilla rediseñada y acciones en bloque** (sección «Entrega 3»).
+Estado: **fase 1 y fase 2 implementadas** · entrega 3 definida, pendiente de implementar. La fase 2 añade la
+edición con Gemini, las propuestas de nombre y etiquetas y el análisis de estilo. La tercera entrega, más pequeña,
+es la **parrilla rediseñada y las acciones en bloque** (sección «Entrega 3»).
 
 Prototipo: `img-r-prototype.html` en la raíz del repo, junto a `deck-prototype.html`. Publicado en
 https://claude.ai/artifact/3uMePFsfmqiLpxTjvgdeKW. Es el contrato de interacción de las dos fases: el
@@ -46,13 +46,86 @@ con las decisiones D1 a D16 y los cinco bloques, está en `docs/features/img-r-f
 
 **Pendiente.**
 
-- Aplicar M2 (`20261001100100_images_name_not_null.sql`) justo después de desplegar. Mientras producción
-  tenga el código antiguo, lo que se sube desde su popup entra sin nombre: IMG_r lo enseña con el nombre
-  del fichero, pero la búsqueda no lo encuentra hasta que M2 lo rellena (3 imágenes el 1 de octubre).
+- ~~Aplicar M2 justo después de desplegar.~~ Aplicada el 2 de octubre de 2026, tras el despliegue del PR #6:
+  69 imágenes antes y después, las 3 que había sin nombre ya lo tienen, y `name` no admite nulos ni vacíos.
 - Check A, el relleno de las miniaturas de las antiguas: lo tiene que lanzar Carlos, porque el script usa
   la clave `service_role`.
 - Check B, el corte de red a mitad de una subida múltiple: sin verificar, porque requiere cortar la red.
 - El icono de IMG_r es un borrador: falta que lo vea Alberto.
+
+## Fase 2: implementada
+
+Rama `feat/img-r-fase-2`, octubre de 2026, sobre `main` con la fase 1. El plan, con la prueba de Gemini y lo que
+se decidió en cada parada, está en `docs/features/img-r-fase-2-plan.md`; la verificación, con sus fallos y
+observaciones, en `docs/features/img-r-fase-2-informe.md`.
+
+**Qué hay.**
+
+- **Análisis de estilo y propuesta.**
+  - Al subir, cada fila pide su propuesta de nombre y etiquetas y su veredicto, tres a la vez. El
+    veredicto se guarda con la fila; la propuesta, solo con «Usar propuesta».
+  - Va también en la subida del popup de DeckMak_r y FormMak_r, que es la misma pieza.
+  - Las imágenes sin analizar tienen «Analizar estilo» en el detalle.
+  - Las que no encajan llevan una cruz en la tarjeta, y la píldora «Estilo Interactius» deja solo las
+    que encajan.
+- **Editar con IA.**
+  - Elección de prompt (Estándar o Personas) y de modelo, una indicación libre y 25 intentos por persona
+    y mes.
+  - Al guardar, «Guardar como copia» o «Sobrescribir» (solo si nadie la usa).
+  - Comparar con el original manteniendo pulsado, y «Volver al original» (bloqueado si está en uso).
+- **API.**
+  - `/api/images/analyze` y `/api/images/[id]/analyze`.
+  - `/api/images/[id]/edit`, `/api/images/[id]/edit/commit`, `/api/images/[id]/revert` y
+    `/api/images/quota`.
+  - El listado admite `style=si`.
+- **Base de datos.** Las tres migraciones se aplicaron el 3 de octubre de 2026; siguen 69 imágenes y 51
+  contadores.
+  - `20261002120000_images_ai.sql`: las columnas de estilo y del prompt, y `peek_rate_limit` /
+    `refund_rate_limit`.
+  - `20261003100000_images_edit_model.sql`: la columna `edit_model`.
+  - `20261003100100_purge_keeps_monthly.sql`.
+
+**Lo que cambió respecto a esta definición** (decisiones de las paradas del plan):
+
+- **Modelo, por decisión de Carlos (3 de octubre de 2026).**
+  - Nano Banana 2 (`gemini-3.1-flash-image`) por defecto; Nano Banana Pro (`gemini-3-pro-image`), a
+    elección de quien edita.
+  - Nano Banana 2 pide 2K hasta 2048 px de lado y 4K por encima. Pro pide siempre 2K: en 4K tardó 45 s.
+  - La fila guarda el modelo en `edit_model`, y el detalle lo enseña junto a «Prompt».
+- **El veredicto lo calcula el código** (`lib/images/analyze/verdict.ts`) desde los seis criterios. En la
+  prueba, el modelo dio «parcial» a una foto con 4 de 6 criterios fallidos.
+- **La ligera y la miniatura de una edición se fabrican en el navegador** con `optimizeImage()`, como en la
+  subida, y el servidor las copia a su sitio. Así no hace falta `sharp` en Netlify, que no se podía probar
+  antes de producción.
+- **Las claves de `style_checks`** son `film`, `dof`, `light`, `motion`, `not_stock` y `subject`; la tabla
+  *Datos* decía `people`.
+- **El mes de la cuota es el de Madrid.**
+- **`peek_rate_limit` y `refund_rate_limit` solo aceptan la cuota de quien llama.**
+- **`purge_rate_limits()`** ya no la puede ejecutar `anon`, y guarda tres meses las cuotas mensuales. Antes
+  las borraba al día. Lo aprobó Carlos.
+- **Sobrescribir dos veces** conserva como original previo el original de verdad.
+- **Sobrescribir una antigua** guarda su ligera como original previo, sin moverla ni borrarla.
+- **«Original previo»** dice «Guardado», sin medidas.
+- **«Volver al original» en una imagen en uso: bloqueado**, como recomendaba *Decisiones abiertas*.
+- **«Pasar» `evalText()`** es no tener incumplimientos duros: la longitud es una regla blanda.
+- **Copy nueva:**
+  - «Prueba con Nano Banana Pro: a veces edita fotos que este rechaza.», cuando Nano Banana 2 no devuelve
+    imagen;
+  - «No se puede volver al original: la usa deck «X». Cambia la imagen en ese documento y vuelve a
+    intentarlo.»;
+  - «No se ha podido guardar la edición. Vuelve a intentarlo.»;
+  - «No se ha podido recuperar el original. Vuelve a intentarlo.»;
+  - «Guardando».
+- **Netlify corta cada petición a los 60 s y `maxDuration` no tiene efecto allí.** La llamada a Gemini
+  lleva su propio corte a los 40 s, para devolver el intento antes del `504`.
+
+**Pendiente.**
+
+- `GEMINI_API_KEY` en las variables de Netlify (producción), con la facturación de Google activa.
+- Check D (coste real en la consola de Google): `requiere Carlos`. El check C se verificó con un fallo real de
+  Gemini durante la verificación.
+- Las fotos de menores en el EEE: Google dice que no se pueden editar, pero solo en la página de vídeo.
+  Está sin confirmar para estos modelos.
 
 ## Contexto
 
@@ -149,8 +222,8 @@ Claude sí entra en la fase 2 para proponer el nombre y las etiquetas de cada im
 
 | Pregunta | Alternativas | Recomendación |
 |---|---|---|
-| Modelo de Gemini (fase 2) | Gemini 3 Pro Image · Nano Banana 2 (3.1 Flash Image) | Lo propone Claude Code en el análisis, tras probar dos o tres fotos reales del banco. Precios de septiembre de 2026: entre 0,07 y 0,15 $ por imagen según resolución. Ningún modelo devuelve la foto intacta |
-| «Volver al original» en una imagen que ya se usa (fase 2) | bloquearlo, como sobrescribir · permitirlo y conservar los ficheros editados | **Bloquearlo.** Sobrescribir solo se permite si nadie la usa, pero alguien puede colocarla en un deck después. Volver al original borra los ficheros editados y ese deck se quedaría con la imagen rota. El prototipo lo deja hacer con un aviso: la implementación se separa de él en esto |
+| Modelo de Gemini (fase 2) | Gemini 3 Pro Image · Nano Banana 2 (3.1 Flash Image) | **Resuelta** (3 de octubre de 2026): Nano Banana 2 por defecto y Pro a elección. Ver *Fase 2: implementada* |
+| «Volver al original» en una imagen que ya se usa (fase 2) | bloquearlo, como sobrescribir · permitirlo y conservar los ficheros editados | **Bloquearlo** (así se implementó en la fase 2). Sobrescribir solo se permite si nadie la usa, pero alguien puede colocarla en un deck después. Volver al original borra los ficheros editados y ese deck se quedaría con la imagen rota. El prototipo lo deja hacer con un aviso: la implementación se separa de él en esto |
 | Miniaturas de las imágenes antiguas | script de relleno con credenciales de servidor · se dejan sin miniatura y la tarjeta usa la versión ligera | Las dos cosas. El respaldo a la versión ligera hace falta siempre, por robustez. El script corre después y es `requiere Carlos`, porque necesita la clave `service_role` |
 | Choque entre enlaces y botones de los modales | la norma cambia · cambian los modales del workspace | Lo decide **Alberto**. IMG_r usa enlaces en página y detalle, y los botones compartidos en los modales (ver *Marca*) |
 
@@ -333,13 +406,25 @@ MODIFICADO
   docs/features/urls-workspace.md                 las dos rutas nuevas
   docs/features/deck-image-gallery.md             nota: el banco se gestiona desde IMG_r
 
-FASE 2 · NUEVO
-  supabase/migrations/<ts>_images_ai.sql          columnas de estilo · peek_rate_limit · refund_rate_limit
-  lib/images/edit/adapter.ts                      interfaz del proveedor e implementación de Gemini
+FASE 2 · NUEVO (lo que se implementó; el plan lo argumenta)
+  supabase/migrations/20261002120000_images_ai.sql            columnas de estilo y prompt · peek_rate_limit · refund_rate_limit
+  supabase/migrations/20261003100000_images_edit_model.sql    edit_model
+  supabase/migrations/20261003100100_purge_keeps_monthly.sql  la purga no vacía las cuotas mensuales ni la ejecuta anon
+  lib/images/edit/models.ts                       Nano Banana 2 y Pro, y el tamaño que se pide (también en el navegador)
+  lib/images/edit/adapter.ts                      Gemini por fetch, con corte a los 40 s (solo servidor)
   lib/images/edit/prompt.ts                       prompt de edición desde lib/prompts.ts
+  lib/images/edit/files.ts                        temporales, rutas de sobrescribir, qué se borra al sobrescribir y al volver
+  lib/images/edit/dimensions.ts                   medidas de un JPEG o PNG por su cabecera
+  lib/images/edit/server.ts                       cuota y purga de temporales (solo servidor)
+  lib/images/edit/persist.ts                      copiar a su sitio, borrar y analizar el resultado (solo servidor)
   lib/images/analyze/prompt.ts                    prompt de propuesta y estilo desde lib/prompts.ts y lib/tokens.ts
-  lib/images/analyze/schema.ts                    esquema Zod de la salida
-  lib/images/quota.ts                             clave mensual, restantes, fecha de reinicio
+  lib/images/analyze/schema.ts                    esquema Zod y JSON Schema de la salida
+  lib/images/analyze/verdict.ts                   el veredicto desde los seis criterios
+  lib/images/analyze/result.ts                    evalText, etiquetas y columnas de estilo
+  lib/images/analyze/server.ts                    la llamada a Claude (solo servidor)
+  lib/images/quota.ts                             clave mensual en hora de Madrid, restantes, día de reinicio
+  lib/images/bankTags.ts                          las etiquetas del banco, para las píldoras y el prompt
+  lib/images/limit.ts                             tres análisis a la vez
   app/api/images/analyze/route.ts                 propuesta + estilo de una imagen aún sin subir (ligera en base64)
   app/api/images/[id]/analyze/route.ts            «Analizar estilo» de una imagen del banco
   app/api/images/[id]/edit/route.ts               edición → resultado en images/_tmp/ (purga antes los de >24 h)
@@ -348,16 +433,22 @@ FASE 2 · NUEVO
   app/api/images/quota/route.ts                   ediciones que le quedan a quien pregunta
   components/images/AiEditModal.tsx               el modal «Editar con IA»
   components/images/StyleVerdict.tsx              caja «Encaja», banner desplegable «No encaja» / «Encaja en parte»
-  components/images/HoldToCompare.tsx             «Mantén pulsado para ver el original», ratón y teclado
+  components/images/HoldToCompare.tsx             «Mantén pulsado para ver el original», ratón, táctil y teclado
+  lib/images/__tests__/{styleCriteria,verdict,analyze,quota,limit,editPrompt,editModels,editFiles,dimensions}.test.ts
 
 FASE 2 · MODIFICADO
-  lib/prompts.ts                                  exporta el cuerpo de estilo y los criterios, SIN cambiar ningún texto
+  lib/prompts.ts                                  los seis criterios citan su línea; ningún texto cambia (import de tokens relativo)
+  lib/__tests__/prompts.test.ts                   la salida de getImagePrompt() congelada en sus seis combinaciones
+  lib/decks/types.ts · lib/decks/api.ts           columnas nuevas; análisis, edición, cuota y volver al original
+  lib/images/filter.ts · lib/images/view.ts       filtro de estilo; datos y descargas de editadas y sobrescritas
+  lib/images/client.ts                            la ligera para analizar y las variantes de una edición
   components/images/ImageUploadModal.tsx          propuesta y veredicto por fila
-  components/images/ImageCard.tsx                 cruz con tooltip si no encaja
-  components/images/ImageFilters.tsx              píldora «Estilo Interactius»
-  components/images/ImageDetailModal.tsx          bloque de estilo, acciones de edición, comparar, volver al original
-  app/api/images/route.ts                         filtro por estilo en el listado
-  .env.example                                    GEMINI_API_KEY (server-only; la usan edit y commit)
+  components/images/ImageCard.tsx                 cruz con aviso si no encaja
+  components/images/ImageFilters.tsx              píldora «Estilo Interactius» (FilterBar admite varias píldoras especiales)
+  components/images/ImageDetailModal.tsx          bloque de estilo, edición, comparar, volver al original
+  components/images/ImageBank.tsx                 abrir la imagen de origen y la copia guardada
+  app/api/images/route.ts · [id]/route.ts         filtro por estilo, estilo al registrar, imagen de origen en el detalle
+  .env.example                                    GEMINI_API_KEY (server-only; la usa edit)
 ```
 
 `middleware.ts` **no cambia**: `/api/images` ya está en `EDITOR_API` y las rutas nuevas cuelgan de ella.
@@ -717,7 +808,6 @@ rejilla de IMG_r. El detalle de la imagen no cambia.
 
 ## Pendiente
 
-- **Arrancar la fase 2.** La señal es que la fase 1 esté verificada y el banco tenga uso real.
 - **Analizar en lote las imágenes antiguas.** Hoy es bajo demanda. La señal es que el filtro «Estilo
   Interactius» se use y deje fuera fotos buenas solo porque nadie las analizó.
 - **Mover los originales a un bucket privado con enlace firmado.** La señal es cualquier imagen sensible,
@@ -808,68 +898,66 @@ fallos separados de las observaciones. Marca los checks A y B como pendientes: n
 ## Prompt para Claude Code · fase 2
 
 ```markdown
-Trabajas en `interactius-brandguidelines` (repo `platform-clonica/brand-guidelines`). La fase 1 de
-IMG_r, el banco de imágenes, ya está implementada y verificada. Vamos con la **fase 2**: edición con
-Gemini, propuesta de nombre y etiquetas, y análisis de estilo Interactius. El contrato es la sección
-«Fase 2 — IA» de `docs/features/img-r.md`, con su tabla de detalles F1 a F30, y el prototipo
-`img-r-prototype.html` con el interruptor «Fase 2» activado.
+IMG_r · fase 2 (IA). Repo `brand-guidelines`, rama `feat/img-r`. Si la fase 1 ya está mergeada y la rama
+borrada, crea `feat/img-r` de nuevo desde `main` actualizado.
 
-## Fase 1 — análisis y plan. NO escribas código todavía.
+**Contrato:** `docs/features/img-r.md`, sección «Fase 2 — IA» (detalles F1–F30 y F2a–F2c, checks 24–38),
+y `img-r-prototype.html` con el interruptor «Fase 2» activado. Lo que ya existe está en «Fase 1:
+implementada» y en `docs/features/img-r-fase-1-plan.md`. El documento manda: léelo, no te lo repito aquí.
 
-Estudia lo que dejó la fase 1 (`components/images/`, `app/api/images/**`, `lib/images/`), `lib/prompts.ts`,
-`lib/rateLimit.ts` y la migración `20260817130000_rate_limits.sql`, `lib/eval.ts` y una ruta que ya use
-`@anthropic-ai/sdk` con structured outputs. Devuelve un plan que cubra:
+**Paso 0.** `git status`. Commitea solo `docs/features/img-r.md` e `img-r-prototype.html` como
+`docs(imgr): definicion de la fase 2 y la entrega 3`. El resto de cambios del árbol no son tuyos: no los toques.
 
-1. **Gemini.** Modelo exacto, precio vigente por imagen, resolución de salida, latencia y condiciones de
-   uso de datos de la API de pago. Prueba dos o tres fotos reales del banco y enséñame el resultado
-   antes de fijar el modelo. Diseña el adaptador para que cambiar de proveedor sea tocar un fichero.
-2. **Prompts.** Cómo usas `getImagePrompt()` completo en sus dos variantes y cómo declaras junto a él los
-   seis criterios (el sexto depende de la variante), **sin cambiar ningún texto** de los prompts. Cómo compones
-   el prompt de edición y el de análisis, y qué sale de `lib/tokens.ts`.
-3. **Datos.** Las columnas de estilo, `peek_rate_limit` y `refund_rate_limit`, la clave mensual y qué NO se toca.
-4. **Endpoints.** Los siete de la definición, con sus códigos de error. Dónde purgas `_tmp/`. Cómo evitas
-   que una petición de edición se acerque a los 60 s, y cuál es el plan si aparecen `504`.
-5. **Interacción.** Recorre F1 a F30 (con F2a, F2b y F2c) uno a uno y confirma que se implementan, incluidos los pequeños: textos
-   exactos, el contador, el bloqueo del modal mientras edita, comparar con teclado, el tooltip con teclado.
-   Si alguno no se va a implementar, dilo ahora.
-6. **La decisión abierta** de «Volver al original» en una imagen en uso, con tu recomendación.
-7. **Arquitectura de ficheros**, **reutilización** y **plan de tests** (glob de `package.json` incluido).
-8. **Cumplimiento de marca** de la copy nueva: sin `!`, sin `…`, sin vocabulario prohibido por raíz; Burdeos solo
-   como alerta.
-9. **Riesgos**, con tu recomendación para cada uno.
+## 1 · Plan, sin código
 
-Si algo choca con `lib/tokens.ts`, `lib/typeScale.ts` o `CLAUDE.md`, dilo en esta fase con la norma en la mano.
+Devuélveme un plan corto con **solo lo que el documento no decide o lo que vas a cambiar**:
 
-**Gate: no escribas ni una línea de código hasta que apruebe el plan.**
+1. **Gemini:** modelo, precio vigente, resolución, latencia y uso de datos de la API de pago. Prueba 2 o 3
+   fotos reales del banco y enséñame el resultado antes de fijar el modelo.
+2. **Prompts:** cómo usas `getImagePrompt()` en sus dos variantes y declaras los seis criterios a su lado
+   **sin cambiar ningún texto**.
+3. **Migración:** columnas nuevas, `peek_rate_limit` y `refund_rate_limit`. Confirma que es aditiva.
+4. **Latencia:** cómo evitas los 504 y qué haces si aparecen.
+5. **Contrato:** de F1–F30 y F2a–F2c, solo los que no vayas a implementar tal cual, con el motivo.
+6. **Decisión abierta** de «Volver al original» en una imagen en uso: tu recomendación.
+7. **Ficheros y tests**, con el glob de `package.json`.
+8. **Choques** con `lib/tokens.ts`, `lib/typeScale.ts` o `CLAUDE.md`.
 
-## Fase 2 — implementación
+**Para aquí hasta que apruebe el plan.**
 
-Por bloques, en este orden. Para entre bloques para que revise:
+## 2 · Implementación
 
-1. Migración, exportaciones de `lib/prompts.ts`, criterios, esquema, cuota, con sus tests.
-2. Análisis: `POST /api/images/analyze` y `POST /api/images/[id]/analyze`, `StyleVerdict`, la propuesta y el
-   veredicto en la subida, el bloque de estilo del detalle, la cruz con tooltip y la píldora del filtro.
-3. Edición: adaptador de Gemini, `edit`, `commit`, `revert`, `quota`, `AiEditModal` y `HoldToCompare`, y el
-   detalle de las editadas y sobrescritas.
-4. `.env.example` con `GEMINI_API_KEY` y quién la usa, y `docs/features/img-r.md` al día.
+Cuatro bloques. Un commit por bloque (`feat(imgr): <qué> (bloque N)`) y paras entre bloques:
 
-Reglas mientras implementas:
+1. Migración, exportaciones de `lib/prompts.ts`, criterios, esquema y cuota, con sus tests. Aplica la
+   migración solo si es aditiva.
+2. Análisis: los dos endpoints `analyze`, `StyleVerdict`, propuesta y veredicto en la subida, bloque de
+   estilo en el detalle, cruz con tooltip y píldora del filtro.
+3. Edición: adaptador de Gemini, `edit`, `commit`, `revert`, `quota`, `AiEditModal` con el selector de
+   prompt, `HoldToCompare` y el detalle de las editadas y sobrescritas.
+4. `.env.example` con `GEMINI_API_KEY` y `docs/features/img-r.md` al día.
 
-- Castellano en toda la interfaz, sin next-intl.
-- No cambies el texto de `getImagePrompt()`: se usa tal cual, en sus dos variantes.
-- `GEMINI_API_KEY` y `ANTHROPIC_API_KEY` son server-only.
-- Nada de valores de marca a mano: salen de `lib/tokens.ts`, `lib/typeScale.ts` y `studio/ui.ts`.
-- `npm run test`, `npm run type-check` y `npm run build` limpios al cerrar cada bloque.
+Antes de cada commit, en limpio y en este orden: `npm run type-check`, `npm test`, `npm run lint`,
+`npm run eval:content`, `npm run build`. Si algo falla, no commitees. `git add` con rutas explícitas,
+nunca `-A`.
 
-## Fase 3 — cierre y verificación
+Reglas: castellano sin next-intl; el texto de `getImagePrompt()` no se toca; las claves son server-only;
+los valores de marca salen de `lib/tokens.ts`, `lib/typeScale.ts` y `studio/ui.ts`.
 
-Actualiza `docs/features/img-r.md` (estado **fase 2 implementada**, decisiones que se movieron y pendientes
-reales). Ejecuta los checks 24 a 38, la fidelidad a F1–F30 y la no regresión, con datos «prueba-…», y
-contrasta contra la tabla `images`, `rate_limits` y `storage.objects`, no contra la pantalla. Deja los
-contadores de cuota como estaban, borra los datos de prueba y entrégame el informe con los fallos separados
-de las observaciones. Marca C y D como pendientes: no los simules.
+## 3 · Verificación y PR
+
+- Ejecuta los checks 24–38, la fidelidad a F1–F30 y F2a–F2c y la no regresión, con datos «prueba-…».
+  Contrasta contra `images`, `rate_limits` y `storage.objects`, no contra la pantalla.
+- Deja las cuotas como estaban y borra los datos de prueba. Los checks C y D quedan pendientes, sin simular.
+- Entrégame el informe con los fallos separados de las observaciones.
+- Abre el PR a `main`, o actualiza el de la fase 1 si sigue abierto. Debe decir:
+  - qué entra;
+  - la migración y su orden;
+  - `GEMINI_API_KEY` en Netlify, y en los secretos de GitHub Actions si el build la necesita;
+  - los checks que me necesitan a mí;
+  - el plan de vuelta atrás.
+- **No mergees.**
 ```
-
 
 ---
 

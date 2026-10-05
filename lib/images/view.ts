@@ -4,6 +4,11 @@
    medidas guardadas. Todo lo que cambia por eso se decide aquí, con test, y no repartido por los
    componentes. Sin SDK: las URLs llegan por `urlFor`. */
 
+import { IMAGE_STYLE_CRITERIA, IMAGE_SUBJECT_CRITERION } from '../prompts.ts';
+import type { StoredStyle } from './analyze/schema.ts';
+import type { StyleChecks, StyleVerdict } from './analyze/verdict.ts';
+import type { ImageUse } from '../decks/types.ts';
+import { editModel } from './edit/models.ts';
 import { downloadName, legacyName } from './naming.ts';
 import { formatBytes } from './upload.ts';
 
@@ -18,7 +23,15 @@ type Row = {
   original_height: number | null;
   thumb_path: string | null;
   created_at: string;
+  /** Fase 2: de dónde sale y cómo se editó. Opcionales: la tarjeta de la fase 1 no los necesita. */
+  source?: string;
+  prior_original_path?: string | null;
+  prompt?: string | null;
+  prompt_variant?: 'standard' | 'people' | null;
+  edit_model?: string | null;
 };
+
+const isEdited = (row: Pick<Row, 'source'>) => row.source === 'edited';
 
 type Size = { width: number; height: number };
 
@@ -43,6 +56,8 @@ const lightSize = (row: Row, natural?: Size): Size | null =>
 export function factLines(row: Row, uploadedBy: string | null, natural?: Size) {
   const light = lightSize(row, natural);
   return {
+    /* F18: en una editada, el dato del original es el de la versión editada. */
+    originalLabel: isEdited(row) ? 'Editada' : 'Original',
     original:
       isLegacy(row) || !row.original_width || !row.original_height
         ? 'No se guardó'
@@ -52,7 +67,7 @@ export function factLines(row: Row, uploadedBy: string | null, natural?: Size) {
   };
 }
 
-export type Download = { kind: 'original' | 'light'; label: string; href: string; toast: string };
+export type Download = { kind: 'original' | 'light' | 'prior'; label: string; href: string; toast: string };
 
 const withDownload = (href: string, file: string) => `${href}?download=${encodeURIComponent(file)}`;
 
@@ -62,11 +77,12 @@ export function downloads(row: Row, urlFor: (path: string) => string, natural?: 
   const out: Download[] = [];
   if (row.original_path) {
     const ext = row.original_path.split('.').pop() ?? 'jpg';
+    const edited = isEdited(row);
     out.push({
       kind: 'original',
-      label: 'Descargar original',
+      label: edited ? 'Descargar editada' : 'Descargar original',
       href: withDownload(urlFor(row.original_path), downloadName(row.name, ext)),
-      toast: `Descargando el original · ${formatBytes(row.original_bytes ?? 0)}`,
+      toast: `${edited ? 'Descargando la versión editada' : 'Descargando el original'} · ${formatBytes(row.original_bytes ?? 0)}`,
     });
   }
   const light = lightSize(row, natural);
@@ -76,7 +92,43 @@ export function downloads(row: Row, urlFor: (path: string) => string, natural?: 
     href: withDownload(row.url, downloadName(row.name, 'jpg')),
     toast: `Descargando la versión ligera · JPEG ${light ? Math.max(light.width, light.height) : 1600} px`,
   });
+  // F19: una sobrescrita guarda su original de antes.
+  if (row.prior_original_path) {
+    const ext = row.prior_original_path.split('.').pop() ?? 'jpg';
+    out.push({
+      kind: 'prior',
+      label: 'Descargar original previo',
+      href: withDownload(urlFor(row.prior_original_path), downloadName(`${row.name} (original previo)`, ext)),
+      toast: 'Descargando el original previo',
+    });
+  }
   return out;
+}
+
+/* F18: los datos de una editada, o null si no lo es. */
+export function editFacts(row: Row): { prompt: string | null; model: string | null; instruction: string | null } | null {
+  if (!isEdited(row)) return null;
+  return {
+    prompt: row.prompt_variant === 'people' ? 'Personas' : row.prompt_variant === 'standard' ? 'Estándar' : null,
+    model: row.edit_model ? editModel(row.edit_model).label : null,
+    instruction: row.prompt?.trim() || null,
+  };
+}
+
+/* F18: la nota del detalle de una editada. El modelo devuelve 2K o 4K, aunque el original fuera más grande. */
+export function editedNote(row: Row): string | null {
+  if (!isEdited(row) || !row.original_width || !row.original_height) return null;
+  return `La versión editada sale a ${Math.max(row.original_width, row.original_height)} px de lado como máximo, aunque el original fuera más grande.`;
+}
+
+const KIND_LABEL: Record<ImageUse['kind'], string> = { deck: 'deck', form: 'formulario' };
+
+/* «la usa deck «X»», «la usan deck «X» y formulario «Y»»: para «No se puede sobrescribir» (F12) y «No se
+   puede volver al original». */
+export function usedByText(uses: readonly ImageUse[]): string {
+  const parts = uses.map((u) => `${KIND_LABEL[u.kind]} «${u.name}»`);
+  const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} y ${parts.at(-1)}` : (parts[0] ?? '');
+  return `${parts.length > 1 ? 'la usan' : 'la usa'} ${list}`;
 }
 
 /* El texto de un error para un aviso. Los de la API ya vienen en castellano y se enseñan; el fallo de red
@@ -88,3 +140,31 @@ export const errorText = (e: unknown, fallback: string) =>
    mientras conserve el nombre del fichero; una vez renombrada en IMG_r se edita su nombre como cualquiera. */
 export const editableName = (row: { name: string; alt: string | null; storage_path: string; original_path: string | null }) =>
   isLegacy(row) && row.name === legacyName(row.alt, row.storage_path) ? '' : row.name;
+
+/* ── Estilo Interactius (fase 2) ── */
+
+type StyleCols = {
+  style_verdict: StyleVerdict | null;
+  style_checks: StyleChecks | null;
+  style_reason: string | null;
+  people_present: boolean | null;
+};
+
+/* El estilo de una fila, o null si está sin analizar. */
+export function styleOf(row: StyleCols): StoredStyle | null {
+  if (!row.style_verdict || !row.style_checks) return null;
+  return { verdict: row.style_verdict, checks: row.style_checks, reason: row.style_reason, people_present: !!row.people_present };
+}
+
+export type StyleRow = { label: string; value: 'Sí' | 'No' | 'No aplica' };
+
+/* Las seis filas del banner desplegado (F25): los cinco criterios comunes y el sexto según haya personas.
+   Las etiquetas son las de lib/prompts.ts, junto a las líneas del prompt de las que salen. */
+export function styleRows(style: StoredStyle): StyleRow[] {
+  const subject = style.people_present ? IMAGE_SUBJECT_CRITERION.people : IMAGE_SUBJECT_CRITERION.standard;
+  const rows: { label: string; v: boolean | null }[] = [
+    ...IMAGE_STYLE_CRITERIA.map((c) => ({ label: c.label as string, v: style.checks[c.key] })),
+    { label: subject.label, v: style.checks.subject },
+  ];
+  return rows.map(({ label, v }) => ({ label, value: v === null ? 'No aplica' : v ? 'Sí' : 'No' }));
+}

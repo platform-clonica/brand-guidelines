@@ -10,7 +10,7 @@ import {
   forbiddenVocabulary,
   punctuationRules,
   sentenceLength,
-} from '@/lib/tokens';
+} from './tokens.ts';
 
 /* ─── Tone-only prompt (sección Tono de marca, botón "Copiar prompt") ─── */
 
@@ -136,6 +136,47 @@ export function getImagePrompt(locale: Locale, variant: ImagePromptVariant): str
   if (locale === 'ca') return IMAGE_BODY_CA + (people ? IMAGE_SUBJECTS_PEOPLE_CA : IMAGE_SUBJECTS_STANDARD_CA);
   return IMAGE_BODY_ES + (people ? IMAGE_SUBJECTS_PEOPLE_ES : IMAGE_SUBJECTS_STANDARD_ES);
 }
+
+/* ─── Criterios de estilo (IMG_r, fase 2) ───
+
+   Con qué juzga IMG_r si una foto encaja con la guía. No son una regla nueva: cada criterio CITA
+   literalmente la línea del prompt de arriba de la que sale, y lib/images/__tests__/styleCriteria.test.ts
+   comprueba que la cita sigue dentro de getImagePrompt(). Si alguien cambia una línea del prompt, el
+   test cae y obliga a revisar su criterio, en vez de seguir juzgando fotos con una regla que ya no es
+   la de la guía.
+
+   Los cinco primeros salen del cuerpo común, que es igual en las dos variantes. El sexto sale del
+   bloque de sujeto, y por eso depende de si hay personas en la foto. `label` es el texto que enseña
+   la interfaz (F25 de docs/features/img-r.md). */
+
+export type StyleCriterionKey = 'film' | 'dof' | 'light' | 'motion' | 'not_stock' | 'subject';
+
+export const IMAGE_STYLE_CRITERIA = [
+  {
+    key: 'film',
+    label: 'Película analógica: grano fino y color tipo Portra',
+    quote: 'grano fino perceptible, estilo cromático sutil de Kodak Portra 400',
+  },
+  { key: 'dof', label: 'Poca profundidad de campo', quote: 'Profundidad de campo muy baja' },
+  { key: 'light', label: 'Luz natural, lateral o difusa', quote: 'Luz natural, lateral o difusa' },
+  { key: 'motion', label: 'Movimiento o barrido sutil', quote: 'capturar un movimiento sutil, un barrido' },
+  {
+    key: 'not_stock',
+    label: 'Lejos de la estética de banco de imágenes',
+    quote: 'huyendo por completo de la estética de los bancos de imágenes tradicionales',
+  },
+] as const satisfies readonly { key: StyleCriterionKey; label: string; quote: string }[];
+
+export const IMAGE_SUBJECT_CRITERION = {
+  people: {
+    label: 'Personas sin posar, sin mirar a cámara ni sonreír de forma corporativa',
+    quote: 'nunca posando, nunca mirando a cámara, nunca sonriendo de forma corporativa',
+  },
+  standard: {
+    label: 'El sujeto es el espacio, los objetos o la luz, sin figuras humanas',
+    quote: 'Ninguna figura humana en el encuadre',
+  },
+} as const satisfies Record<ImagePromptVariant, { label: string; quote: string }>;
 
 /* ─── Master prompt: capa dura completa para ingesta IA ───
    Esta es la pieza que cualquier LLM (NotebookLM, ChatGPT, Claude Projects)

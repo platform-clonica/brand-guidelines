@@ -29,9 +29,9 @@ export function useImageList() {
      píldoras. Teclear «pa» detrás de «p» no vuelve a pedir nada. */
   const search = effectiveSearch(filter.q);
   const query = useMemo(
-    () => ({ q: search, tags: filter.tags, untagged: filter.untagged }),
+    () => ({ q: search, tags: filter.tags, untagged: filter.untagged, style: filter.style }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [search, filter.tags.join('\u0000'), filter.untagged],
+    [search, filter.tags.join('\u0000'), filter.untagged, filter.style],
   );
 
   const request = useRef(0);

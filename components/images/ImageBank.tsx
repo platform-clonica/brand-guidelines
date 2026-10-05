@@ -236,6 +236,17 @@ function Bank({ user, initialId }: { user: SessionUser; initialId: string | null
             list.remove(detail.id);
             closeDetail();
           }}
+          onOpenImage={(parentId) => {
+            window.history.pushState({ imgr: parentId }, '', `${BASE}/${parentId}`);
+            setDetail({ id: parentId, pushed: true });
+          }}
+          onCopied={(row) => {
+            // F14: la copia entra la primera en la rejilla y se abre su detalle en el sitio del de la original.
+            list.prepend([row]);
+            list.refreshFacets();
+            window.history.replaceState({ imgr: row.id }, '', `${BASE}/${row.id}`);
+            setDetail((d) => ({ id: row.id, initial: row, pushed: d?.pushed ?? false }));
+          }}
         />
       )}
 

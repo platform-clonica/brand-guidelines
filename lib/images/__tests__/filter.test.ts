@@ -27,12 +27,13 @@ import {
   searchText,
   suggestTags,
   tagFacets,
+  toggleStyle,
   toggleTag,
   toggleUntagged,
   type ImageFilter,
 } from '../filter.ts';
 
-const none: ImageFilter = { q: '', tags: [], untagged: false };
+const none: ImageFilter = { q: '', tags: [], untagged: false, style: false };
 const pasillo = { name: 'Pasillo de la oficina', tags: ['oficina', 'presentación', 'luz'] };
 const antigua = { name: 'IMG_4821', tags: [] };
 
@@ -82,10 +83,10 @@ test('«Sin etiquetas» solo deja pasar las que no tienen ninguna, y gana a las 
 
 test('pulsar una etiqueta apaga «Sin etiquetas», y al revés', () => {
   const conSin = toggleUntagged(none);
-  assert.deepEqual(conSin, { q: '', tags: [], untagged: true });
-  assert.deepEqual(toggleTag(conSin, 'luz'), { q: '', tags: ['luz'], untagged: false });
-  assert.deepEqual(toggleUntagged({ q: 'x', tags: ['luz'], untagged: false }), { q: 'x', tags: [], untagged: true });
-  assert.deepEqual(toggleTag({ q: '', tags: ['luz', 'oficina'], untagged: false }, 'luz'), { q: '', tags: ['oficina'], untagged: false });
+  assert.deepEqual(conSin, { ...none, untagged: true });
+  assert.deepEqual(toggleTag(conSin, 'luz'), { ...none, tags: ['luz'] });
+  assert.deepEqual(toggleUntagged({ ...none, q: 'x', tags: ['luz'] }), { ...none, q: 'x', untagged: true });
+  assert.deepEqual(toggleTag({ ...none, tags: ['luz', 'oficina'] }, 'luz'), { ...none, tags: ['oficina'] });
 });
 
 test('«Quitar filtros» lo limpia todo, e isFiltered dice cuándo mostrarlo', () => {
@@ -179,4 +180,34 @@ test('suggestTags propone las existentes que empiezan por lo escrito, sin tildes
   assert.deepEqual(suggestTags('ofi', all, ['oficina']), []);
   assert.deepEqual(suggestTags('  ', all, []), []);
   assert.deepEqual(suggestTags('fic', all, []), [], 'por prefijo, no por subcadena');
+});
+
+/* Fase 2, F30: la píldora «Estilo Interactius» deja solo las que encajan. Se combina con lo demás en Y,
+   también con «Sin etiquetas»: no es una etiqueta. */
+test('el filtro de estilo deja solo las que encajan, y se combina con el resto', () => {
+  const encaja = { ...pasillo, style_verdict: 'si' as const };
+  const parcial = { ...pasillo, style_verdict: 'parcial' as const };
+  const sinAnalizar = { ...pasillo, style_verdict: null };
+  assert.ok(matchesFilter(encaja, { ...none, style: true }));
+  assert.ok(!matchesFilter(parcial, { ...none, style: true }));
+  assert.ok(!matchesFilter(sinAnalizar, { ...none, style: true }));
+  assert.ok(!matchesFilter(pasillo, { ...none, style: true }));
+  assert.ok(matchesFilter(encaja, { ...none, style: true, tags: ['luz'] }));
+  assert.ok(!matchesFilter(encaja, { ...none, style: true, tags: ['sala'] }));
+  assert.ok(matchesFilter({ ...antigua, style_verdict: 'si' as const }, { ...none, style: true, untagged: true }));
+});
+
+test('la píldora de estilo se enciende y se apaga sin tocar etiquetas, y cuenta como filtro', () => {
+  const on = toggleStyle({ ...none, tags: ['luz'] });
+  assert.deepEqual(on, { ...none, tags: ['luz'], style: true });
+  assert.deepEqual(toggleStyle(on), { ...none, tags: ['luz'] });
+  assert.ok(isFiltered({ ...none, style: true }));
+  assert.ok(narrows({ ...none, style: true }));
+  assert.equal(clearFilter().style, false);
+});
+
+test('parseListQuery lee el filtro de estilo solo con style=si', () => {
+  assert.equal(parseListQuery(new URLSearchParams('style=si')).style, true);
+  assert.equal(parseListQuery(new URLSearchParams('style=no')).style, false);
+  assert.equal(parseListQuery(new URLSearchParams('')).style, false);
 });

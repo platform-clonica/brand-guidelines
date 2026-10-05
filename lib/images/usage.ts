@@ -14,7 +14,8 @@ import type { ImageUse } from '../decks/types.ts';
 /* Las columnas que la API devuelve de una imagen. Todas menos `search_text`, que es solo para buscar. */
 export const IMAGE_COLUMNS =
   'id, storage_path, url, alt, width, height, source, prompt, name, tags, original_path, original_bytes, ' +
-  'original_width, original_height, thumb_path, parent_id, prior_original_path, created_by, created_at, updated_at';
+  'original_width, original_height, thumb_path, parent_id, prior_original_path, created_by, created_at, updated_at, ' +
+  'style_verdict, style_checks, style_reason, style_analyzed_at, people_present, prompt_variant, edit_model';
 
 type UseRow = { image_id: string; kind: string; doc_id: string; doc_name: string };
 
