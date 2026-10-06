@@ -6,7 +6,8 @@
 
 **Estado (6 de octubre de 2026):** plan aprobado con las cuatro decisiones de abajo. Paso 0 (`96c1369`) y bloques
 1 a 4 hechos (`a7b2363`, `da3eaf0`, `4fb3038` y el commit del bloque 4). Lo que se implementó, con lo que cambió
-respecto al plan, está en `docs/features/img-r.md`, «Entrega 3: implementada». Falta la verificación y el PR.
+respecto al plan, está en `docs/features/img-r.md`, «Entrega 3: implementada». Verificada: informe en
+`docs/features/img-r-entrega-3-informe.md`. Falta fusionar el PR.
 
 **Rama.** `feat/img-r-entrega-3`, desde `main` en `6fe1244`, con las fases 1 y 2 ya fusionadas (#6 y #7).
 Sin Clock_r: Clock_r vive en `feat/clockr` y esta rama no toca ninguno de sus ficheros.

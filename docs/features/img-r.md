@@ -130,7 +130,8 @@ observaciones, en `docs/features/img-r-fase-2-informe.md`.
 ## Entrega 3: implementada
 
 Rama `feat/img-r-entrega-3`, octubre de 2026, sobre `main` con las fases 1 y 2. El plan, con las cuatro decisiones
-de Carlos, está en `docs/features/img-r-entrega-3-plan.md`.
+de Carlos, está en `docs/features/img-r-entrega-3-plan.md`; la verificación, en
+`docs/features/img-r-entrega-3-informe.md`.
 
 **Qué hay.**
 
