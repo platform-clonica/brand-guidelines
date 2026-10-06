@@ -4,8 +4,9 @@
 > documento ya lo decide y no cambio nada, no lo repito. Contrato: sección «Entrega 3 — parrilla rediseñada y
 > acciones en bloque» (G1–G14, checks 39–52) e `img-r-prototype.html`.
 
-**Estado (5 de octubre de 2026):** plan aprobado con las cuatro decisiones de abajo. Paso 0 hecho (`96c1369
-docs(imgr): prompt de la entrega 3 sin Clock_r`); bloque 1 en curso.
+**Estado (6 de octubre de 2026):** plan aprobado con las cuatro decisiones de abajo. Paso 0 (`96c1369`) y bloques
+1 a 4 hechos (`a7b2363`, `da3eaf0`, `4fb3038` y el commit del bloque 4). Lo que se implementó, con lo que cambió
+respecto al plan, está en `docs/features/img-r.md`, «Entrega 3: implementada». Falta la verificación y el PR.
 
 **Rama.** `feat/img-r-entrega-3`, desde `main` en `6fe1244`, con las fases 1 y 2 ya fusionadas (#6 y #7).
 Sin Clock_r: Clock_r vive en `feat/clockr` y esta rama no toca ninguno de sus ficheros.
@@ -235,8 +236,9 @@ El resto de G1–G14, según documento.
 
 - **Burdeos**, solo como alerta (`uiRole`): la placa de la cruz y el botón de confirmar el borrado. El
   «Eliminar» de la barra no va en Burdeos ni en el rosa del prototipo.
-- **Transparencias:** Warm Light al 30 % en los separadores y al 80 % en los enlaces de la barra. Son
-  transparencias de un token, no colores nuevos; vienen del prototipo.
+- **Transparencias:** Warm Light al 30 % en los separadores de la barra, una transparencia de un token que viene
+  del prototipo. Los enlaces de la barra usan el estilo de enlace de la casa (`hover-wipe-underline`, al 60 % hasta
+  pasar el ratón), no el 80 % del prototipo.
 - **Tamaños:** Mono de 10 a 12 px, como el resto de la interfaz del workspace (`studio/ui.ts`). Fuera de la
   escala web de 7 peldaños, igual que las otras tools. Ningún valor nuevo.
 - **Copy:** sin «!», sin «…» (la etiqueta se corta con `clip`) y sin vocabulario prohibido de ninguna familia.

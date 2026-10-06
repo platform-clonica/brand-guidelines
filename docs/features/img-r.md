@@ -4,9 +4,9 @@
 > su trabajo, cada una con nombre y etiquetas. Lo que se sube aquí aparece en los decks y en los formularios.
 > No es un almacén nuevo: es la pantalla de gestión del banco que DeckMak_r y FormMak_r ya comparten.
 
-Estado: **fase 1 y fase 2 implementadas** · entrega 3 definida, pendiente de implementar. La fase 2 añade la
-edición con Gemini, las propuestas de nombre y etiquetas y el análisis de estilo. La tercera entrega, más pequeña,
-es la **parrilla rediseñada y las acciones en bloque** (sección «Entrega 3»).
+Estado: **fases 1 y 2 y entrega 3 implementadas**. La fase 2 añade la edición con Gemini, las propuestas de
+nombre y etiquetas y el análisis de estilo. La tercera entrega, más pequeña, es la **parrilla rediseñada y las
+acciones en bloque** (sección «Entrega 3»).
 
 Prototipo: `img-r-prototype.html` en la raíz del repo, junto a `deck-prototype.html`. Publicado en
 https://claude.ai/artifact/3uMePFsfmqiLpxTjvgdeKW. Es el contrato de interacción de las dos fases: el
@@ -126,6 +126,75 @@ observaciones, en `docs/features/img-r-fase-2-informe.md`.
   Gemini durante la verificación.
 - Las fotos de menores en el EEE: Google dice que no se pueden editar, pero solo en la página de vídeo.
   Está sin confirmar para estos modelos.
+
+## Entrega 3: implementada
+
+Rama `feat/img-r-entrega-3`, octubre de 2026, sobre `main` con las fases 1 y 2. El plan, con las cuatro decisiones
+de Carlos, está en `docs/features/img-r-entrega-3-plan.md`.
+
+**Qué hay.**
+
+- **Tarjeta nueva** (G1–G8):
+  - solo la miniatura, con la primera etiqueta dentro;
+  - arriba a la derecha, el número de usos y, si no encaja, la cruz en Burdeos, cada uno con su aviso;
+  - arriba a la izquierda, el selector redondo.
+- **Rejilla a todo el ancho** (G14): columnas de 220 px como mínimo y 6 px de hueco, solo en IMG_r.
+- **Selección múltiple** (G13): sobrevive a filtros, búsqueda y páginas. Escape la anula si no hay ningún modal
+  abierto.
+- **Barra de acciones** (G9 a G12): «Añadir etiquetas», «Descargar», «Eliminar», «Seleccionar las N visibles» y
+  «Anular selección».
+- **API:**
+  - `PATCH /api/images/bulk` añade etiquetas con la función `add_image_tags`;
+  - `POST /api/images/bulk-delete` borra en bloque;
+  - el borrado de fila y ficheros vive en `lib/images/remove.ts`, y lo comparten el borrado de una imagen y el de
+    varias.
+- **Base de datos:** `20261005120000_images_bulk_tags.sql`, aditiva, aplicada el 5 de octubre de 2026. Añade la
+  función `add_image_tags`, que une las etiquetas fila a fila sin pisar las de otra pestaña.
+- **Dependencia nueva:** `fflate` 0.8.3 (MIT), para el ZIP.
+
+**Lo que cambió respecto a esta definición** (decisiones de Carlos el 5 de octubre de 2026, y del plan):
+
+- **Como mucho 10 etiquetas por imagen** (`TAGS_MAX`, antes 20).
+  - Vale para la subida, para «Editar nombre y etiquetas» y para añadir en bloque.
+  - En bloque, se añaden mientras quepan y el aviso cuenta las que ya estaban llenas.
+- **El ZIP admite 50 imágenes y 100 MB como máximo.**
+  - Se monta en el navegador con `fflate`, sin volver a comprimir.
+  - Si falla la bajada de una imagen, se reintenta una vez. Si vuelve a fallar, el ZIP sale sin ella y el aviso lo
+    dice.
+- **No hay más acciones en bloque** por ahora.
+- **La cruz del popup** de DeckMak_r y FormMak_r toma el aspecto de G4, pero sigue abajo a la derecha, porque
+  arriba está la papelera.
+- **Avisos de las marcas (G5):** son la descripción accesible del botón de abrir (`aria-describedby`). Con el
+  foco del teclado salen los dos juntos, apilados.
+- **La barra:**
+  - va a 24 px del borde y por debajo del velo de los modales;
+  - mientras está abierta, los avisos flotantes suben por encima de ella;
+  - sus enlaces usan el estilo de enlace de la casa;
+  - «Eliminar» va en el color de la barra.
+- **«Seleccionar las N visibles»:** N son las imágenes cargadas en la rejilla con el filtro actual.
+- **«Eliminar» en bloque** sigue la regla del borrado de una: si todas las que se borran son antiguas, la
+  confirmación no habla de originales.
+- **Check 46:** se lee como «ningún cambio se pierde sin que la persona lo vea». Añadir etiquetas en bloque mueve
+  `updated_at`, así que la pestaña que tenga abierto «Editar nombre y etiquetas» verá el choque al guardar.
+- **Copy nueva:**
+  - los singulares: «1 seleccionada», «Se añaden a la imagen seleccionada. Las etiquetas que ya tiene no
+    cambian.», «Etiquetas añadidas a 1 imagen», «1 imagen eliminada», «· 1 en uso no se ha tocado»;
+  - «Seleccionar la visible»;
+  - «Añadiendo»;
+  - en el aviso de añadir etiquetas, «· M ya tenían 10 etiquetas» y «· M ya no están en el banco»;
+  - en el borrado, «· M no se han podido eliminar»;
+  - «Se usa en documentos. Cambia la imagen en ellos y vuelve a intentarlo.», cuando la única imagen
+    seleccionada está en uso;
+  - «Puedes descargar hasta 50 imágenes a la vez.»;
+  - «La selección pesa X MB. Puedes descargar hasta 100 MB a la vez.»;
+  - «ZIP descargado con N imágenes · M no se han podido descargar»;
+  - «No se ha podido preparar el ZIP. Vuelve a intentarlo.»;
+  - «No se han podido añadir las etiquetas. Revisa la conexión y vuelve a intentarlo.»;
+  - «No se han podido eliminar las imágenes. Revisa la conexión y vuelve a intentarlo.».
+
+**Pendiente.**
+
+- Aprobar la copia nueva.
 
 ## Contexto
 
@@ -337,7 +406,8 @@ edición es paramétrica; la edición de un modelo de IA no lo es.
 
 - **Galería** `/workspace/img_r`. Cabecera de galería del workspace. `SearchField` busca por nombre
   y por etiqueta, sin distinguir tildes. `FilterBar` sin cliente ni estado, con etiquetas más
-  «Sin etiquetas». La rejilla es `auto-fill` con mínimo 220 px y huecos de 24. La primera celda es la de subida.
+  «Sin etiquetas». La rejilla va a todo el ancho, `auto-fill` con mínimo 220 px y huecos de 6 (entrega 3, G14).
+  La primera celda es la de subida.
   Carga 60 tarjetas y pide más al acercarse al final. Detalles 1 a 15 del prototipo.
 - **Detalle** `/workspace/img_r/[id]`. La misma página de la galería con el modal abierto: entrar por
   esa URL pinta la galería y abre el detalle. Cerrar vuelve a `/workspace/img_r` sin recargar ni
@@ -345,7 +415,7 @@ edición es paramétrica; la edición de un modelo de IA no lo es.
 - **Subida.** El modal de los detalles 16 a 27. En el navegador se generan la ligera (`optimizeImage()`, 1600 px,
   JPEG 82 %) y la miniatura (480 px), y se suben los tres ficheros a `images/<id>/` con el id generado
   en el navegador. Después se registra la fila. Si falla el registro, se borran los tres objetos.
-- **«En uso · N» en la rejilla.** Necesita el recuento en el listado, no una llamada por tarjeta. El
+- **El número de usos en la rejilla** (G4 desde la entrega 3). Necesita el recuento en el listado, no una llamada por tarjeta. El
   listado lo devuelve calculado en servidor. **[supuesto]** Un `ilike` por imagen sobre `decks.md` y
   `forms.md` aguanta 60 por página; si no, se pasa a una función SQL. Se decide en la fase de análisis.
 - **Superficie pública:** ninguna.
@@ -449,6 +519,30 @@ FASE 2 · MODIFICADO
   components/images/ImageBank.tsx                 abrir la imagen de origen y la copia guardada
   app/api/images/route.ts · [id]/route.ts         filtro por estilo, estilo al registrar, imagen de origen en el detalle
   .env.example                                    GEMINI_API_KEY (server-only; la usa edit)
+
+ENTREGA 3 · NUEVO
+  supabase/migrations/20261005120000_images_bulk_tags.sql     add_image_tags: unión de etiquetas fila a fila
+  app/api/images/bulk/route.ts                    PATCH: añadir etiquetas a varias
+  app/api/images/bulk-delete/route.ts             POST: borrar las libres, devolver las que se usan
+  lib/images/bulk.ts                              validación, topes, textos de la barra y de sus modales, qué entra en el ZIP
+  lib/images/selection.ts                         la selección de la galería
+  lib/images/remove.ts                            borrar filas y ficheros (lo comparten el borrado de una y el de varias)
+  lib/images/zip.ts                               el ZIP en el navegador, con fflate
+  components/images/BulkBar.tsx                   la barra de la selección
+  components/images/BulkTagsModal.tsx             «Añadir etiquetas»
+  components/images/BulkDeleteModal.tsx           «Eliminar» en bloque
+  lib/images/__tests__/{bulk,bulkCopy,selection,zip}.test.ts
+
+ENTREGA 3 · MODIFICADO
+  components/images/ImageCard.tsx                 la tarjeta nueva (G1–G8); la cruz del popup con el aspecto de G4
+  components/images/ImageBank.tsx                 rejilla a todo el ancho, selección, Escape, barra y descarga
+  components/images/images.css                    tarjeta, selector, marcas, avisos, rejilla y el aviso por encima de la barra
+  app/api/images/[id]/route.ts                    el DELETE usa lib/images/remove.ts
+  lib/images/naming.ts                            TAGS_MAX: 10
+  lib/images/view.ts                              «En uso en N documento(s)»
+  lib/hooks/modalStack.ts                         isEmpty(), para el Escape de la selección
+  lib/decks/api.ts                                bulkAddTags y bulkDelete
+  package.json · package-lock.json                fflate
 ```
 
 `middleware.ts` **no cambia**: `/api/images` ya está en `EDITOR_API` y las rutas nuevas cuelgan de ella.
@@ -781,7 +875,8 @@ rejilla de IMG_r. El detalle de la imagen no cambia.
 - `POST /api/images/bulk-delete` con `{ ids }`. Calcula el uso de cada una con `image_uses` (D13), borra las
   libres (fila y todos sus objetos) y devuelve `{ deleted, blocked: [{ id, uses }] }`. Máximo 200 ids.
 
-**Decisiones abiertas de la entrega 3**
+**Decisiones abiertas de la entrega 3** (resueltas el 5 de octubre de 2026: el ZIP va en el navegador con `fflate`,
+con topes de 50 imágenes y 100 MB, y no hay más acciones en bloque)
 
 | Pregunta | Alternativas | Recomendación |
 |---|---|---|
