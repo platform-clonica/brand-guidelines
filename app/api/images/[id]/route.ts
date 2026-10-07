@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { dbFail, requireUser, supabaseAuthServer } from '@/lib/supabase/server';
-import { IMAGE_BUCKET } from '@/lib/storage/paths';
 import { isUuid } from '@/lib/uuid';
 import { withName } from '@/lib/images/naming';
-import { objectPaths, validateUpdateInput } from '@/lib/images/upload';
+import { REMOVABLE_COLUMNS, removeImages, type RemovableImage } from '@/lib/images/remove';
+import { validateUpdateInput } from '@/lib/images/upload';
 import { IMAGE_COLUMNS, imageUses } from '@/lib/images/usage';
 import type { ImageDetail, ImageRecord } from '@/lib/decks/types';
 
@@ -107,13 +107,8 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
 /* DELETE /api/images/:id — borra la imagen y TODOS sus ficheros, salvo que algún deck o formulario la
    use: entonces 409 con la lista y no toca nada. La regla vive aquí, no en la pantalla, para que el
-   popup, IMG_r y cualquier cliente futuro digan lo mismo.
-
-   Primero la fila, después los ficheros. No hay transacción posible entre Postgres y Storage, así que
-   hay que elegir qué inconsistencia se prefiere si falla el segundo paso: un fichero huérfano es
-   invisible y barato de limpiar; una fila que apunta a un fichero borrado se ve rota. Se comprueba lo
-   que Storage CONFIRMA haber borrado, como en /api/design-systems/[id]: sin política de lectura,
-   `remove` respondía 200 y no borraba nada. */
+   popup, IMG_r y cualquier cliente futuro digan lo mismo. El borrado de fila y ficheros es el de
+   lib/images/remove.ts, el mismo que el borrado en bloque. */
 export async function DELETE(_req: Request, { params }: Ctx) {
   const unauth = await requireUser();
   if (unauth) return unauth;
@@ -124,7 +119,7 @@ export async function DELETE(_req: Request, { params }: Ctx) {
 
   const { data: row, error: findErr } = await sb
     .from('images')
-    .select('storage_path, original_path, thumb_path, prior_original_path')
+    .select(REMOVABLE_COLUMNS)
     .eq('id', id)
     .maybeSingle();
   if (findErr) return dbFail('images/[id]', findErr, 500);
@@ -143,19 +138,9 @@ export async function DELETE(_req: Request, { params }: Ctx) {
     );
   }
 
-  const { error } = await sb.from('images').delete().eq('id', id);
+  const { deleted, error } = await removeImages(sb, [row as RemovableImage]);
   if (error) return dbFail('images/[id]', error, 500);
-
-  const paths = objectPaths(row);
-  const { data: removed, error: storageErr } = await sb.storage.from(IMAGE_BUCKET).remove(paths);
-  // No bloqueante: la fila ya no está y el banco es coherente. Solo hay que poder verlo.
-  if (storageErr || (removed?.length ?? 0) < paths.length) {
-    const gone = new Set((removed ?? []).map((o) => o.name));
-    console.error(
-      '[storage:images] huérfano',
-      paths.filter((p) => !gone.has(p)),
-      storageErr?.message ?? `Storage confirmó ${removed?.length ?? 0} de ${paths.length} borrados`,
-    );
-  }
+  // Otra pestaña la borró entre la lectura y el borrado.
+  if (!deleted.length) return notFound();
   return NextResponse.json({ ok: true });
 }

@@ -9,6 +9,8 @@ export type ModalStack = {
   push(entry: object): void;
   remove(entry: object): void;
   isTop(entry: object): boolean;
+  /** Ningún modal abierto. Lo pregunta la galería de IMG_r antes de anular la selección con Escape. */
+  isEmpty(): boolean;
 };
 
 export function createModalStack(): ModalStack {
@@ -23,6 +25,9 @@ export function createModalStack(): ModalStack {
     },
     isTop(entry) {
       return entries.length > 0 && entries[entries.length - 1] === entry;
+    },
+    isEmpty() {
+      return entries.length === 0;
     },
   };
 }

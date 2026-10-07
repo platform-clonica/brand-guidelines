@@ -49,3 +49,15 @@ test('una pila vacía no tiene a nadie arriba, y meter dos veces el mismo no lo 
   s.remove(a);
   assert.ok(!s.isTop(a));
 });
+
+/* Entrega 3 de IMG_r (G9): Escape anula la selección de la galería solo si no hay ningún modal abierto. Con
+   uno abierto, Escape es suyo. */
+test('la pila dice si no hay ningún modal abierto', () => {
+  const s = createModalStack();
+  assert.ok(s.isEmpty());
+  const a = {};
+  s.push(a);
+  assert.ok(!s.isEmpty());
+  s.remove(a);
+  assert.ok(s.isEmpty());
+});

@@ -215,9 +215,11 @@ test('failureReason: el texto de la API en el registro sí; la red y los errores
   assert.equal(failureReason(new Error('The object exceeded the maximum allowed size'), false), null);
 });
 
-test('rowProblem avisa antes de subir si entre comunes y propias pasan de 20 etiquetas', () => {
-  const many = Array.from({ length: 12 }, (_, i) => `a${i}`);
-  const more = Array.from({ length: 9 }, (_, i) => `b${i}`);
+/* Diez etiquetas por imagen como máximo, en la subida, en «Editar nombre y etiquetas» y al añadir en bloque
+   (decisión de Carlos en el plan de la entrega 3, 5 de octubre de 2026; antes eran veinte). */
+test('rowProblem avisa antes de subir si entre comunes y propias pasan de 10 etiquetas', () => {
+  const many = Array.from({ length: 6 }, (_, i) => `a${i}`);
+  const more = Array.from({ length: 5 }, (_, i) => `b${i}`);
   assert.equal(rowProblem({ name: 'x', tags: more }, many), 'Demasiadas etiquetas.');
-  assert.equal(rowProblem({ name: 'x', tags: more.slice(0, 8) }, many), null);
+  assert.equal(rowProblem({ name: 'x', tags: more.slice(0, 4) }, many), null);
 });

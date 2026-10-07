@@ -19,6 +19,7 @@
     "@next/mdx": "^15.1.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.108.2",
+    "fflate": "^0.8.3",
     "framer-motion": "^11.15.0",
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.3.1",

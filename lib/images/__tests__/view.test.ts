@@ -5,7 +5,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LEGACY_NOTE, downloads, editableName, editedNote, editFacts, errorText, factLines, formatDate, isLegacy, styleOf, styleRows, thumbSrc, usedByText } from '../view.ts';
+import { LEGACY_NOTE, downloads, editableName, editedNote, editFacts, errorText, factLines, formatDate, isLegacy, styleOf, styleRows, thumbSrc, usedByText, usesLabel } from '../view.ts';
 
 const ID = '3f2b8c1e-9a4d-4c3b-8f7e-1a2b3c4d5e6f';
 const urlFor = (path: string) => `https://x.supabase.co/storage/v1/object/public/deck-images/${path}`;
@@ -172,4 +172,10 @@ test('usedByText: quién usa la imagen, en una frase', () => {
     usedByText([{ kind: 'deck', id: '1', name: 'A' }, { kind: 'deck', id: '2', name: 'B' }, { kind: 'form', id: '3', name: 'C' }]),
     'la usan deck «A», deck «B» y formulario «C»',
   );
+});
+
+/* Entrega 3, G5: el número de usos de la tarjeta lleva su texto en el aviso y para el lector de pantalla. */
+test('el aviso del número de usos dice documento o documentos', () => {
+  assert.equal(usesLabel(1), 'En uso en 1 documento');
+  assert.equal(usesLabel(2), 'En uso en 2 documentos');
 });

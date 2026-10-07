@@ -1,16 +1,7 @@
-/* IMG_r — solo el movimiento de las piezas del banco de imágenes. El resto de estilos va en línea con
-   components/deck/studio/ui.ts, como en las otras galerías del workspace. Esto va aparte porque un estilo
-   en línea no puede reaccionar al `:hover` de un padre, ni declarar `@keyframes`, ni leer
-   `prefers-reduced-motion`, ni cambiar de columnas con el ancho. */
-
-/* Detalle 11: leve zoom de la miniatura al pasar el ratón, con la curva de la casa. */
-.ixi-zoom img {
-  transition: transform 0.4s cubic-bezier(0.45, 0, 0.15, 1);
-}
-.ixi-zoom:hover img,
-.ixi-zoom:focus-visible img {
-  transform: scale(1.03);
-}
+/* IMG_r — lo que no puede ir en línea. El resto de estilos va en línea con components/deck/studio/ui.ts, como
+   en las otras galerías del workspace. Esto va aparte porque un estilo en línea no puede reaccionar al `:hover`
+   de un padre, ni declarar `@keyframes`, ni leer `prefers-reduced-motion` o `hover: none`, ni cambiar de
+   columnas o márgenes con el ancho. Los colores son los tokens de app/globals.css (`--c-*`). */
 
 /* Detalle 14: las tarjetas fantasma laten mientras carga. */
 @keyframes ixi-pulse {
@@ -56,9 +47,8 @@
   transform: rotate(180deg);
 }
 
-/* Fase 2, F28 y F29: la cruz de «no encaja» en la tarjeta, con su aviso al pasar sobre ella o al llegar a la
-   tarjeta con el teclado. Abre hacia arriba porque la cruz está abajo, y alineado a la derecha para no salirse
-   de la tarjeta. */
+/* Los avisos de las marcas de una tarjeta. Por defecto abren hacia arriba y alineados a la derecha, para no
+   salirse de la tarjeta: es la cruz del popup, que está abajo. La tarjeta de IMG_r los abre hacia abajo. */
 .ixi-tip {
   position: absolute;
   right: 0;
@@ -82,16 +72,237 @@
   transform: none;
 }
 
+/* La cruz de «no encaja» en el popup de DeckMak_r y FormMak_r: el aspecto de G4 (placa Burdeos, cruz clara),
+   abajo a la derecha porque arriba está la papelera. Burdeos es el color de alerta (`uiRole`). */
+.ixi-mark {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-bordeaux);
+  color: var(--c-warm-light);
+}
+
+/* ── Entrega 3: la tarjeta de IMG_r (G1 a G8) ─────────────────────────────── */
+
+.ixi-cell {
+  position: relative;
+  min-width: 0;
+}
+.ixi-open {
+  appearance: none;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.ixi-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--c-grey);
+  border: 1px solid var(--c-warm-dark);
+}
+/* Detalle 11: leve zoom de la miniatura al pasar el ratón, con la curva de la casa. */
+.ixi-thumb img {
+  transition: transform 0.4s cubic-bezier(0.45, 0, 0.15, 1);
+}
+.ixi-open:hover .ixi-thumb img,
+.ixi-open:focus-visible .ixi-thumb img {
+  transform: scale(1.03);
+}
+
+/* G7: seleccionada, contorno oscuro de 2 px separado 2 px de la imagen. Con el hueco de 6 px no llega a la de
+   al lado. */
+.ixi-selected .ixi-thumb {
+  outline: 2px solid var(--c-dark);
+  outline-offset: 2px;
+}
+
+/* G2: solo la primera etiqueta, dentro de la imagen. Si no cabe se corta, sin puntos suspensivos
+   (`punctuationRules.noEllipsis`). */
+.ixi-ontop {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  max-width: calc(100% - 50px);
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+  font: 400 10px/1 var(--font-ibm-plex-mono, monospace);
+  color: var(--c-ash-dark);
+  background: var(--c-white);
+  border: 1px solid var(--c-warm-dark);
+  padding: 4px 5px;
+}
+.ixi-ontop.ixi-none {
+  border-style: dashed;
+  color: var(--c-ash);
+  background: var(--c-warm-light);
+}
+
+/* G4: arriba a la derecha, el número de usos y la cruz, en fila. */
+.ixi-marks {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  display: flex;
+  gap: 4px;
+}
+.ixi-marks > .ixi-count,
+.ixi-marks > .ixi-nofit {
+  position: relative;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 500 11px/1 var(--font-ibm-plex-mono, monospace);
+  font-variant-numeric: tabular-nums;
+}
+.ixi-count {
+  background: var(--c-dark);
+  color: var(--c-warm-light);
+}
+.ixi-marks > .ixi-nofit {
+  padding: 0;
+  background: var(--c-bordeaux);
+  color: var(--c-warm-light);
+}
+
+/* G5: los avisos abren hacia abajo. Con el ratón, el de cada marca; con el foco del teclado en la tarjeta, los
+   dos juntos en una sola caja, para que no se pisen. */
+.ixi-marks .ixi-tip,
+.ixi-tips {
+  top: calc(100% + 6px);
+  bottom: auto;
+  transform: translateY(-2px);
+}
+.ixi-marks > span:hover .ixi-tip {
+  opacity: 1;
+  transform: none;
+}
+.ixi-tips {
+  position: absolute;
+  right: 0;
+  display: grid;
+  gap: 4px;
+  width: max-content;
+  max-width: 180px;
+  background: var(--c-dark);
+  color: var(--c-warm-light);
+  font: 500 11px/1.35 var(--font-ibm-plex-mono, monospace);
+  letter-spacing: 0.02em;
+  padding: 7px 9px;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+  pointer-events: none;
+  z-index: 3;
+}
+.ixi-open:focus-visible ~ .ixi-marks .ixi-tips {
+  opacity: 1;
+  transform: none;
+}
+.ixi-open:focus-visible ~ .ixi-marks .ixi-tip {
+  opacity: 0;
+}
+
+/* G6: el selector redondo, arriba a la izquierda. Se ve al pasar por la tarjeta, con foco, en cuanto hay una
+   seleccionada y siempre en pantallas táctiles. Es una casilla de verificación con aspecto redondo. */
+.ixi-sel {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.ixi-cell:hover .ixi-sel,
+.ixi-sel:focus-visible,
+.ixi-selecting .ixi-sel,
+.ixi-selected .ixi-sel {
+  opacity: 1;
+}
+@media (hover: none) {
+  .ixi-sel {
+    opacity: 1;
+  }
+}
+.ixi-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--c-dark);
+  background: var(--c-warm-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ixi-sel[aria-checked='true'] .ixi-dot {
+  background: var(--c-dark);
+}
+.ixi-sel[aria-checked='true'] .ixi-dot::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c-warm-light);
+}
+
+/* ── Entrega 3, G14: la rejilla de IMG_r a todo el ancho ─────────────────── */
+
+/* Sin ancho máximo, con el margen lateral de la página: 16 px en móvil, 32 desde 700 px. Abajo, sitio para la
+   barra de la selección. Se aparta a propósito de las otras galerías (img-r.md, «Divergencias»). */
+.ixi-page {
+  padding: 40px 16px 120px;
+}
+@media (min-width: 700px) {
+  .ixi-page {
+    padding-inline: 32px;
+  }
+}
+.ixi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 6px;
+  align-items: start;
+}
+
+/* G9: mientras la barra de la selección está abierta, los avisos flotantes salen por encima de ella. La barra
+   escribe su altura en `--ixi-bulk-h` (components/images/BulkBar.tsx). */
+body.ixi-bulk-open .toast {
+  bottom: calc(24px + var(--ixi-bulk-h, 44px) + 12px + env(safe-area-inset-bottom, 0px));
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .ixi-zoom img,
+  .ixi-thumb img,
   .ixi-pulse,
   .ixi-chev,
-  .ixi-tip {
+  .ixi-tip,
+  .ixi-tips,
+  .ixi-sel {
     animation: none;
     transition: none;
   }
-  .ixi-zoom:hover img,
-  .ixi-zoom:focus-visible img {
+  .ixi-open:hover .ixi-thumb img,
+  .ixi-open:focus-visible .ixi-thumb img {
     transform: none;
   }
 }

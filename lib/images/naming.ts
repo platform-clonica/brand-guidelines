@@ -6,7 +6,9 @@ import type { ImageMeta } from '../decks/types.ts';
 
 export const NAME_MAX = 140;
 export const TAG_MAX = 40;
-export const TAGS_MAX = 20;
+/* Diez por imagen: decisión de Carlos en el plan de la entrega 3 (5 de octubre de 2026). Vale para la subida,
+   «Editar nombre y etiquetas» y «Añadir etiquetas» en bloque. */
+export const TAGS_MAX = 10;
 
 /* El nombre de una imagen subida antes de IMG_r. Primero el `alt`, que el popup rellenaba con el
    nombre original del fichero sin extensión y sin sanear («hub (1)»); si no hay, la ruta sin carpeta,

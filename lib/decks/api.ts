@@ -202,6 +202,35 @@ export async function deleteImage(id: string): Promise<ImageDeleteResult> {
   return { ok: true };
 }
 
+/* Entrega 3: acciones en bloque. «Añadir etiquetas» une sin pisar (PATCH /api/images/bulk); «Eliminar» borra
+   las libres y devuelve las que se usan, sin tocarlas (POST /api/images/bulk-delete). */
+export type BulkTagsResult = { rows: ImageRecord[]; missing: string[]; full: string[] };
+
+export async function bulkAddTags(ids: string[], addTags: string[]): Promise<BulkTagsResult> {
+  const res = await fetch('/api/images/bulk', {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ids, addTags }),
+  });
+  return json<BulkTagsResult>(res);
+}
+
+export type BulkDeleteResult = {
+  deleted: string[];
+  blocked: { id: string; uses: ImageUse[] }[];
+  missing: string[];
+  failed: string[];
+};
+
+export async function bulkDelete(ids: string[]): Promise<BulkDeleteResult> {
+  const res = await fetch('/api/images/bulk-delete', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  });
+  return json<BulkDeleteResult>(res);
+}
+
 /* Qué documentos referencian esta imagen (por la URL de su versión ligera en el markdown). La definición
    de «en uso» es una sola, en servidor: la comparten esto, el listado y el DELETE. */
 export type { ImageUse };
