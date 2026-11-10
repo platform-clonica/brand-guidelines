@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { compileSocial } from '@/lib/social/compile';
-import { CANVASES, type CanvasId } from '@/lib/social/types';
+import { CANVASES, EXPORT_SCALE, type CanvasId } from '@/lib/social/types';
 import { LAYOUTS } from '@/lib/social/catalog';
 import { TEMPLATES, templateById, type TemplateId } from '@/lib/social/templates';
 import { exportAll, exportCard, fileName } from '@/lib/social/exportPng';
@@ -575,7 +575,7 @@ export function SocialStudio() {
             <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ whiteSpace: 'nowrap' }}>
                 {total} tarjeta{total === 1 ? '' : 's'} · lienzo {spec.w}×{spec.h} · se exporta a{' '}
-                {spec.w * 2}×{spec.h * 2}
+                {spec.w * EXPORT_SCALE}×{spec.h * EXPORT_SCALE}
               </span>
               {avisos.length > 0 && (
                 <span

@@ -33,13 +33,21 @@ Dos formatos, **ambos de 1080 px de ancho**. Eso no es un detalle de implementac
 permite que haya **una sola escala tipográfica**. Una tarjeta de carrusel y un post horizontal se
 ven con el mismo ancho en el feed, así que el texto tiene que medir lo mismo en los dos.
 
-| Lienzo | Base | Exportado (×2) | Ratio |
-|---|---|---|---|
-| Carrusel | 1080×1350 | 2160×2700 | 4:5 |
-| Post horizontal | 1080×608 | 2160×1216 | 16:9 |
+| Lienzo | Exportado | Ratio |
+|---|---|---|
+| Carrusel | 1080×1350 | 4:5 |
+| Post horizontal | 1080×608 | 16:9 |
 
-El ×2 no es arbitrario: el carrusel más reciente que Interactius ha publicado mide exactamente
-2160×2700, así que es el tamaño al que ya se trabaja.
+**Se exporta al tamaño exacto del lienzo.** Es la medida nativa de LinkedIn e Instagram y la de
+cinco de los seis carruseles de referencia.
+
+Estuvo a ×2 (2160×2700) porque el carrusel más reciente mide eso. Decisión de Martina del
+10/11/2026: a ×1. El cambio no pierde nitidez por sí solo, el texto se rasteriza exactamente a la
+resolución del lienzo sin reescalar nada; a ×2 el resultado es algo más fino en pantallas densas a
+cambio de que la red social lo redimensione y lo vuelva a comprimir al subirlo.
+
+El factor vive en una constante (`EXPORT_SCALE`), así que la descarga suelta, el `.zip` y la
+etiqueta del editor dicen siempre lo mismo.
 
 El post es 1,776 en lugar del 1,778 exacto. La desviación es del 0,08 %, invisible, y a cambio el
 alto es par y la exportación no deja medio píxel suelto.
@@ -358,7 +366,7 @@ Exportando el nodo que ya está pintado, el PNG y la vista previa no pueden dife
 - El `.zip` lo hace `fflate`, que ya estaba en el proyecto. Va en zip y no en descargas sueltas
   porque los navegadores bloquean las descargas múltiples seguidas, y porque dentro van numeradas,
   que es lo que fija el orden al subirlas.
-- Medido: entre 70 y 380 ms por imagen a 2160×2700.
+- Medido: entre 70 y 380 ms por imagen.
 
 ---
 

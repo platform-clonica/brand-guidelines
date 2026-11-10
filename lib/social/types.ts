@@ -147,8 +147,19 @@ export const CANVASES: Record<CanvasId, CanvasSpec> = {
   },
 };
 
-/** Factor de exportación. 1080 → 2160, que es a lo que ya se exporta hoy. */
-export const EXPORT_SCALE = 2;
+/* Factor de exportación. A 1, el PNG sale al tamaño exacto del lienzo:
+   1080×1350 el carrusel y 1080×608 el post.
+
+   Estuvo a 2 porque el carrusel más reciente que había publicado
+   Interactius mide 2160×2700. Decisión de Martina del 10/11/2026: a 1.
+   Los otros cinco carruseles de referencia miden 1080×1350, que es
+   además la medida nativa de LinkedIn e Instagram.
+
+   El cambio no pierde nitidez por sí solo: a 1 el texto se rasteriza
+   exactamente a la resolución del lienzo, sin reescalar nada. A 2 el
+   resultado es algo más fino en pantallas densas, a cambio de que la red
+   social lo redimensione y lo vuelva a comprimir al subirlo. */
+export const EXPORT_SCALE = 1;
 
 export type SocialDeck = {
   slides: Slide[];
