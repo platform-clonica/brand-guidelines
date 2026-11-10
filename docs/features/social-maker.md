@@ -154,6 +154,16 @@ Las dos existen en los carruseles publicados:
 Se elige con `> marca: arriba` en la portada. No es un capricho de maquetación: es lo que
 distingue una serie de otra de un vistazo en el feed, antes de leer nada.
 
+**El texto y la marca ocupan extremos opuestos, siempre.** Con la papelería al pie el titular va
+arriba; con la papelería en cabecera, abajo. Es lo que hace que las dos portadas se lean distintas
+usando exactamente las mismas piezas, y es lo que hacen los diseños: los dos carruseles de Miradas
+arrancan con el titular pegado al margen superior.
+
+**El velo sigue al titular.** Cada velo lleva la banda fuerte donde cae el texto y una de apoyo en
+el extremo contrario, donde va la papelería. Esa segunda banda no es opcional: el imagotipo y el
+slug van en blanco, así que sobre una foto con una zona clara justo ahí desaparecen, y eso no se
+descubre hasta que la pieza está publicada.
+
 El imagotipo girado **mide lo mismo que el horizontal**, 318×41, porque es el mismo lockup rotado.
 Medido al píxel en las dos portadas que lo usan: ocupa de (56,56) a (96,372).
 

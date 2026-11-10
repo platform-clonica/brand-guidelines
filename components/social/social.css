@@ -306,25 +306,39 @@
 .ix-social .photo{position:absolute; inset:0; overflow:hidden;}
 .ix-social .photo img{width:100%; height:100%; object-fit:cover; display:block;}
 .ix-social .scrim{position:absolute; inset:0;}
+/* Cada velo lleva DOS bandas: la fuerte donde cae el texto y una de apoyo
+   en el extremo contrario, donde va la papelería.
+
+   La de apoyo no es opcional. El imagotipo y el slug van en blanco, así
+   que sobre una foto con una zona clara justo ahí desaparecen. Pasó con
+   una portada cuya franja inferior era casi blanca: el pie se perdía
+   entero y no se descubre hasta que la pieza está publicada. */
 .ix-social .scrim.bottom{
   background:
     linear-gradient(to top, rgba(10,9,8,.86) 0%, rgba(10,9,8,.42) 34%, rgba(10,9,8,0) 62%),
-    linear-gradient(to bottom, rgba(10,9,8,.34) 0%, rgba(10,9,8,0) 36%);
+    linear-gradient(to bottom, rgba(10,9,8,.58) 0%, rgba(10,9,8,.22) 14%, rgba(10,9,8,0) 34%);
 }
 .ix-social .scrim.top{
   background:
     linear-gradient(to bottom, rgba(10,9,8,.86) 0%, rgba(10,9,8,.42) 34%, rgba(10,9,8,0) 62%),
-    linear-gradient(to top, rgba(10,9,8,.30) 0%, rgba(10,9,8,0) 30%);
+    linear-gradient(to top, rgba(10,9,8,.68) 0%, rgba(10,9,8,.26) 13%, rgba(10,9,8,0) 28%);
 }
 .ix-social .on-photo{color:var(--warm-light); --ink:var(--warm-light); --ink-soft:rgba(245,242,237,.72); --rule:rgba(245,242,237,.28);}
 .ix-social .on-photo .box{z-index:2;}
 
-/* · portada — foto, titular serif abajo y subtítulo mono. */
-.ix-social .l-portada .box{display:flex; flex-direction:column; justify-content:flex-end;}
-/* Con la papelería en cabecera, el pie queda libre y el titular llega
-   hasta el margen inferior. Es lo que hace que esta portada respire
-   distinto de la de Miradas aunque use las mismas piezas. */
-.ix-social .l-portada.con-cabecera .box{bottom:var(--m);}
+/* · portada — foto a sangre, titular serif y subtítulo mono.
+
+   EL TEXTO Y LA MARCA OCUPAN EXTREMOS OPUESTOS, SIEMPRE.
+
+   · Papelería al pie (Miradas) → el titular va ARRIBA.
+   · Papelería en cabecera (evento, workshop) → el titular va ABAJO.
+
+   No es una regla cosmética: es lo que hace que las dos portadas se lean
+   distintas en el feed usando exactamente las mismas piezas. Y es lo que
+   hacen los diseños: los dos carruseles de Miradas arrancan con el titular
+   pegado al margen superior. */
+.ix-social .l-portada .box{display:flex; flex-direction:column; justify-content:flex-start;}
+.ix-social .l-portada.con-cabecera .box{justify-content:flex-end; bottom:var(--m);}
 .ix-social .l-portada .sub{margin-top:24px; max-width:78%;}
 
 /* · foto — texto arriba o abajo, o ninguno. */

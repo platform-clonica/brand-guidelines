@@ -4,9 +4,12 @@ import { typesetHeadline } from '@/lib/deck/typeset';
 import { inline } from '@/components/deck/inline';
 import { Photo } from '../Photo';
 
-/* Portada: foto a sangre, titular serif abajo y subtítulo mono.
-   El titular va abajo y no arriba porque la foto se lee primero y el texto
-   tiene que cerrarla, no taparla. */
+/* Portada: foto a sangre, titular serif y subtítulo mono.
+
+   El titular va al extremo CONTRARIO de donde esté la papelería, y el velo
+   lo sigue. Un velo en el lado equivocado deja el titular sobre la parte
+   clara de la foto, y eso no se descubre hasta que la pieza está
+   publicada. */
 export function Portada({
   slide,
   boxH,
@@ -14,9 +17,10 @@ export function Portada({
   slide: Extract<Slide, { kind: 'portada' }>;
   boxH: number;
 }) {
+  const enCabecera = slide.papeleria === 'cabecera';
   return (
     <>
-      <Photo image={slide.image} scrim="bottom" />
+      <Photo image={slide.image} scrim={enCabecera ? 'bottom' : 'top'} />
       <FitText maxHeight={boxH} className="box l-portada on-photo">
         <div>
           <h1 className="headline">{inline(typesetHeadline(slide.title))}</h1>
