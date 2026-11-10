@@ -114,7 +114,19 @@ export function pageOf<T extends { id: string; created_at: string }>(rows: reado
   return { items, nextCursor: rows.length > limit && last ? encodeCursor({ createdAt: last.created_at, id: last.id }) : null };
 }
 
-export type ListQuery = { search: string; tags: string[]; untagged: boolean; style: boolean; cursor: Cursor | null; limit: number };
+export type ListQuery = {
+  search: string;
+  tags: string[];
+  untagged: boolean;
+  style: boolean;
+  cursor: Cursor | null;
+  limit: number;
+  /* Búsqueda por URL pública exacta. La usa el Social Maker: en su
+     markdown una foto es una URL, y para aplicarle el estilo con IA hace
+     falta la fila del banco. Exacta y no `ilike`: es un identificador, no
+     un texto que alguien teclea. */
+  url: string | null;
+};
 
 export function parseListQuery(p: URLSearchParams): ListQuery {
   const untagged = p.get('untagged') === '1';
@@ -126,6 +138,7 @@ export function parseListQuery(p: URLSearchParams): ListQuery {
     style: p.get('style') === 'si',
     cursor: decodeCursor(p.get('cursor')),
     limit: Number.isNaN(raw) ? PAGE_SIZE : Math.min(PAGE_SIZE, Math.max(1, raw)),
+    url: p.get('url')?.trim() || null,
   };
 }
 

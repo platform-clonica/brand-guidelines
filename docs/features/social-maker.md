@@ -256,6 +256,27 @@ Se pinta como una capa aparte, encima del velo y no en su lugar. Así se suma a 
 tres velos sin recalcular sus degradados, y la garantía de contraste del velo base queda intacta
 pase lo que pase con este control.
 
+### Aplicar el estilo Interactius a una foto
+
+Botón **Estilo Interactius** en el panel de foto. Aplica la directiva de imagen de la marca con IA
+y, al guardar, escribe la URL resultante en el markdown.
+
+**La directiva NO se duplica aquí.** Vive en `lib/prompts.ts` (`getImagePrompt`), la aplica IMG_r
+con Gemini desde hace semanas, su salida está congelada en `lib/__tests__/prompts.test.ts` y el
+equipo y un cliente la usan a diario. Una segunda copia sería una norma de marca con dos versiones
+destinadas a separarse. Este botón solo abre el modal que ya existe (`AiEditModal`) sin salir del
+editor.
+
+**El puente es la URL.** En el markdown una foto es una URL y «Editar con IA» necesita la fila del
+banco, así que `GET /api/images` acepta ahora un filtro `url` de coincidencia exacta.
+
+Dos consecuencias que conviene saber:
+
+- **Solo funciona con fotos del banco.** Las de `/universo` son archivos estáticos del repositorio,
+  no filas del banco: hay que subirlas desde la galería primero. El editor lo dice cuando pasa.
+- **Gasta la cuota de IMG_r**, que son 25 ediciones por persona y mes. Es la misma bolsa, no una
+  aparte.
+
 ### Cualquier tarjeta puede llevar foto de fondo
 
 Una imagen en un layout que no la consume (titular, texto, lista, cita, rótulo, agenda) se entiende

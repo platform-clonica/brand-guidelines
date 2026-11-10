@@ -8,6 +8,9 @@ import { TEMPLATES, templateById, type TemplateId } from '@/lib/social/templates
 import { exportAll, exportCard, fileName } from '@/lib/social/exportPng';
 import { colors, btn, btnGhost, toolbarBtn, seg, segOn } from '@/components/deck/studio/ui';
 import { ImageGallery } from '@/components/deck/studio/ImageGallery';
+import { AiEditModal } from '@/components/images/AiEditModal';
+import { ToastProvider } from '@/components/ui/Toast';
+import { buscarFoto, type FotoDelBanco } from '@/lib/social/estiloIA';
 import {
   countBlockImages,
   removeBlockImageAt,
@@ -42,6 +45,9 @@ export function SocialStudio() {
   /* Cuando está activo, lo que se elija en la galería es el logo del
      cliente y no una foto de tarjeta. */
   const [eligiendoLogo, setEligiendoLogo] = useState(false);
+  /* La foto del banco sobre la que se va a aplicar el estilo con IA. */
+  const [estilo, setEstilo] = useState<FotoDelBanco | null>(null);
+  const [buscando, setBuscando] = useState(false);
   const [encima, setEncima] = useState<number | null>(null);
 
   const deck = useMemo(() => compileSocial(md, canvas), [md, canvas]);
@@ -182,6 +188,24 @@ export function SocialStudio() {
     slideActual && (CON_FOTO.includes(slideActual.kind) || slideActual.fondo?.src),
   );
   const exposicionActual = slideActual?.exposicion ?? 100;
+  const urlFotoActual =
+    slideActual?.fondo?.src ??
+    (slideActual && 'image' in slideActual ? slideActual.image?.src : undefined);
+
+  /* «Aplicar estilo Interactius»: busca la foto en el banco y abre el mismo
+     modal de IMG_r. La directiva no se duplica aquí; ver lib/social/estiloIA.ts. */
+  const aplicarEstilo = useCallback(async () => {
+    if (!urlFotoActual) return;
+    setError(null);
+    setBuscando(true);
+    try {
+      setEstilo(await buscarFoto(urlFotoActual));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se ha podido abrir el editor de estilo.');
+    } finally {
+      setBuscando(false);
+    }
+  }, [urlFotoActual]);
 
   const insertar = (skeleton: string) => {
     setMd((prev) => `${prev.trimEnd()}\n\n---\n\n${skeleton}\n`);
@@ -363,6 +387,23 @@ export function SocialStudio() {
                 }}
               >
                 Quitar foto
+              </button>
+
+              {/* Aplica la directiva de imagen de la marca con IA. Es el
+                  mismo motor de IMG_r, con la misma cuota: aquí solo se
+                  abre su modal sin tener que salir del editor. */}
+              <button
+                type="button"
+                disabled={!urlFotoActual || buscando}
+                onClick={() => void aplicarEstilo()}
+                title="Aplica la directiva de imagen de Interactius con IA. Gasta cuota de IMG_r."
+                style={{
+                  ...toolbarBtn, padding: '7px 9px',
+                  opacity: urlFotoActual ? 1 : 0.45,
+                  cursor: urlFotoActual ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {buscando ? 'Abriendo…' : 'Estilo Interactius'}
               </button>
             </div>
 
@@ -584,6 +625,24 @@ export function SocialStudio() {
             setEligiendoLogo(false);
           }}
         />
+      )}
+
+      {estilo && (
+        /* El modal de IMG_r pide su propio contexto de avisos. */
+        <ToastProvider>
+          <AiEditModal
+            image={estilo.image}
+            uses={estilo.uses}
+            onClose={() => setEstilo(null)}
+            onSaved={(row) => {
+              /* La imagen editada puede ser otra fila (copia) o la misma
+                 sobrescrita. En los dos casos basta con escribir su URL:
+                 el markdown sigue siendo la fuente de verdad. */
+              setMd((prev) => setBlockImageAt(prev, bloqueDe(actual), 0, row.url));
+              setEstilo(null);
+            }}
+          />
+        </ToastProvider>
       )}
 
       {ranura && (
