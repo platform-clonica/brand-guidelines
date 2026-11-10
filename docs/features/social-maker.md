@@ -133,6 +133,34 @@ nunca quiere decir.
 
 ---
 
+## Cambiar la foto y el fondo sin escribir
+
+Las dos cosas **editan el markdown**, no un estado aparte. El texto de la izquierda sigue siendo la
+fuente de verdad y no puede desincronizarse de lo que se ve.
+
+- **Clic sobre una foto** y se abre la galería de imágenes. Es la misma de DeckMak_r y FormMak_r
+  (`components/deck/studio/ImageGallery`), o sea el banco que gestiona IMG_r. Al pasar por encima
+  de una tarjeta con foto aparece un rótulo «Cambiar foto», porque el clic funciona pero nadie lo
+  adivina.
+- **La tarjeta de cierre tiene dos imágenes**, el fondo y el retrato, y cada una se cambia por su
+  lado. El botón de retrato solo sale cuando ya hay foto de fondo: sin ella, cambiaría el fondo
+  creyendo cambiar el retrato.
+- **La paleta de fondos** está bajo la galería de layouts, con muestra y nombre de marca, para no
+  tener que acordarse de si el beige se llama `warm-dark` o `arena`. La muestra lleva una «Aa»
+  encima: un fondo no se elige en abstracto, se elige para que un texto se lea sobre él.
+- En una tarjeta con foto a sangre **la paleta se apaga** y lo explica: ahí el fondo es la imagen.
+
+Dos detalles de implementación que conviene no deshacer:
+
+- `.box` lleva `pointer-events:none`. La caja de texto cubre el centro de la tarjeta, así que sin
+  eso un clic en mitad de una portada caía sobre el texto y nunca sobre la foto. Dentro no hay nada
+  interactivo y a la exportación le da igual.
+- `setBlockBackground` escribe **siempre en la línea `[ly:]`** y de paso borra el sufijo `{…}` del
+  titular si lo había. La línea `[ly:]` gana en el compilador: dejar la otra sería dejar una
+  mentira en el texto.
+
+---
+
 ## La exportación
 
 **Se exporta desde el DOM, a propósito.** No se vuelve a dibujar la tarjeta en el servidor.

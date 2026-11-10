@@ -7,7 +7,14 @@ import { LAYOUTS } from '@/lib/social/catalog';
 import { TEMPLATES, templateById, type TemplateId } from '@/lib/social/templates';
 import { exportAll, exportCard, fileName } from '@/lib/social/exportPng';
 import { colors, btn, btnGhost, toolbarBtn, seg, segOn } from '@/components/deck/studio/ui';
+import { ImageGallery } from '@/components/deck/studio/ImageGallery';
+import { countBlockImages, setBlockBackground, setBlockImageAt } from '@/lib/social/source';
+import { Paleta } from './studio/Paleta';
 import { SocialCard } from './SocialCard';
+
+/* Los layouts que llevan foto a sangre. En ellos manda la imagen, así que
+   el relleno de color no pinta nada y la paleta se apaga. */
+const CON_FOTO: readonly string[] = ['portada', 'foto', 'cierre'];
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
@@ -23,6 +30,10 @@ export function SocialStudio() {
   const [actual, setActual] = useState(0);
   const [exportando, setExportando] = useState<null | string>(null);
   const [error, setError] = useState<string | null>(null);
+  /* Qué imagen se está cambiando: el bloque del markdown y, dentro de él,
+     cuál de sus imágenes. El cierre tiene dos: el fondo y el retrato. */
+  const [ranura, setRanura] = useState<{ bloque: number; pos: number } | null>(null);
+  const [encima, setEncima] = useState<number | null>(null);
 
   const deck = useMemo(() => compileSocial(md, canvas), [md, canvas]);
   const total = deck.slides.length;
@@ -122,6 +133,31 @@ export function SocialStudio() {
       setExportando(null);
     }
   }, [canvas, titulo]);
+
+  /* El índice del bloque de markdown que produjo la tarjeta. Hoy es 1:1,
+     pero se lee de `provenance` para que siga valiendo si deja de serlo. */
+  const bloqueDe = useCallback((i: number) => deck.provenance?.[i] ?? i, [deck]);
+
+  /* Clic sobre una tarjeta: selecciona, y si ha caído sobre una imagen,
+     abre la galería para cambiar esa imagen y no otra. */
+  const alClicar = useCallback(
+    (e: React.MouseEvent, i: number) => {
+      setActual(i);
+      const t = e.target as HTMLElement;
+      if (t.closest('.avatar')) setRanura({ bloque: bloqueDe(i), pos: 1 });
+      else if (t.closest('.photo')) setRanura({ bloque: bloqueDe(i), pos: 0 });
+    },
+    [bloqueDe],
+  );
+
+  const slideActual = deck.slides[actual];
+  /* La tarjeta con foto no usa relleno: el fondo es la imagen. */
+  const paletaApagada =
+    !slideActual
+      ? 'Elige una tarjeta para cambiarle el fondo.'
+      : CON_FOTO.includes(slideActual.kind)
+        ? `Una tarjeta de «${slideActual.kind}» lleva foto a sangre: el fondo es la imagen. Haz clic sobre ella para cambiarla.`
+        : undefined;
 
   const insertar = (skeleton: string) => {
     setMd((prev) => `${prev.trimEnd()}\n\n---\n\n${skeleton}\n`);
@@ -231,6 +267,17 @@ export function SocialStudio() {
               ))}
             </div>
           </div>
+
+          <Paleta
+            actual={slideActual && !CON_FOTO.includes(slideActual.kind)
+              ? (slideActual.theme === 'dark' ? 'dark' : (slideActual.bg ?? 'warm-light'))
+              : undefined}
+            deshabilitado={paletaApagada}
+            onElegir={(f) => {
+              if (!slideActual) return;
+              setMd((prev) => setBlockBackground(prev, bloqueDe(actual), slideActual.kind, f.token));
+            }}
+          />
         </section>
 
         {/* ── Columna de las tarjetas ── */}
@@ -253,31 +300,84 @@ export function SocialStudio() {
             }}
           >
             <div className="ix-social">
-              {deck.slides.map((slide, i) => (
-                <div
-                  key={i}
-                  ref={(el) => {
-                    nodos.current[i] = el?.querySelector<HTMLDivElement>('.frame') ?? null;
-                  }}
-                  onClick={() => setActual(i)}
-                  style={{
-                    marginBottom: 20,
-                    /* Filete siempre, para que la tarjeta se lea sobre el
-                       fondo sea cual sea su relleno. Es sombra y no borde:
-                       no ocupa sitio y no se confunde con el diseño. */
-                    boxShadow: `0 0 0 1px ${colors.warmDark}`,
-                    outline: i === actual ? `2px solid ${colors.dark}` : '2px solid transparent',
-                    outlineOffset: 4,
-                    cursor: 'pointer',
-                    width: 'fit-content',
-                  }}
-                >
-                  <SocialCard slide={slide} canvas={canvas} scale={escala} />
-                  <p style={{ font: `400 10px/1 ${MONO}`, color: colors.ash, margin: '8px 0 0', letterSpacing: '.06em' }}>
-                    {String(i + 1).padStart(2, '0')} · {slide.kind}
-                  </p>
-                </div>
-              ))}
+              {deck.slides.map((slide, i) => {
+                const conFoto = CON_FOTO.includes(slide.kind);
+                return (
+                  <div
+                    key={i}
+                    style={{ marginBottom: 20 }}
+                    onMouseEnter={() => setEncima(i)}
+                    onMouseLeave={() => setEncima((v) => (v === i ? null : v))}
+                  >
+                    <div
+                      ref={(el) => {
+                        nodos.current[i] = el?.querySelector<HTMLDivElement>('.frame') ?? null;
+                      }}
+                      onClick={(e) => alClicar(e, i)}
+                      style={{
+                        position: 'relative',
+                        /* Filete siempre, para que la tarjeta se lea sobre el
+                           fondo sea cual sea su relleno. Es sombra y no borde:
+                           no ocupa sitio y no se confunde con el diseño. */
+                        boxShadow: `0 0 0 1px ${colors.warmDark}`,
+                        outline: i === actual ? `2px solid ${colors.dark}` : '2px solid transparent',
+                        outlineOffset: 4,
+                        cursor: 'pointer',
+                        width: 'fit-content',
+                      }}
+                    >
+                      <SocialCard slide={slide} canvas={canvas} scale={escala} />
+
+                      {/* El clic sobre la foto ya funciona, pero nadie lo
+                          adivina. El rótulo aparece al pasar por encima: dice
+                          que se puede, sin ensuciar la vista el resto del
+                          tiempo. */}
+                      {conFoto && encima === i && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActual(i);
+                            setRanura({ bloque: bloqueDe(i), pos: 0 });
+                          }}
+                          style={{
+                            position: 'absolute', top: 10, left: 10, zIndex: 10,
+                            ...toolbarBtn, padding: '6px 9px',
+                          }}
+                        >
+                          Cambiar foto
+                        </button>
+                      )}
+                      {/* El retrato es la SEGUNDA imagen del bloque, así que
+                          solo tiene sentido ofrecerlo cuando ya hay una
+                          primera. Sin foto de fondo, este botón cambiaría el
+                          fondo creyendo cambiar el retrato. */}
+                      {slide.kind === 'cierre' &&
+                        encima === i &&
+                        countBlockImages(md, bloqueDe(i)) > 0 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActual(i);
+                            setRanura({ bloque: bloqueDe(i), pos: 1 });
+                          }}
+                          style={{
+                            position: 'absolute', bottom: 10, right: 10, zIndex: 10,
+                            ...toolbarBtn, padding: '6px 9px',
+                          }}
+                        >
+                          Cambiar retrato
+                        </button>
+                        )}
+                    </div>
+
+                    <p style={{ font: `400 10px/1 ${MONO}`, color: colors.ash, margin: '8px 0 0', letterSpacing: '.06em' }}>
+                      {String(i + 1).padStart(2, '0')} · {slide.kind}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
           <footer style={{ borderTop: `1px solid ${colors.warmDark}`, padding: '10px 20px', background: colors.white, font: `400 11px/1 ${MONO}`, color: colors.ash }}>
@@ -325,6 +425,23 @@ export function SocialStudio() {
           </footer>
         </section>
       </div>
+
+      {ranura && (
+        <ImageGallery
+          onClose={() => setRanura(null)}
+          onSelect={(url) => {
+            setMd((prev) => {
+              /* Nunca se salta un hueco: si se pide la segunda imagen de un
+                 bloque que solo tiene una, la nueva va a la segunda
+                 posición, no a la tercera. Sin esto se colaban dos imágenes
+                 idénticas y el fondo acababa siendo el retrato. */
+              const pos = Math.min(ranura.pos, countBlockImages(prev, ranura.bloque));
+              return setBlockImageAt(prev, ranura.bloque, pos, url);
+            });
+            setRanura(null);
+          }}
+        />
+      )}
     </div>
   );
 }

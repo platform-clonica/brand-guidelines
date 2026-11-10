@@ -84,8 +84,16 @@
 .ix-social .theme-light{--ink:var(--dark); --ink-soft:rgba(28,26,23,.62); --rule:rgba(28,26,23,.18);}
 .ix-social .theme-dark {--ink:var(--warm-light); --ink-soft:rgba(245,242,237,.62); --rule:rgba(245,242,237,.22);}
 
-/* Caja de contenido: el rectángulo dentro de los márgenes, por encima del pie. */
+/* Caja de contenido: el rectángulo dentro de los márgenes, por encima del pie.
+
+   `pointer-events:none` para que el puntero la atraviese. No es decorativo:
+   la caja de texto cubre el centro de la tarjeta, así que un clic en mitad
+   de una portada caía sobre el texto y no sobre la foto, y el editor no
+   podía saber que querías cambiar la imagen. Dentro no hay nada con lo que
+   interactuar —es un lienzo, no una interfaz— y a la exportación le da
+   igual. El clic sigue llegando a la tarjeta y seleccionándola. */
 .ix-social .box{
+  pointer-events:none;
   position:absolute;
   left:var(--m); right:var(--m); top:var(--m);
   bottom:calc(var(--m) + var(--foot-h) + 24px);
