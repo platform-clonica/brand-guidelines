@@ -35,8 +35,13 @@
   --s-title:64px;      /* escala `title`, sin tocar */
   /* Lista, agenda, firma del autor Y el slug de la esquina. Los cuatro
      medidos entre 48 y 58 sobre los PNG publicados: un solo peldaño los
-     sostiene y es mejor que inventar un número por rol. */
-  --s-title-sm:48px;   /* escala `title-sm` ×1,5 */
+     sostiene y es mejor que inventar un número por rol.
+
+     A 56 va POR ENCIMA de los diseños de referencia (un 17 %). No es una
+     desviación por descuido: Martina los veía pequeños en el feed, que es
+     donde se juzgan, y es su decisión. Se sube el peldaño entero y no solo
+     el slug, para no dejar la esquina gritando más que el contenido. */
+  --s-title-sm:56px;   /* escala `title-sm` ×1,75 */
   --s-body:40px;       /* escala `body` ×2,25 — medido 40 */
   --s-body-sm:36px;    /* escala `body-sm` ×2,25 */
   --s-caption:22px;    /* escala `caption` ×2,25 */
@@ -45,6 +50,10 @@
   --track-label:.04em; /* caption que no va en mayúsculas */
 
   --m:56px;            /* margen único, los cuatro lados */
+  /* Alto del imagotipo. UNA medida y siempre la misma, horizontal o
+     girado: es el mismo lockup. Guarda con el slug la proporción que
+     tienen en los diseños (0,85), así que si uno sube, sube el otro. */
+  --marca-h:48px;
   /* Hueco entre el titular y el cuerpo. No hay escala de espaciado escrita
      en el manual, así que sale de la proporción que ya usa el deck: 26 px
      bajo un titular de 44 (`.split h2`), que sobre los 96 de aquí son 57.
@@ -52,11 +61,10 @@
      publicados. Si algún día se escribe una escala de espaciado, este es
      uno de los números que tiene que entrar en ella. */
   --gap:64px;
-  /* Alto del pie: lo fija el elemento más alto de la fila, que es el slug
-     (48). El imagotipo mide 41 y se alinea abajo, que es exactamente la
-     relación que tienen en los carruseles publicados: el slug asoma unos
-     6 px por encima del imagotipo. */
-  --foot-h:48px;
+  /* Alto del pie: lo fija el elemento más alto de la fila, que es el slug.
+     El imagotipo se alinea abajo y asoma algo menos, que es la relación
+     que tienen en los carruseles publicados. */
+  --foot-h:56px;
 
   --expo:cubic-bezier(0.16,1,0.3,1);
   --s:1;               /* factor de visualización; la exportación lo ignora */
@@ -124,8 +132,8 @@
    con la proporción del SVG (3131×404) dan 318 de ancho. Es exactamente lo
    que miden los dos carruseles de Miradas publicados, al píxel. Un logo
    que cambia de tamaño según la tarjeta deja de ser un logo. */
-.ix-social .foot .mark{height:41px; width:auto; display:block;}
-.ix-social .foot .mark.wordmark{height:41px;}
+.ix-social .foot .mark{height:var(--marca-h); width:auto; display:block;}
+.ix-social .foot .mark.wordmark{height:var(--marca-h);}
 
 /* El logo del cliente va en CAJA FIJA y contenido dentro. Los logos ajenos
    vienen con proporciones imprevisibles —el de la Barcelona Design Week
@@ -152,10 +160,10 @@
    alto. Es el MISMO lockup, no una versión distinta, así que la medida
    única se mantiene también aquí. Medido al píxel en las dos portadas que
    lo usan: de (56,56) a (96,372). */
-.ix-social .head .vmark{width:41px; height:318px; position:relative;}
+.ix-social .head .vmark{width:var(--marca-h); height:372px; position:relative;}
 .ix-social .head .vmark img{
   position:absolute; top:0; left:0;
-  width:318px; height:41px;
+  width:372px; height:var(--marca-h);
   /* El reset de Tailwind pone `max-width:100%` a toda imagen, y aquí el
      contenedor mide 41 px de ancho: sin esto, el imagotipo se recorta a 41
      y se ve como una astilla. */
@@ -165,7 +173,7 @@
      `transform`, así que la rotación la gira también y el imagotipo acaba
      fuera de la caja. Aquí se lee de derecha a izquierda: primero gira
      sobre su esquina, luego se devuelve a la caja. */
-  transform:translate(41px, 0) rotate(90deg);
+  transform:translate(var(--marca-h), 0) rotate(90deg);
   transform-origin:0 0;
 }
 .ix-social .head .slug{

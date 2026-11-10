@@ -111,16 +111,18 @@ export const socialTypeScale: readonly SocialScaleEntry[] = [
   {
     id: 'title-sm',
     cssVar: '--s-title-sm',
-    px: 48,
+    px: 56,
     lineHeight: 1.3,
     family: 'serif',
     weights: [300, 400],
-    origen: 'escala `title-sm` (2rem) ×1,5',
+    origen: 'escala `title-sm` (2rem) ×1,75',
     uso:
       'Elementos de lista, filas de agenda, la firma del autor y el slug de la esquina. Medidos ' +
       '58, 49 y 49 sobre los PNG publicados: un solo peldaño los sostiene a los cuatro, que es ' +
       'mejor que inventar un número por rol. El slug va en serif y no en mono porque es una ' +
-      'firma, no una etiqueta de interfaz.',
+      'firma, no una etiqueta de interfaz. A 56 queda un 17 % POR ENCIMA de los diseños de ' +
+      'referencia, por decisión de Martina: en el feed los veía pequeños. Se subió el peldaño ' +
+      'entero y no solo el slug, para que la esquina no grite más que el contenido.',
   },
   {
     id: 'body',
@@ -156,11 +158,15 @@ export const socialTypeScale: readonly SocialScaleEntry[] = [
 ];
 
 /* El imagotipo tiene UNA medida y es siempre la misma, en los nueve
-   layouts: 41 px de alto, que con la proporción del SVG (3131×404) dan 318
-   de ancho. Es exactamente lo que miden los dos carruseles de Miradas
-   publicados, al píxel. Un logo que cambia de tamaño según la tarjeta deja
-   de ser un logo. */
-export const WORDMARK_H = 41;
+   layouts: 48 px de alto, que con la proporción del SVG (3131×404) dan 372
+   de ancho. Un logo que cambia de tamaño según la tarjeta deja de ser un
+   logo.
+
+   Los diseños de referencia lo tienen a 41 (317×41, idéntico en los dos
+   carruseles de Miradas, al píxel). Sube a 48 con el peldaño `title-sm`,
+   para conservar la proporción de 0,85 que guarda con el slug: si uno
+   crece y el otro no, el pie se descuadra. */
+export const WORDMARK_H = 48;
 
 /* El retrato de la tarjeta de cierre: cuadrado, y al mismo margen de página
    que todo lo demás. Medido 331×331 en una pieza publicada y 328 de ancho

@@ -6,7 +6,29 @@
 
    El texto es instructivo a propósito («Titular de la portada»), nunca
    copia plausible: tiene que ser evidente que hay que sustituirlo y no
-   puede colarse en una publicación real si alguien se lo deja. */
+   puede colarse en una publicación real si alguien se lo deja.
+
+   CADA PLANTILLA TRAE SU RITMO DE FONDOS, Y ES LA PARTE QUE MÁS SE NOTA
+
+   En un feed, tres carruseles seguidos con los mismos layouts se leen como
+   el mismo carrusel. La variedad no hace falta buscarla en diseños nuevos
+   —un layout que se usa una vez es un layout que el siguiente usará mal—
+   sino en el orden de los fondos, que no cuesta nada y cambia el carácter
+   de la pieza entera.
+
+   Los tres ritmos son deliberadamente distintos:
+
+     Miradas    respiración larga. Oscuro, luego claros encadenados, y un
+                oscuro que corta antes del cierre. El claro domina y el
+                oscuro puntúa: es una pieza para leer.
+     Evento     la foto marca el compás. Plano, foto, plano, foto. Lo que
+                se cuenta pasó en un sitio, y el sitio se ve.
+     Workshop   bloques oscuros que enmarcan el dato claro. El oscuro
+                domina y el claro es lo que hay que retener.
+
+   El ritmo vive en el markdown de la plantilla, no en código: quien parte
+   de ella lo hereda y puede romperlo a mano en cualquier tarjeta. Un ritmo
+   que no se pudiera romper sería una cárcel, no un punto de partida. */
 
 export type TemplateId = 'miradas' | 'evento' | 'workshop' | 'vacio';
 
@@ -97,6 +119,20 @@ const EVENTO = `[ly: portada] {dark}
 ![Foto del evento](/universo/universo-03.jpg)
 
 # La frase que resume lo que se vio allí
+
+---
+
+[ly: texto] {warm-light}
+
+## Qué se planteó
+
+El contexto en una o dos frases, para quien llega sin saber de qué va.
+
+---
+
+[ly: foto]
+
+![Otra foto del evento](/universo/universo-04.jpg)
 
 ---
 

@@ -79,9 +79,16 @@ diseños, y el pie entero iba descompensado. **El error fue estimar en lugar de 
 
 ### El imagotipo tiene una sola medida
 
-**41 px de alto**, que con la proporción del SVG (3131×404) dan 318 de ancho. Es exactamente lo
-que miden los dos carruseles de Miradas publicados, al píxel. Un logo que cambia de tamaño según
-la tarjeta deja de ser un logo.
+**48 px de alto**, que con la proporción del SVG (3131×404) dan 372 de ancho. Un logo que cambia
+de tamaño según la tarjeta deja de ser un logo.
+
+Los diseños de referencia lo tienen a **41** (317×41, idéntico en los dos carruseles de Miradas,
+al píxel; verificado exportando una tarjeta y midiendo la tinta igual que en el original). Sube a
+48 junto con el peldaño `title-sm`, **por decisión de Martina**: en el feed los veía pequeños.
+
+Importante: **sube el peldaño entero, no solo el slug.** Si la esquina creciera sola acabaría
+gritando más que el contenido, que es justo lo que no debe hacer la papelería. El imagotipo y el
+slug guardan la proporción 0,85 que tienen en los diseños, así que si uno sube, sube el otro.
 
 El pie (`--foot-h`) mide lo que mide el imagotipo, y el slug comparte fila.
 
@@ -106,6 +113,23 @@ acaso»: un layout que nadie usa es una papeleta para que alguien lo use mal.
 
 Las plantillas de arranque son cuatro: **Miradas** (papelería al pie), **evento** y **workshop**
 (papelería en cabecera) y una en blanco.
+
+### Cada plantilla trae su ritmo de fondos
+
+En un feed, tres carruseles seguidos con los mismos layouts se leen como el mismo carrusel. La
+variedad no hace falta buscarla en diseños nuevos (un layout que se usa una vez es un layout que
+el siguiente usará mal) sino en el **orden de los fondos**, que no cuesta nada y cambia el
+carácter de la pieza entera.
+
+| Plantilla | Ritmo | Qué dice |
+|---|---|---|
+| Miradas | Oscuro · claros encadenados · un oscuro que corta · cierre | El claro domina y el oscuro puntúa: es una pieza para leer |
+| Evento | Plano · foto · plano · foto | Lo que se cuenta pasó en un sitio, y el sitio se ve |
+| Workshop | Bloques oscuros que enmarcan el dato claro | El oscuro domina y el claro es lo que hay que retener |
+
+El ritmo vive en el markdown de la plantilla, **no en código**: quien parte de ella lo hereda y
+puede romperlo a mano en cualquier tarjeta. Un ritmo que no se pudiera romper sería una cárcel, no
+un punto de partida.
 
 **El cierre no lleva pie.** El retrato ocupa la esquina donde iría el slug, y así es en las dos
 piezas publicadas que lo llevan: su pie es la firma a la izquierda y el retrato a la derecha. La
