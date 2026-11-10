@@ -38,17 +38,50 @@ export function SocialStudio() {
   }, [total, actual]);
 
   const spec = CANVASES[canvas];
-  /* La vista previa se escala para caber en su columna sin tocar el lienzo. */
-  const [anchoVista, setAnchoVista] = useState(520);
+
+  /* La vista previa se escala para caber en su hueco sin tocar el lienzo.
+
+     Se mide el ALTO además del ancho, y es lo que arregla el problema de
+     verdad: ajustando solo al ancho, una tarjeta de 1350 de alto se salía
+     de la pantalla en cuanto la columna era ancha. Un carrusel es vertical;
+     el alto es la dimensión que manda. */
+  const [caja, setCaja] = useState({ w: 520, h: 700 });
   const vista = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = vista.current;
     if (!el) return;
-    const ro = new ResizeObserver(([e]) => setAnchoVista(e.contentRect.width));
+    const ro = new ResizeObserver(([e]) =>
+      setCaja({ w: e.contentRect.width, h: e.contentRect.height }),
+    );
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  const escala = Math.min(1, (anchoVista - 48) / spec.w);
+
+  /* Encaje: la tarjeta entera dentro del hueco, con aire. Nunca por encima
+     del 100 %, que sería ampliar un lienzo fijo y emborronarlo. */
+  const encaje = Math.min(1, (caja.w - 72) / spec.w, (caja.h - 72) / spec.h);
+  /* Y encima, el zoom que elija quien edita. Se guarda en el navegador
+     porque es una preferencia de pantalla, no de la pieza: quien trabaja en
+     un portátil no quiere volver a bajarlo cada vez que abre. */
+  const [zoom, setZoom] = useState(1);
+  useEffect(() => {
+    try {
+      const v = Number(localStorage.getItem('socialmakr:zoom'));
+      if (v >= 0.25 && v <= 1.5) setZoom(v);
+    } catch {
+      /* Modo privado o almacenamiento bloqueado: se queda en 1 y no pasa nada. */
+    }
+  }, []);
+  const cambiarZoom = useCallback((v: number) => {
+    const z = Math.min(1.5, Math.max(0.25, Math.round(v * 100) / 100));
+    setZoom(z);
+    try {
+      localStorage.setItem('socialmakr:zoom', String(z));
+    } catch {
+      /* Ídem: la preferencia se pierde al cerrar, pero la sesión funciona. */
+    }
+  }, []);
+  const escala = encaje * zoom;
 
   const descargarUna = useCallback(async () => {
     const node = nodos.current[actual];
@@ -188,8 +221,8 @@ export function SocialStudio() {
         </section>
 
         {/* ── Columna de las tarjetas ── */}
-        <section ref={vista} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ flex: 1, overflow: 'auto', padding: 24, display: 'flex', justifyContent: 'center' }}>
+        <section style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          <div ref={vista} style={{ flex: 1, overflow: 'auto', padding: 24, display: 'flex', justifyContent: 'center' }}>
             <div className="ix-social">
               {deck.slides.map((slide, i) => (
                 <div
@@ -214,8 +247,35 @@ export function SocialStudio() {
             </div>
           </div>
           <footer style={{ borderTop: `1px solid ${colors.warmDark}`, padding: '10px 20px', background: colors.white, font: `400 11px/1 ${MONO}`, color: colors.ash }}>
-            {total} tarjeta{total === 1 ? '' : 's'} · lienzo {spec.w}×{spec.h} · se exporta a{' '}
-            {spec.w * 2}×{spec.h * 2}
+            <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span>
+                {total} tarjeta{total === 1 ? '' : 's'} · lienzo {spec.w}×{spec.h} · se exporta a{' '}
+                {spec.w * 2}×{spec.h * 2}
+              </span>
+              <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => cambiarZoom(zoom - 0.1)}
+                  aria-label="Ver más pequeño"
+                  style={{ ...toolbarBtn, padding: '5px 9px' }}
+                >
+                  −
+                </button>
+                {/* Se enseña la escala REAL sobre el lienzo, no el zoom: es el
+                    número que dice de verdad a qué tamaño estás mirando. */}
+                <span style={{ minWidth: 42, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>
+                  {Math.round(escala * 100)}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => cambiarZoom(zoom + 0.1)}
+                  aria-label="Ver más grande"
+                  style={{ ...toolbarBtn, padding: '5px 9px' }}
+                >
+                  +
+                </button>
+              </span>
+            </span>
           </footer>
         </section>
       </div>
