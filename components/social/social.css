@@ -1,0 +1,410 @@
+/* social.css — el lienzo de las tarjetas para redes.
+   ─────────────────────────────────────────────────────────────────────────
+   Los tokens de color espejan `lib/tokens.ts` y los tamaños espejan
+   `lib/social/typeScale.ts`. Si cambias uno, cambia el otro. Es la misma
+   duplicación a mano que ya tiene el deck y está documentada en el
+   CLAUDE.md del repo: al tocar un color aquí, contrastarlo con tokens.ts.
+
+   GEOMETRÍA
+   Ancho base 1080 para todos los lienzos, margen 56 por los cuatro lados.
+   El margen no es un gusto: es el que usan los seis carruseles que
+   Interactius ya tiene publicados, medido sobre los PNG y constante en los
+   seis. 56/1080 = 5,2 % del ancho.
+
+   EL PIE ES UNA FILA, SIEMPRE LA MISMA
+   Izquierda el imagotipo o el logo co-marca, derecha el slug. Misma altura,
+   mismo margen, en todos los layouts. Los carruseles publicados colocaban
+   el imagotipo unas veces abajo en horizontal y otras arriba girado; se
+   unifica en uno solo, porque mismo rol tiene que dar mismo valor. */
+
+.ix-social{
+  /* Neutros de marca */
+  --dark:#1C1A17; --white:#FFFFFF; --grey:#E8E6E3; --warm-light:#F5F2ED;
+  --warm-dark:#E0DAD2; --ash:#75706B; --ash-dark:#46433F;
+  /* Acentos. Solo Opal se usa como fondo; ver lib/social/types.ts. */
+  --opal:#B0B5B0; --bordeaux:#99335F; --emerald:#5999A6;
+
+  --serif:var(--font-ibm-plex-serif), 'IBM Plex Serif', ui-serif, serif;
+  --mono:var(--font-ibm-plex-mono), 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Escala — espeja lib/social/typeScale.ts.
+     Los valores salen de medir los carruseles publicados, no de estimar.
+     Ver la cabecera de lib/social/typeScale.ts. */
+  --s-super:192px;     /* escala `super`, sin tocar */
+  --s-display:96px;    /* escala `display`, sin tocar — medido 96 */
+  --s-title:64px;      /* escala `title`, sin tocar */
+  /* Lista, agenda, firma del autor Y el slug de la esquina. Los cuatro
+     medidos entre 48 y 58 sobre los PNG publicados: un solo peldaño los
+     sostiene y es mejor que inventar un número por rol.
+
+     A 56 va POR ENCIMA de los diseños de referencia (un 17 %). No es una
+     desviación por descuido: Martina los veía pequeños en el feed, que es
+     donde se juzgan, y es su decisión. Se sube el peldaño entero y no solo
+     el slug, para no dejar la esquina gritando más que el contenido. */
+  --s-title-sm:56px;   /* escala `title-sm` ×1,75 */
+  --s-body:40px;       /* escala `body` ×2,25 — medido 40 */
+  --s-body-sm:36px;    /* escala `body-sm` ×2,25 */
+  --s-caption:22px;    /* escala `caption` ×2,25 */
+
+  --track-caps:.08em;  /* antetítulo en MAYÚSCULAS */
+  --track-label:.04em; /* caption que no va en mayúsculas */
+
+  --m:56px;            /* margen único, los cuatro lados */
+  /* Alto del imagotipo. UNA medida y siempre la misma, horizontal o
+     girado: es el mismo lockup. Guarda con el slug la proporción que
+     tienen en los diseños (0,85), así que si uno sube, sube el otro.
+     El ancho sale de la proporción del SVG (3131×404 = 7,75). */
+  --marca-h:48px;
+  --marca-w:372px;
+  /* Hueco entre el titular y el cuerpo. No hay escala de espaciado escrita
+     en el manual, así que sale de la proporción que ya usa el deck: 26 px
+     bajo un titular de 44 (`.split h2`), que sobre los 96 de aquí son 57.
+     Se redondea a 64, que es el valor al que respiran los carruseles
+     publicados. Si algún día se escribe una escala de espaciado, este es
+     uno de los números que tiene que entrar en ella. */
+  --gap:64px;
+  /* Alto del pie: lo fija el elemento más alto de la fila, que es el slug.
+     El imagotipo se alinea abajo y asoma algo menos, que es la relación
+     que tienen en los carruseles publicados. */
+  --foot-h:56px;
+
+  --expo:cubic-bezier(0.16,1,0.3,1);
+  --s:1;               /* factor de visualización; la exportación lo ignora */
+
+  font-family:var(--mono);
+}
+
+/* ───────────────────────────── Lienzo ───────────────────────────── */
+
+.ix-social .card{
+  position:relative;
+  width:calc(var(--cw) * var(--s));
+  height:calc(var(--ch) * var(--s));
+}
+.ix-social .frame{
+  position:absolute; top:0; left:0;
+  width:var(--cw); height:var(--ch);
+  overflow:hidden;
+  transform:scale(var(--s)); transform-origin:top left;
+}
+
+/* Temas. Solo `dark` cambia la tinta; los tres rellenos claros la conservan. */
+.ix-social .theme-light{background:var(--warm-light); color:var(--dark);}
+.ix-social .theme-dark {background:var(--dark);       color:var(--warm-light);}
+
+/* Relleno elegido por quien escribe. Cambia el fondo, nunca el color del texto:
+   los cuatro claros llevan tinta oscura y es lo que les da el contraste. */
+.ix-social .bg-warm-light{background:var(--warm-light);}
+.ix-social .bg-warm-dark {background:var(--warm-dark);}
+.ix-social .bg-white     {background:var(--white);}
+.ix-social .bg-opal      {background:var(--opal);}
+
+.ix-social .theme-light{--ink:var(--dark); --ink-soft:rgba(28,26,23,.62); --rule:rgba(28,26,23,.18);}
+.ix-social .theme-dark {--ink:var(--warm-light); --ink-soft:rgba(245,242,237,.62); --rule:rgba(245,242,237,.22);}
+
+/* Caja de contenido: el rectángulo dentro de los márgenes, por encima del pie.
+
+   `pointer-events:none` para que el puntero la atraviese. No es decorativo:
+   la caja de texto cubre el centro de la tarjeta, así que un clic en mitad
+   de una portada caía sobre el texto y no sobre la foto, y el editor no
+   podía saber que querías cambiar la imagen. Dentro no hay nada con lo que
+   interactuar —es un lienzo, no una interfaz— y a la exportación le da
+   igual. El clic sigue llegando a la tarjeta y seleccionándola. */
+.ix-social .box{
+  pointer-events:none;
+  position:absolute;
+  left:var(--m); right:var(--m); top:var(--m);
+  bottom:calc(var(--m) + var(--foot-h) + 24px);
+}
+
+/* ───────────────────────────── Pie ─────────────────────────────
+   Una fila, idéntica en todos los layouts. */
+
+.ix-social .foot{
+  position:absolute; left:var(--m); right:var(--m); bottom:var(--m);
+  height:var(--foot-h);
+  display:flex; align-items:flex-end; justify-content:space-between;
+  z-index:3;
+}
+.ix-social .foot .slug{
+  font-family:var(--serif); font-weight:400; font-size:var(--s-title-sm);
+  line-height:1; color:var(--ink); white-space:nowrap;
+}
+/* El imagotipo tiene UNA medida y es siempre la misma: 41 px de alto, que
+   con la proporción del SVG (3131×404) dan 318 de ancho. Es exactamente lo
+   que miden los dos carruseles de Miradas publicados, al píxel. Un logo
+   que cambia de tamaño según la tarjeta deja de ser un logo. */
+.ix-social .foot .mark{height:var(--marca-h); width:auto; display:block;}
+.ix-social .foot .mark.wordmark{height:var(--marca-h);}
+
+/* El logo del cliente va en CAJA FIJA y contenido dentro. Los logos ajenos
+   vienen con proporciones imprevisibles —el de la Barcelona Design Week
+   lleva dos líneas y mide 250×55— y fijar solo el alto dejaría uno
+   apaisado invadiendo el slug. La caja sale de medir ese: 300×56. */
+.ix-social .mark.cliente{
+  height:56px; width:auto; max-width:300px;
+  object-fit:contain; object-position:left bottom; display:block;
+}
+
+/* El pie sobre foto siempre va en claro: la foto lleva su velo debajo. */
+.ix-social .on-photo .foot .slug{color:var(--warm-light);}
+
+/* ── Cabecera de portada ──
+   La otra colocación de la papelería, la que usan evento, workshop y la
+   Barcelona Design Week. El imagotipo va girado a la izquierda y enfrente
+   queda el logo del cliente, o el slug si no hay cliente. */
+.ix-social .head{
+  position:absolute; left:var(--m); right:var(--m); top:var(--m);
+  display:flex; align-items:flex-start; justify-content:space-between;
+  z-index:3;
+}
+/* La caja mide lo que mide el imagotipo girado: 41 de ancho por 318 de
+   alto. Es el MISMO lockup, no una versión distinta, así que la medida
+   única se mantiene también aquí. Medido al píxel en las dos portadas que
+   lo usan: de (56,56) a (96,372). */
+.ix-social .head .vmark{width:var(--marca-h); height:var(--marca-w); position:relative;}
+.ix-social .head .vmark img{
+  position:absolute; top:0; left:0;
+  width:var(--marca-w); height:var(--marca-h);
+  /* El reset de Tailwind pone `max-width:100%` a toda imagen, y aquí el
+     contenedor mide 41 px de ancho: sin esto, el imagotipo se recorta a 41
+     y se ve como una astilla. */
+  max-width:none;
+  /* Gira en ANTIHORARIO, no en horario. Es la diferencia entre que el
+     imagotipo mire hacia dentro de la tarjeta o hacia fuera, y los diseños
+     de referencia lo tienen así: la palabra se lee de abajo arriba, con la
+     «i» abajo. Girado al revés sale la misma pieza del revés, que es lo
+     que estaba pasando.
+
+     UNA sola transformación, y el desplazamiento DESPUÉS de la rotación.
+     Con la propiedad `translate` separada no funciona: se aplica antes que
+     `transform`, así que la rotación la gira también y el imagotipo acaba
+     fuera de la caja. Aquí se lee de derecha a izquierda: primero gira
+     sobre su esquina, luego se devuelve a la caja. */
+  transform:translate(0, var(--marca-w)) rotate(-90deg);
+  transform-origin:0 0;
+}
+.ix-social .head .slug{
+  font-family:var(--serif); font-weight:400; font-size:var(--s-title-sm);
+  line-height:1; color:var(--ink); white-space:nowrap;
+}
+/* La portada siempre va sobre foto, así que su cabecera va en claro. */
+.ix-social .l-portada .head .slug{color:var(--warm-light);}
+.ix-social .head .mark.cliente{object-position:right top;}
+
+/* ───────────────────────────── Tipografía ───────────────────────────── */
+
+.ix-social h1,.ix-social h2,.ix-social h3,.ix-social p,.ix-social ul,.ix-social li{margin:0;}
+.ix-social ul{list-style:none; padding:0;}
+
+/* Titular serif. 300 es el peso que manda `lib/tokens.ts` para la de contraste. */
+.ix-social .headline{
+  font-family:var(--serif); font-weight:300; font-size:var(--s-display);
+  line-height:1.1; letter-spacing:-.01em; color:var(--ink);
+}
+.ix-social .headline.sm{font-size:var(--s-title); line-height:1.15; letter-spacing:0;}
+.ix-social .headline.xl{font-size:var(--s-super); line-height:1;}
+
+/* Cuerpo en mono. */
+.ix-social .copy{font-family:var(--mono); font-weight:400; font-size:var(--s-body); line-height:1.55; color:var(--ink);}
+.ix-social .copy.sm{font-size:var(--s-body-sm);}
+.ix-social .copy p + p{margin-top:1.55em;}
+
+/* Antetítulo. */
+.ix-social .eyebrow{
+  font-family:var(--mono); font-weight:500; font-size:var(--s-caption);
+  letter-spacing:var(--track-caps); text-transform:uppercase; color:var(--ink-soft);
+  margin-bottom:28px; display:block;
+}
+
+/* La negrita del markdown. En mono el sistema admite 600 y es el único modo
+   de cargar peso en una monoespaciada. En serif, 600 se saldría del 300/400
+   que permite la norma, así que el destacado serif es Regular sobre Light:
+   un escalón, que es lo que hace falta para que se lea. */
+.ix-social .copy strong{font-weight:600;}
+.ix-social .headline strong,
+.ix-social .items strong,
+.ix-social .quote strong{font-weight:400;}
+
+/* Nunca cursiva, en ninguna de las dos familias. Regla dura del manual:
+   el markdown puede traer `*texto*` de un copiar y pegar y no debe colarse. */
+.ix-social em,.ix-social i{font-style:normal; font-weight:inherit;}
+
+/* ───────────────────────────── Layouts ───────────────────────────── */
+
+/* · titular — un titular serif y nada más, anclado arriba. */
+.ix-social .l-titular .headline{max-width:100%;}
+
+/* · texto — titular arriba, cuerpo mono debajo. */
+.ix-social .l-texto .headline{margin-bottom:var(--gap);}
+
+/* · lista — titular, entradilla opcional y elementos numerados con filete.
+   El filete va DEBAJO de cada elemento, incluido el último: cierra la serie
+   y es lo que hacen los carruseles publicados. */
+.ix-social .items{display:block;}
+.ix-social .items li{
+  display:flex; align-items:baseline; gap:24px;
+  padding:22px 0; border-bottom:1px solid var(--rule);
+}
+.ix-social .items li:first-child{padding-top:0;}
+.ix-social .items .n{
+  font-family:var(--mono); font-weight:400; font-size:var(--s-caption);
+  color:var(--ink-soft); flex:0 0 auto; min-width:22px;
+}
+.ix-social .items .t{
+  font-family:var(--serif); font-weight:300; font-size:var(--s-title-sm);
+  line-height:1.3; color:var(--ink);
+}
+.ix-social .items .t .lead{font-weight:400;}
+.ix-social .l-lista .headline{margin-bottom:var(--gap);}
+.ix-social .l-lista .intro{margin-bottom:var(--gap);}
+
+/* · cita — serif a tamaño `title`, centrada en la caja.
+   `bottom:auto` no es cosmético: FitText centra moviendo `top`, y una caja
+   estirada entre `top` y `bottom` ignora ese movimiento y deja la cita
+   pegada arriba. Con el alto libre, el centrado funciona. */
+.ix-social .l-cita{bottom:auto;}
+
+.ix-social .quote{
+  font-family:var(--serif); font-weight:300; font-size:var(--s-title);
+  line-height:1.2; color:var(--ink);
+}
+.ix-social .quote .src{
+  display:block; margin-top:36px;
+  font-family:var(--mono); font-weight:400; font-size:var(--s-caption);
+  letter-spacing:var(--track-label); color:var(--ink-soft);
+}
+
+/* · rotulo — cuerpo mono arriba, rótulo serif grande abajo. */
+.ix-social .l-rotulo .box{display:flex; flex-direction:column; justify-content:space-between;}
+.ix-social .l-rotulo .label{
+  font-family:var(--serif); font-weight:300; font-size:var(--s-display);
+  line-height:1; color:var(--ink);
+}
+
+/* · agenda — qué y a qué hora. */
+.ix-social .agenda li{
+  display:flex; align-items:baseline; justify-content:space-between; gap:32px;
+  padding:20px 0; border-bottom:1px solid var(--rule);
+}
+.ix-social .agenda li:first-child{padding-top:0;}
+.ix-social .agenda .what{
+  font-family:var(--serif); font-weight:300; font-size:var(--s-title-sm);
+  line-height:1.25; color:var(--ink);
+}
+.ix-social .agenda .when{
+  font-family:var(--serif); font-weight:300; font-size:var(--s-title-sm);
+  line-height:1.25; color:var(--ink); font-variant-numeric:tabular-nums; flex:0 0 auto;
+}
+.ix-social .l-agenda .headline{margin-bottom:var(--gap);}
+
+/* ───────────────────────────── Foto ─────────────────────────────
+   La foto va a sangre y el texto encima, así que necesita un velo. Dos
+   gradientes, no una capa plana: oscurecen la zona del texto sin apagar la
+   imagen entera. Es el mismo recurso que usa la portada del deck. */
+
+.ix-social .photo{position:absolute; inset:0; overflow:hidden;}
+.ix-social .photo img{width:100%; height:100%; object-fit:cover; display:block;}
+.ix-social .scrim{position:absolute; inset:0;}
+/* Cada velo lleva DOS bandas: la fuerte donde cae el texto y una de apoyo
+   en el extremo contrario, donde va la papelería.
+
+   La de apoyo no es opcional. El imagotipo y el slug van en blanco, así
+   que sobre una foto con una zona clara justo ahí desaparecen. Pasó con
+   una portada cuya franja inferior era casi blanca: el pie se perdía
+   entero y no se descubre hasta que la pieza está publicada. */
+.ix-social .scrim.bottom{
+  background:
+    linear-gradient(to top, rgba(10,9,8,.86) 0%, rgba(10,9,8,.42) 34%, rgba(10,9,8,0) 62%),
+    linear-gradient(to bottom, rgba(10,9,8,.58) 0%, rgba(10,9,8,.22) 14%, rgba(10,9,8,0) 34%);
+}
+.ix-social .scrim.top{
+  background:
+    linear-gradient(to bottom, rgba(10,9,8,.86) 0%, rgba(10,9,8,.42) 34%, rgba(10,9,8,0) 62%),
+    linear-gradient(to top, rgba(10,9,8,.68) 0%, rgba(10,9,8,.26) 13%, rgba(10,9,8,0) 28%);
+}
+/* Velo uniforme: el de las tarjetas que llevan foto de fondo en un layout
+   que no la lleva de serie.
+
+   Uniforme y no en degradado porque aquí el texto puede caer en cualquier
+   parte de la tarjeta: un titular arriba, una lista en medio, un rótulo
+   abajo. Un degradado protegería una zona y dejaría las otras al azar de
+   la foto.
+
+   0,60 no es un número elegido a ojo. Es el velo mínimo que garantiza
+   4,5:1 de contraste para la tinta clara (#F5F2ED) sobre el PEOR fondo
+   posible, que es una foto blanca: con 0,60 el blanco queda en 102 y da
+   5,14; con 0,55 se queda en 4,25 y no llega. Si aguanta contra una foto
+   blanca, aguanta con cualquiera.
+
+   Es oscuro a propósito: una tarjeta de texto sobre foto usa la foto como
+   textura, no como tema. Para que la foto sea la protagonista está el
+   layout `foto`. */
+.ix-social .scrim.full{background:rgba(10,9,8,.60);}
+
+/* Oscurecido extra, el control de exposición. Va sobre el velo y no en
+   lugar de él: el velo es lo que garantiza el contraste y este control
+   solo puede añadir, nunca quitar. */
+.ix-social .photo .expo{position:absolute; inset:0; background:#0A0908;}
+
+.ix-social .on-photo{color:var(--warm-light); --ink:var(--warm-light); --ink-soft:rgba(245,242,237,.72); --rule:rgba(245,242,237,.28);}
+.ix-social .on-photo .box{z-index:2;}
+
+/* · portada — foto a sangre, titular serif y subtítulo mono.
+
+   EL TEXTO Y LA MARCA OCUPAN EXTREMOS OPUESTOS, SIEMPRE.
+
+   · Papelería al pie (Miradas) → el titular va ARRIBA.
+   · Papelería en cabecera (evento, workshop) → el titular va ABAJO.
+
+   No es una regla cosmética: es lo que hace que las dos portadas se lean
+   distintas en el feed usando exactamente las mismas piezas. Y es lo que
+   hacen los diseños: los dos carruseles de Miradas arrancan con el titular
+   pegado al margen superior. */
+.ix-social .l-portada .box{display:flex; flex-direction:column; justify-content:flex-start;}
+.ix-social .l-portada.con-cabecera .box{justify-content:flex-end; bottom:var(--m);}
+.ix-social .l-portada .sub{margin-top:24px; max-width:78%;}
+
+/* · foto — texto arriba o abajo, o ninguno. */
+.ix-social .l-foto .box{display:flex; flex-direction:column;}
+.ix-social .l-foto.at-bottom .box{justify-content:flex-end;}
+
+/* · cierre — la llamada a leer, la firma y el retrato.
+
+   Esta tarjeta NO lleva pie: el retrato ocupa la esquina donde iría el
+   slug, y así es en las dos piezas publicadas que lo llevan. Su pie es la
+   firma a la izquierda y el retrato a la derecha.
+
+   La firma va en SERIF, no en mono. Es lo que hacen los dos carruseles
+   publicados, y tiene sentido: es una firma, que es exactamente el papel
+   que el sistema le da a la tipografía de contraste. */
+/* El titular del cierre va al peldaño `super` de la escala, no al
+   `display` del resto. Es el único texto de la tarjeta, así que puede y
+   debe ocupar: medido 182 px en la pieza publicada, y 192 es el peldaño
+   que la escala ya tiene declarado para «una palabra o un titular muy
+   corto». No hace falta inventar nada.
+
+   FitText lo encoge si alguien escribe un cierre largo, así que subirlo no
+   arriesga nada. */
+.ix-social .l-cierre .box{display:flex; flex-direction:column; justify-content:flex-start;}
+.ix-social .l-cierre .headline{font-size:var(--s-super); line-height:1;}
+.ix-social .l-cierre .by{
+  position:absolute; left:var(--m); bottom:var(--m);
+  font-family:var(--serif); font-weight:300; font-size:var(--s-title-sm);
+  line-height:1; color:var(--warm-light); z-index:3;
+}
+/* El retrato es un cuadrado de 330 al margen de página, no pegado al
+   borde. Medido sobre las piezas publicadas: 331×331 en una y 328 de ancho
+   en la otra. Que respete el mismo margen que todo lo demás es lo que lo
+   integra en la retícula en vez de dejarlo colgando de la esquina. */
+.ix-social .l-cierre .avatar{
+  position:absolute; right:var(--m); bottom:var(--m); width:330px; height:330px;
+  overflow:hidden; z-index:3;
+}
+.ix-social .l-cierre .avatar img{width:100%; height:100%; object-fit:cover; display:block;}
+
+/* ───────────────────────────── Exportación ─────────────────────────────
+   Al exportar se quita el factor de visualización y se pinta el lienzo a
+   tamaño real; el multiplicador lo aplica el exportador. */
+.ix-social.exporting{--s:1;}
+.ix-social.exporting .card{width:var(--cw); height:var(--ch);}

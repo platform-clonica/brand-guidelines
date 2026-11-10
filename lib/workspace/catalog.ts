@@ -83,8 +83,8 @@ export const APPS: AppEntry[] = [
     id: 'socialmakr',
     label: 'SocialMakr',
     group: 'tools',
-    href: null,
-    description: 'Próximamente',
+    href: '/workspace/socialmak_r',
+    description: 'Imágenes para redes',
     wordmark: { before: 'SocialMak', after: 'r' },
   },
 ];

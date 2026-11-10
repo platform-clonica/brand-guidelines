@@ -33,6 +33,7 @@ export async function GET(req: Request) {
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .limit(q.limit + 1);
+  if (q.url) query = query.eq('url', q.url);
   if (q.search) query = query.ilike('search_text', `%${escapeLike(q.search)}%`);
   if (q.untagged) query = query.eq('tags', '{}');
   else if (q.tags.length) query = query.contains('tags', q.tags);

@@ -10,7 +10,7 @@ import { useLayoutEffect, useRef, type ReactNode } from 'react';
    into a taller box mid-fit.
 
    No floor: the rule is that a slide never overflows, whatever the copy, so scale is always exactly
-   maxHeight/natural when it would overflow. Realistic copy (up to ~2.5× today's) stays readable;
+   the tightest of the two axes when it would overflow. Realistic copy (up to ~2.5× today's) stays readable;
    copy long enough to shrink further is rare and still never breaks the layout. A soft warning when
    it shrinks a lot belongs in the editor (deckWarnings), not here.
 
@@ -36,7 +36,21 @@ export function FitText({
     if (!el) return;
     el.style.transform = 'none';
     const natural = el.scrollHeight;
-    const scale = Math.min(1, maxHeight / natural);
+
+    /* También se mide el ANCHO. Un bloque puede desbordar de lado sin ser
+       demasiado alto: basta con una tirada que no se puede partir. Pasó al
+       subir el titular del cierre social a 192 px — `bindWidow` ata la
+       última palabra corta a la anterior con un espacio duro, y a ese
+       tamaño el par resultante ya no cabía en la caja, así que se salía
+       por la derecha sin que el alto se enterara.
+
+       `scrollWidth` nunca es menor que `clientWidth`, así que este factor
+       vale exactamente 1 mientras no haya desbordamiento: no puede
+       encoger nada que hoy se vea bien. */
+    const anchoCaja = el.clientWidth;
+    const factorAncho = anchoCaja > 0 ? anchoCaja / el.scrollWidth : 1;
+
+    const scale = Math.min(1, maxHeight / natural, factorAncho);
     el.style.transformOrigin = 'top left';
     el.style.transform = `scale(${scale})`;
     if (centerTop != null) {
