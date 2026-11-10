@@ -108,7 +108,10 @@ function kindOf(m: BlockModel): SlideKind {
    Regular sobre el Light del resto: un escalón, que es lo que permite el
    300/400 de la serif y lo que hace falta para que se lea. */
 function toListItem(raw: string): ListItem {
-  const m = raw.match(/^\*\*(.+?)\*\*\s*(.*)$/);
+  /* `[\s\S]` y no `.` en la cola: un elemento puede traer saltos de línea
+     desde que el editor los respeta, y con `.` el resto se quedaba fuera
+     del grupo y la negrita inicial no se detectaba. */
+  const m = raw.match(/^\*\*(.+?)\*\*\s*([\s\S]*)$/);
   if (m) return { lead: m[1].trim(), text: m[2].trim() };
   return { text: raw.trim() };
 }
@@ -258,7 +261,11 @@ function buildSlide(m: BlockModel, autorPieza?: string): Slide {
 }
 
 export function compileSocial(md: string, canvas: CanvasId = 'carrusel'): SocialDeck {
-  const sources = parse(md);
+  /* Saltos blandos: en el Social Maker, un Enter es un salto de línea
+     dentro del mismo texto y una línea en blanco empieza otra cosa. Es lo
+     que espera cualquiera que escriba, y sin ello los saltos de un titular
+     desaparecían. Ver `OpcionesParse` en lib/deck/parse.ts. */
+  const sources = parse(md, { saltosBlandos: true });
 
   /* Dos pasadas. En la primera se leen los bloques y se busca quién firma
      la pieza; en la segunda se construyen las tarjetas, que ya pueden

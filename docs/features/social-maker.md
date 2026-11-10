@@ -390,11 +390,20 @@ node scripts/sync-equipo.mjs
 Copia las fotos y regenera `lib/social/equipo.ts`, que está marcado como generado. Cuando alguien
 entre o salga del equipo, se vuelve a correr.
 
-## Trampa conocida al escribir
+## Cómo funciona pulsar Enter
 
-**Un párrafo tiene que ir en una sola línea.** El tokenizador convierte cada línea no vacía en su
-propio párrafo, así que partir una frase con un salto de línea produce dos párrafos separados. Es
-el mismo comportamiento que el deck.
+**Un Enter es un salto de línea dentro del mismo texto. Una línea en blanco empieza otra cosa.**
+
+Vale para titulares, párrafos, citas y elementos de lista. Un titular de tres líneas se escribe en
+tres líneas y salen tres líneas.
+
+Antes no era así: cada línea era un token propio, de modo que un titular partido en tres producía
+un titular de una línea y dos párrafos sueltos que el layout no pintaba. **Los saltos
+desaparecían.** La barra final (`\`) ya lo resolvía, pero nadie la adivina.
+
+**El deck NO lo tiene**, y es deliberado. `parse()` recibe la opción `saltosBlandos` y solo la
+activa el Social Maker. En las plantillas del deck hay 19 titulares pegados a su cuerpo sin línea
+en blanco: con saltos blandos se tragarían el párrafo dentro del titular.
 
 ---
 
