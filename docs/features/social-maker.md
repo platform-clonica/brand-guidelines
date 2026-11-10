@@ -274,7 +274,22 @@ fondo posible, una foto blanca (con 0,60 el blanco queda en 102 y da 5,14; con 0
 Es oscuro a propósito: una tarjeta de texto sobre foto usa la foto como **textura**, no como tema.
 Para que la foto sea la protagonista está el layout `foto`.
 
-Desde el editor: pasar por encima de la tarjeta y **Foto de fondo** / **Quitar foto**.
+Desde el editor hay **dos sitios**, y los dos hacen falta:
+
+- El panel **Foto de la tarjeta** en la columna izquierda, con *Añadir foto* / *Cambiar foto* /
+  *Quitar foto* y el control de exposición. Actúa sobre la tarjeta seleccionada.
+- Un rótulo al **pasar por encima** de la propia tarjeta.
+
+El panel existe porque el rótulo por hover no se encontraba: quien edita mira a la columna
+izquierda, que es donde están las demás acciones. Una función que no se ve es una función que no
+existe.
+
+**El primer clic sobre una tarjeta selecciona; el segundo actúa.** Si el clic sobre la foto abriera
+la galería a la primera, una tarjeta con foto no se podría ni seleccionar para bajarle la
+exposición: el modal saltaría siempre.
+
+*Quitar* solo vale para la foto de fondo. En los layouts que la llevan por diseño (portada, foto,
+cierre) el botón sale apagado y lo explica: una portada sin foto no es una portada.
 
 ---
 

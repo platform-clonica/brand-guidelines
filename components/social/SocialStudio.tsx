@@ -147,16 +147,23 @@ export function SocialStudio() {
      pero se lee de `provenance` para que siga valiendo si deja de serlo. */
   const bloqueDe = useCallback((i: number) => deck.provenance?.[i] ?? i, [deck]);
 
-  /* Clic sobre una tarjeta: selecciona, y si ha caído sobre una imagen,
-     abre la galería para cambiar esa imagen y no otra. */
+  /* Clic sobre una tarjeta: el primero SELECCIONA, el segundo actúa.
+
+     Si el clic sobre la foto abriera la galería a la primera, una tarjeta
+     con foto no se podría ni seleccionar para bajarle la exposición: el
+     modal saltaría siempre. Seleccionar y luego actuar es el patrón de
+     toda la vida y conserva el gesto de «clico en la imagen y la cambio»,
+     que es lo que se pidió. */
   const alClicar = useCallback(
     (e: React.MouseEvent, i: number) => {
+      const yaEstaba = actual === i;
       setActual(i);
+      if (!yaEstaba) return;
       const t = e.target as HTMLElement;
       if (t.closest('.avatar')) setRanura({ bloque: bloqueDe(i), pos: 1 });
       else if (t.closest('.photo')) setRanura({ bloque: bloqueDe(i), pos: 0 });
     },
-    [bloqueDe],
+    [actual, bloqueDe],
   );
 
   const slideActual = deck.slides[actual];
@@ -310,17 +317,66 @@ export function SocialStudio() {
             </div>
           </div>
 
-          {/* Exposición: solo baja. El velo del layout es lo que garantiza
-              que el texto se lea encima de cualquier foto, así que subirlo
-              por encima de ahí sería poder publicar algo ilegible. */}
+          {/* Panel de la foto de la tarjeta seleccionada.
+
+              Existe porque el control por hover sobre la propia tarjeta,
+              que también sigue ahí, no se encuentra: quien edita mira a la
+              columna de la izquierda, que es donde están las demás
+              acciones. Una función que no se ve es una función que no
+              existe. */}
           <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.warmLight }}>
             <p
               style={{
                 font: `500 10px/1 ${MONO}`, letterSpacing: '.08em', textTransform: 'uppercase',
-                color: colors.ash, margin: '0 0 10px', display: 'flex', justifyContent: 'space-between',
+                color: colors.ash, margin: '0 0 10px',
               }}
             >
-              <span>Exposición de la foto</span>
+              Foto de la tarjeta
+            </p>
+
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                disabled={!slideActual}
+                onClick={() => slideActual && setRanura({ bloque: bloqueDe(actual), pos: 0 })}
+                style={{ ...toolbarBtn, padding: '7px 9px', opacity: slideActual ? 1 : 0.45 }}
+              >
+                {conFotoActual ? 'Cambiar foto' : 'Añadir foto'}
+              </button>
+
+              {/* Quitar solo vale para la foto de fondo. En los layouts que
+                  la llevan de serie no tiene sentido: una portada sin foto
+                  no es una portada. */}
+              <button
+                type="button"
+                disabled={!slideActual?.fondo?.src}
+                title={
+                  slideActual && CON_FOTO.includes(slideActual.kind)
+                    ? `Una tarjeta de «${slideActual.kind}» lleva foto por diseño: no se puede quitar, solo cambiar.`
+                    : undefined
+                }
+                onClick={() => setMd((prev) => removeBlockImageAt(prev, bloqueDe(actual), 0))}
+                style={{
+                  ...toolbarBtn, padding: '7px 9px',
+                  opacity: slideActual?.fondo?.src ? 1 : 0.45,
+                  cursor: slideActual?.fondo?.src ? 'pointer' : 'not-allowed',
+                }}
+              >
+                Quitar foto
+              </button>
+            </div>
+
+            {/* Exposición: solo baja. El velo del layout es lo que
+                garantiza que el texto se lea encima de cualquier foto, así
+                que subirlo por encima de ahí sería poder publicar algo
+                ilegible. */}
+            <p
+              style={{
+                font: `400 10px/1 ${MONO}`, color: colors.ash,
+                margin: '14px 0 8px', display: 'flex', justifyContent: 'space-between',
+              }}
+            >
+              <span>Exposición</span>
               <span style={{ fontVariantNumeric: 'tabular-nums' }}>
                 {conFotoActual ? `${exposicionActual} %` : '—'}
               </span>
@@ -344,11 +400,6 @@ export function SocialStudio() {
               }}
               style={{ width: '100%', accentColor: colors.dark, opacity: conFotoActual ? 1 : 0.4 }}
             />
-            {!conFotoActual && (
-              <p style={{ font: `400 10px/1.5 ${MONO}`, color: colors.ash, margin: '8px 0 0' }}>
-                Esta tarjeta no tiene foto. Ponle una y podrás bajarle la exposición.
-              </p>
-            )}
           </div>
 
           <Paleta
