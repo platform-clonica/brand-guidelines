@@ -52,8 +52,10 @@
   --m:56px;            /* margen único, los cuatro lados */
   /* Alto del imagotipo. UNA medida y siempre la misma, horizontal o
      girado: es el mismo lockup. Guarda con el slug la proporción que
-     tienen en los diseños (0,85), así que si uno sube, sube el otro. */
+     tienen en los diseños (0,85), así que si uno sube, sube el otro.
+     El ancho sale de la proporción del SVG (3131×404 = 7,75). */
   --marca-h:48px;
+  --marca-w:372px;
   /* Hueco entre el titular y el cuerpo. No hay escala de espaciado escrita
      en el manual, así que sale de la proporción que ya usa el deck: 26 px
      bajo un titular de 44 (`.split h2`), que sobre los 96 de aquí son 57.
@@ -160,20 +162,26 @@
    alto. Es el MISMO lockup, no una versión distinta, así que la medida
    única se mantiene también aquí. Medido al píxel en las dos portadas que
    lo usan: de (56,56) a (96,372). */
-.ix-social .head .vmark{width:var(--marca-h); height:372px; position:relative;}
+.ix-social .head .vmark{width:var(--marca-h); height:var(--marca-w); position:relative;}
 .ix-social .head .vmark img{
   position:absolute; top:0; left:0;
-  width:372px; height:var(--marca-h);
+  width:var(--marca-w); height:var(--marca-h);
   /* El reset de Tailwind pone `max-width:100%` a toda imagen, y aquí el
      contenedor mide 41 px de ancho: sin esto, el imagotipo se recorta a 41
      y se ve como una astilla. */
   max-width:none;
-  /* UNA sola transformación, y el desplazamiento DESPUÉS de la rotación.
+  /* Gira en ANTIHORARIO, no en horario. Es la diferencia entre que el
+     imagotipo mire hacia dentro de la tarjeta o hacia fuera, y los diseños
+     de referencia lo tienen así: la palabra se lee de abajo arriba, con la
+     «i» abajo. Girado al revés sale la misma pieza del revés, que es lo
+     que estaba pasando.
+
+     UNA sola transformación, y el desplazamiento DESPUÉS de la rotación.
      Con la propiedad `translate` separada no funciona: se aplica antes que
      `transform`, así que la rotación la gira también y el imagotipo acaba
      fuera de la caja. Aquí se lee de derecha a izquierda: primero gira
      sobre su esquina, luego se devuelve a la caja. */
-  transform:translate(var(--marca-h), 0) rotate(90deg);
+  transform:translate(0, var(--marca-w)) rotate(-90deg);
   transform-origin:0 0;
 }
 .ix-social .head .slug{
