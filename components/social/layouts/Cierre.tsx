@@ -1,6 +1,6 @@
 import type { Slide } from '@/lib/social/types';
 import { FitText } from '@/components/deck/FitText';
-import { typesetHeadline } from '@/lib/deck/typeset';
+import { keepCompounds } from '@/lib/deck/typeset';
 import { inline } from '@/components/deck/inline';
 import { Photo } from '../Photo';
 
@@ -25,7 +25,15 @@ export function Cierre({
     <>
       <Photo image={slide.image} scrim="bottom" />
       <FitText maxHeight={boxH} className="box l-cierre on-photo">
-        <h2 className="headline">{inline(typesetHeadline(slide.title))}</h2>
+        {/* Sin ligado de viuda, a diferencia del resto de titulares.
+
+            La regla ata la última palabra corta a la anterior para que no
+            se quede sola en su línea, y a 96 px es lo correcto. Aquí el
+            titular va a 192 y ocupa cuatro líneas: atar «nuestro blog.»
+            lo convierte en una tirada que no cabe en la caja, obliga a
+            FitText a encoger y deja «en» sola, que es justo el defecto que
+            la regla quería evitar. Suelto parte donde parte el diseño. */}
+        <h2 className="headline">{inline(keepCompounds(slide.title))}</h2>
       </FitText>
       {slide.author && <span className="by">Por {slide.author}</span>}
       {slide.avatar?.src ? (

@@ -111,6 +111,13 @@ acaso»: un layout que nadie usa es una papeleta para que alguien lo use mal.
 | `agenda` | Filas de «qué \| cuándo» con filete |
 | `cierre` | Llamada a leer, firma y retrato en la esquina |
 
+El titular del cierre va al peldaño **`super` (192)** y no al `display` del resto: es el único
+texto de la tarjeta, medido 182 en la pieza publicada, y 192 es el peldaño que la escala ya tiene
+declarado para «una palabra o un titular muy corto». Es también el único titular **sin ligado de
+viuda**: a ese tamaño, atar la última palabra corta a la anterior crea una tirada que no cabe en
+la caja y deja una palabra suelta en la línea de antes, que es justo el defecto que la regla
+quería evitar.
+
 Las plantillas de arranque son cuatro: **Miradas** (papelería al pie), **evento** y **workshop**
 (papelería en cabecera) y una en blanco.
 
@@ -213,6 +220,26 @@ nunca quiere decir.
 ```
 {warm-light}  {warm-dark}  {white}  {opal}  {dark}
 ```
+
+### Cualquier tarjeta puede llevar foto de fondo
+
+Una imagen en un layout que no la consume (titular, texto, lista, cita, rótulo, agenda) se entiende
+como **foto de fondo** y sustituye al relleno plano. Es ortogonal al layout, igual que el color: el
+componente no se entera.
+
+Arrastra el tema a oscuro, y no es negociable: encima va tinta clara sobre el velo, y dejar que
+alguien eligiera tinta oscura sería dejarle publicar una tarjeta ilegible.
+
+**El velo es uniforme y vale 0,60.** Uniforme porque aquí el texto puede caer en cualquier parte de
+la tarjeta, y un degradado protegería una zona dejando las otras al azar de la foto. Y 0,60 no es
+un número a ojo: es el mínimo que garantiza **4,5:1** de contraste para `#F5F2ED` sobre el peor
+fondo posible, una foto blanca (con 0,60 el blanco queda en 102 y da 5,14; con 0,55 se queda en
+4,25 y no llega). Si aguanta contra una foto blanca, aguanta con cualquiera.
+
+Es oscuro a propósito: una tarjeta de texto sobre foto usa la foto como **textura**, no como tema.
+Para que la foto sea la protagonista está el layout `foto`.
+
+Desde el editor: pasar por encima de la tarjeta y **Foto de fondo** / **Quitar foto**.
 
 ---
 

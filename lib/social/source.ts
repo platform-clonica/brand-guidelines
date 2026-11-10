@@ -39,6 +39,23 @@ export function setBlockImageAt(md: string, blockIndex: number, pos: number, url
   return md.slice(0, b.start) + nuevo + md.slice(b.end);
 }
 
+/* Quita la imagen número `pos` de un bloque. La necesita el control de
+   foto de fondo: poner una es cambiar un color por una imagen, y tiene que
+   poder deshacerse igual de fácil. */
+export function removeBlockImageAt(md: string, blockIndex: number, pos: number): string {
+  const blocks = splitSourceBlocks(md);
+  const b = blocks[blockIndex];
+  if (!b) return md;
+  let n = 0;
+  const texto = b.text
+    .replace(IMG_RE, (whole) => (n++ === pos ? '' : whole))
+    /* La línea se queda vacía al borrar: se cierra el hueco para no dejar
+       tres saltos seguidos en el texto de quien edita. */
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\s+$/, '\n');
+  return md.slice(0, b.start) + texto + md.slice(b.end);
+}
+
 /* Cuántas imágenes tiene ya un bloque. La necesita el editor para saber si
    un clic en el retrato cambia una imagen existente o añade la segunda. */
 export function countBlockImages(md: string, blockIndex: number): number {

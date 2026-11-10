@@ -8,7 +8,13 @@ import { TEMPLATES, templateById, type TemplateId } from '@/lib/social/templates
 import { exportAll, exportCard, fileName } from '@/lib/social/exportPng';
 import { colors, btn, btnGhost, toolbarBtn, seg, segOn } from '@/components/deck/studio/ui';
 import { ImageGallery } from '@/components/deck/studio/ImageGallery';
-import { countBlockImages, setBlockBackground, setBlockImageAt, setMeta } from '@/lib/social/source';
+import {
+  countBlockImages,
+  removeBlockImageAt,
+  setBlockBackground,
+  setBlockImageAt,
+  setMeta,
+} from '@/lib/social/source';
 import { Paleta } from './studio/Paleta';
 import { SocialCard } from './SocialCard';
 
@@ -154,12 +160,13 @@ export function SocialStudio() {
   );
 
   const slideActual = deck.slides[actual];
-  /* La tarjeta con foto no usa relleno: el fondo es la imagen. */
-  const paletaApagada =
-    !slideActual
-      ? 'Elige una tarjeta para cambiarle el fondo.'
-      : CON_FOTO.includes(slideActual.kind)
-        ? `Una tarjeta de «${slideActual.kind}» lleva foto a sangre: el fondo es la imagen. Haz clic sobre ella para cambiarla.`
+  /* Donde hay foto no hay relleno: el fondo es la imagen. */
+  const paletaApagada = !slideActual
+    ? 'Elige una tarjeta para cambiarle el fondo.'
+    : CON_FOTO.includes(slideActual.kind)
+      ? `Una tarjeta de «${slideActual.kind}» lleva foto a sangre: el fondo es la imagen. Haz clic sobre ella para cambiarla.`
+      : slideActual.fondo?.src
+        ? 'Esta tarjeta tiene foto de fondo. Quítala para volver a un color.'
         : undefined;
 
   const insertar = (skeleton: string) => {
@@ -297,7 +304,7 @@ export function SocialStudio() {
           </div>
 
           <Paleta
-            actual={slideActual && !CON_FOTO.includes(slideActual.kind)
+            actual={slideActual && !CON_FOTO.includes(slideActual.kind) && !slideActual.fondo?.src
               ? (slideActual.theme === 'dark' ? 'dark' : (slideActual.bg ?? 'warm-light'))
               : undefined}
             deshabilitado={paletaApagada}
@@ -360,21 +367,37 @@ export function SocialStudio() {
                           adivina. El rótulo aparece al pasar por encima: dice
                           que se puede, sin ensuciar la vista el resto del
                           tiempo. */}
-                      {conFoto && encima === i && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActual(i);
-                            setRanura({ bloque: bloqueDe(i), pos: 0 });
-                          }}
-                          style={{
-                            position: 'absolute', top: 10, left: 10, zIndex: 10,
-                            ...toolbarBtn, padding: '6px 9px',
-                          }}
-                        >
-                          Cambiar foto
-                        </button>
+                      {encima === i && (
+                        <span style={{ position: 'absolute', top: 10, left: 10, zIndex: 10, display: 'flex', gap: 6 }}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActual(i);
+                              setRanura({ bloque: bloqueDe(i), pos: 0 });
+                            }}
+                            style={{ ...toolbarBtn, padding: '6px 9px' }}
+                          >
+                            {conFoto || slide.fondo?.src ? 'Cambiar foto' : 'Foto de fondo'}
+                          </button>
+                          {/* Quitar solo se ofrece cuando la foto es de
+                              fondo. En los layouts que la llevan de serie
+                              no tiene sentido: una portada sin foto no es
+                              una portada. */}
+                          {slide.fondo?.src && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActual(i);
+                                setMd((prev) => removeBlockImageAt(prev, bloqueDe(i), 0));
+                              }}
+                              style={{ ...toolbarBtn, padding: '6px 9px' }}
+                            >
+                              Quitar foto
+                            </button>
+                          )}
+                        </span>
                       )}
                       {/* El retrato es la SEGUNDA imagen del bloque, así que
                           solo tiene sentido ofrecerlo cuando ya hay una

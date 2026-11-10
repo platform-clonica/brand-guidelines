@@ -78,6 +78,10 @@ function appearanceOf(tokens: Token[], title: string): { theme?: Theme; bg?: Bac
    el que más se usa en negativo en los carruseles publicados. */
 const DARK_BY_ROLE: SlideKind[] = ['portada', 'foto', 'cierre'];
 
+/* Los que YA consumen la imagen del bloque como parte de su diseño. En el
+   resto, una imagen suelta se entiende como foto de fondo. */
+const CONSUMEN_IMAGEN: SlideKind[] = ['portada', 'foto', 'cierre'];
+
 function themeFor(kind: SlideKind, override: Theme | undefined): Theme {
   if (override) return override;
   return DARK_BY_ROLE.includes(kind) ? 'dark' : 'light';
@@ -138,10 +142,18 @@ function img(ref: ImageRef | undefined): ImageRef | undefined {
 function buildSlide(m: BlockModel): Slide {
   const kind = kindOf(m);
   const app = appearanceOf(m.tokens, m.headings[0]?.text ?? '');
-  const theme = themeFor(kind, app.theme);
+
+  /* Una imagen en un layout que no la usa es una foto de fondo. Arrastra
+     el tema a oscuro: encima va a ir texto claro sobre el velo, y dejar
+     que alguien eligiera tinta oscura sería dejarle publicar una tarjeta
+     ilegible. */
+  const fondo = !CONSUMEN_IMAGEN.includes(kind) ? img(m.image) : undefined;
+  const theme = fondo ? 'dark' : themeFor(kind, app.theme);
+
   const common = {
     theme,
     bg: app.bg,
+    fondo,
     slug: m.meta.slug,
     logo: m.meta.logo ? { src: m.meta.logo, alt: '' } : undefined,
   };

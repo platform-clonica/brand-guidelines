@@ -12,7 +12,7 @@ export function Photo({
   scrim,
 }: {
   image?: ImageRef;
-  scrim?: 'top' | 'bottom' | 'none';
+  scrim?: 'top' | 'bottom' | 'full' | 'none';
 }) {
   if (!image?.src) return null;
   return (

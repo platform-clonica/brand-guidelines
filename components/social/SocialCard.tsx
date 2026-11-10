@@ -5,6 +5,7 @@ import type { CanvasId, Slide } from '@/lib/social/types';
 import { CANVASES } from '@/lib/social/types';
 import { boxHeight } from '@/lib/social/geometry';
 import { Foot, Head, type Mark } from './Foot';
+import { Photo } from './Photo';
 import {
   Agenda,
   Cierre,
@@ -39,7 +40,11 @@ export function SocialCard({
 }) {
   const spec = CANVASES[canvas];
   const boxH = boxHeight(canvas);
-  const onPhoto = LAYOUTS_SOBRE_FOTO.includes(slide.kind);
+  /* Sobre foto se está de dos maneras: porque el layout la lleva de serie,
+     o porque alguien le ha puesto una de fondo a una tarjeta plana. Las
+     dos piden tinta clara y papelería en negativo. */
+  const conFondo = Boolean(slide.fondo?.src);
+  const onPhoto = LAYOUTS_SOBRE_FOTO.includes(slide.kind) || conFondo;
   /* La portada puede llevar la papelería en cabecera en vez de al pie. Es
      lo que distingue la serie de Miradas de las de evento y workshop, y lo
      que da variedad en el feed sin inventar un diseño nuevo. */
@@ -61,8 +66,10 @@ export function SocialCard({
       }
     >
       <div
-        className={`frame theme-${slide.theme}${bgClass} l-${slide.kind}${enCabecera ? ' con-cabecera' : ''}`}
+        className={`frame theme-${slide.theme}${bgClass} l-${slide.kind}${enCabecera ? ' con-cabecera' : ''}${conFondo ? ' on-photo' : ''}`}
       >
+        {/* La foto de fondo va la PRIMERA, debajo de todo lo demás. */}
+        {conFondo && <Photo image={slide.fondo} scrim="full" />}
         {slide.kind === 'portada' && <Portada slide={slide} boxH={boxH} />}
         {slide.kind === 'titular' && <Titular slide={slide} boxH={boxH} />}
         {slide.kind === 'texto' && <Texto slide={slide} boxH={boxH} />}

@@ -83,6 +83,13 @@ type SlideVariant =
    necesita declararlos. */
 export type Slide = SlideVariant & {
   bg?: Background;
+  /* Foto de fondo en un layout que no la lleva de serie (titular, texto,
+     lista, cita, rótulo, agenda). Sustituye al relleno plano: donde hay
+     foto, el color de fondo no pinta nada.
+
+     Es ortogonal al layout a propósito: cualquier tarjeta puede llevarla
+     sin que su componente se entere, igual que pasa con `bg`. */
+  fondo?: ImageRef;
   /** Texto de la esquina. `/Miradas/`, `/Eventos/`, `/Summer Fest/`… Libre. */
   slug?: string;
   /** Logotipo co-marca del pie, enfrente del slug. Ruta a un archivo. */
