@@ -342,6 +342,11 @@
    layout `foto`. */
 .ix-social .scrim.full{background:rgba(10,9,8,.60);}
 
+/* Oscurecido extra, el control de exposición. Va sobre el velo y no en
+   lugar de él: el velo es lo que garantiza el contraste y este control
+   solo puede añadir, nunca quitar. */
+.ix-social .photo .expo{position:absolute; inset:0; background:#0A0908;}
+
 .ix-social .on-photo{color:var(--warm-light); --ink:var(--warm-light); --ink-soft:rgba(245,242,237,.72); --rule:rgba(245,242,237,.28);}
 .ix-social .on-photo .box{z-index:2;}
 

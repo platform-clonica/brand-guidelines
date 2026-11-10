@@ -23,7 +23,7 @@ export function Cierre({
 }) {
   return (
     <>
-      <Photo image={slide.image} scrim="bottom" />
+      <Photo image={slide.image} scrim="bottom" exposicion={slide.exposicion} />
       <FitText maxHeight={boxH} className="box l-cierre on-photo">
         {/* Sin ligado de viuda, a diferencia del resto de titulares.
 

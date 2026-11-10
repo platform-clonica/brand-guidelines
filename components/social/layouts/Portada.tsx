@@ -20,7 +20,7 @@ export function Portada({
   const enCabecera = slide.papeleria === 'cabecera';
   return (
     <>
-      <Photo image={slide.image} scrim={enCabecera ? 'bottom' : 'top'} />
+      <Photo image={slide.image} scrim={enCabecera ? 'bottom' : 'top'} exposicion={slide.exposicion} />
       <FitText maxHeight={boxH} className="box l-portada on-photo">
         <div>
           <h1 className="headline">{inline(typesetHeadline(slide.title))}</h1>

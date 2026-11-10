@@ -150,10 +150,18 @@ function buildSlide(m: BlockModel): Slide {
   const fondo = !CONSUMEN_IMAGEN.includes(kind) ? img(m.image) : undefined;
   const theme = fondo ? 'dark' : themeFor(kind, app.theme);
 
+  /* `> exposicion: 60`. Fuera de rango se recorta en vez de ignorarse: un
+     número raro escrito a mano debe dar algo sensato, no desaparecer. */
+  const expoCruda = Number(m.meta.exposicion);
+  const exposicion = Number.isFinite(expoCruda)
+    ? Math.min(100, Math.max(0, Math.round(expoCruda)))
+    : undefined;
+
   const common = {
     theme,
     bg: app.bg,
     fondo,
+    exposicion,
     slug: m.meta.slug,
     logo: m.meta.logo ? { src: m.meta.logo, alt: '' } : undefined,
   };

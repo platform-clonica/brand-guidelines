@@ -105,7 +105,7 @@ acaso»: un layout que nadie usa es una papeleta para que alguien lo use mal.
 | `titular` | Un titular serif y nada más |
 | `texto` | Titular opcional + cuerpo en mono |
 | `lista` | Titular + elementos numerados con filete |
-| `cita` | Cita serif centrada en la tarjeta |
+| `cita` | Cita entre comillas, firma pequeña debajo. El pensado para el post horizontal |
 | `foto` | Foto a sangre con texto encima, arriba o abajo, o sin texto |
 | `rotulo` | Cuerpo mono arriba, rótulo serif grande abajo |
 | `agenda` | Filas de «qué \| cuándo» con filete |
@@ -220,6 +220,28 @@ nunca quiere decir.
 ```
 {warm-light}  {warm-dark}  {white}  {opal}  {dark}
 ```
+
+### La cita
+
+Las comillas **las pone el sistema**, no quien escribe: salen siempre las mismas y salen siempre
+las angulares («»), que son las del castellano y las que aparecen en los carruseles publicados. Si
+alguien las teclea igualmente, se le quitan antes para no doblarlas.
+
+La firma va debajo, pequeña, y sale de `> autor: Nombre Apellido`. Mantiene el slug como cualquier
+otra tarjeta, y admite fondo de color o foto.
+
+### Bajar la exposición de la foto
+
+`> exposicion: 35`, de 0 a 100, o el deslizador del editor. 100 es la foto tal cual con el velo
+normal del layout; por debajo se va oscureciendo para que el texto destaque.
+
+**Solo baja, nunca sube.** El velo del layout es lo que garantiza que el texto se lea encima de
+cualquier foto, así que poder subirlo por encima de ahí sería poder publicar una tarjeta
+ilegible. Bajar no tiene ese riesgo: cuanto más oscuro, más se lee.
+
+Se pinta como una capa aparte, encima del velo y no en su lugar. Así se suma a cualquiera de los
+tres velos sin recalcular sus degradados, y la garantía de contraste del velo base queda intacta
+pase lo que pase con este control.
 
 ### Cualquier tarjeta puede llevar foto de fondo
 

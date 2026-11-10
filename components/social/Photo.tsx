@@ -10,11 +10,19 @@ import type { ImageRef } from '@/lib/social/types';
 export function Photo({
   image,
   scrim,
+  exposicion,
 }: {
   image?: ImageRef;
   scrim?: 'top' | 'bottom' | 'full' | 'none';
+  /** 0 a 100. 100 es la foto tal cual; por debajo se oscurece. */
+  exposicion?: number;
 }) {
   if (!image?.src) return null;
+  /* Capa aparte y no una modificación del velo: así el oscurecido se suma
+     a cualquiera de los tres velos sin tener que recalcular sus
+     degradados, y la garantía de contraste del velo base se mantiene
+     intacta pase lo que pase con este control. */
+  const oscurecido = exposicion == null ? 0 : Math.max(0, 1 - exposicion / 100);
   return (
     <div className="photo">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -24,6 +32,7 @@ export function Photo({
         style={image.alignY != null ? { objectPosition: `50% ${image.alignY}%` } : undefined}
       />
       {scrim && scrim !== 'none' && <div className={`scrim ${scrim}`} />}
+      {oscurecido > 0 && <div className="expo" style={{ opacity: oscurecido }} />}
     </div>
   );
 }

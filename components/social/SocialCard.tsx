@@ -69,7 +69,7 @@ export function SocialCard({
         className={`frame theme-${slide.theme}${bgClass} l-${slide.kind}${enCabecera ? ' con-cabecera' : ''}${conFondo ? ' on-photo' : ''}`}
       >
         {/* La foto de fondo va la PRIMERA, debajo de todo lo demás. */}
-        {conFondo && <Photo image={slide.fondo} scrim="full" />}
+        {conFondo && <Photo image={slide.fondo} scrim="full" exposicion={slide.exposicion} />}
         {slide.kind === 'portada' && <Portada slide={slide} boxH={boxH} />}
         {slide.kind === 'titular' && <Titular slide={slide} boxH={boxH} />}
         {slide.kind === 'texto' && <Texto slide={slide} boxH={boxH} />}

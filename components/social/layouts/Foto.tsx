@@ -11,7 +11,7 @@ export function Foto({ slide, boxH }: { slide: Extract<Slide, { kind: 'foto' }>;
   const where = slide.position ?? 'top';
   return (
     <>
-      <Photo image={slide.image} scrim={slide.text ? where : 'none'} />
+      <Photo image={slide.image} scrim={slide.text ? where : 'none'} exposicion={slide.exposicion} />
       {slide.text && (
         <FitText maxHeight={boxH} className={`box l-foto on-photo at-${where}`}>
           <h2 className="headline sm">{inline(typesetHeadline(slide.text))}</h2>

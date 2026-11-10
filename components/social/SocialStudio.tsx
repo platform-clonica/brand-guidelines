@@ -169,6 +169,13 @@ export function SocialStudio() {
         ? 'Esta tarjeta tiene foto de fondo. Quítala para volver a un color.'
         : undefined;
 
+  /* La tarjeta tiene foto si el layout la lleva de serie o si alguien le
+     ha puesto una de fondo. En los dos casos se puede bajar la exposición. */
+  const conFotoActual = Boolean(
+    slideActual && (CON_FOTO.includes(slideActual.kind) || slideActual.fondo?.src),
+  );
+  const exposicionActual = slideActual?.exposicion ?? 100;
+
   const insertar = (skeleton: string) => {
     setMd((prev) => `${prev.trimEnd()}\n\n---\n\n${skeleton}\n`);
     setActual(total);
@@ -301,6 +308,47 @@ export function SocialStudio() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Exposición: solo baja. El velo del layout es lo que garantiza
+              que el texto se lea encima de cualquier foto, así que subirlo
+              por encima de ahí sería poder publicar algo ilegible. */}
+          <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.warmLight }}>
+            <p
+              style={{
+                font: `500 10px/1 ${MONO}`, letterSpacing: '.08em', textTransform: 'uppercase',
+                color: colors.ash, margin: '0 0 10px', display: 'flex', justifyContent: 'space-between',
+              }}
+            >
+              <span>Exposición de la foto</span>
+              <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+                {conFotoActual ? `${exposicionActual} %` : '—'}
+              </span>
+            </p>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              value={exposicionActual}
+              disabled={!conFotoActual}
+              aria-label="Exposición de la foto"
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                setMd((prev) =>
+                  /* 100 es el valor normal: en vez de escribirlo, se quita
+                     la línea. Un markdown lleno de metadatos que no hacen
+                     nada es más difícil de leer. */
+                  setMeta(prev, bloqueDe(actual), 'exposicion', v >= 100 ? null : String(v)),
+                );
+              }}
+              style={{ width: '100%', accentColor: colors.dark, opacity: conFotoActual ? 1 : 0.4 }}
+            />
+            {!conFotoActual && (
+              <p style={{ font: `400 10px/1.5 ${MONO}`, color: colors.ash, margin: '8px 0 0' }}>
+                Esta tarjeta no tiene foto. Ponle una y podrás bajarle la exposición.
+              </p>
+            )}
           </div>
 
           <Paleta

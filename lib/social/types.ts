@@ -90,6 +90,14 @@ export type Slide = SlideVariant & {
      Es ortogonal al layout a propósito: cualquier tarjeta puede llevarla
      sin que su componente se entere, igual que pasa con `bg`. */
   fondo?: ImageRef;
+  /* Exposición de la foto, de 0 a 100. 100 es la foto tal cual, con el
+     velo normal del layout; por debajo se va oscureciendo.
+
+     Solo baja, nunca sube. El velo normal es lo que garantiza que el texto
+     se lea encima de cualquier foto (ver `.scrim.full` en social.css), así
+     que dejar subirlo sería dejar publicar una tarjeta ilegible. Bajar no
+     tiene ese riesgo: cuanto más oscuro, más se lee. */
+  exposicion?: number;
   /** Texto de la esquina. `/Miradas/`, `/Eventos/`, `/Summer Fest/`… Libre. */
   slug?: string;
   /** Logotipo co-marca del pie, enfrente del slug. Ruta a un archivo. */

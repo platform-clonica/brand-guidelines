@@ -49,9 +49,13 @@ Segundo párrafo, si hace falta.`,
 - **Lo segundo.** La explicación que lo acompaña.
 - **Lo tercero.** La explicación que lo acompaña.`,
 
+  /* Las comillas no van en el esqueleto: las pone el sistema, siempre
+     angulares. El autor va como metadato y no como antetítulo en
+     mayúsculas, que es lo que se quiere debajo de una cita: un nombre,
+     no una etiqueta. */
   cita: `> La frase citada, tal cual se dijo.
 
-NOMBRE DE QUIEN LO DIJO`,
+> autor: Nombre Apellido`,
 
   foto: `${IMG}
 
@@ -115,7 +119,9 @@ export const LAYOUTS: readonly LayoutCatalogEntry[] = [
     marker: 'cita',
     kind: 'cita',
     nombre: 'Cita',
-    slots: 'Una cita en serif a toda la tarjeta · atribución opcional',
+    slots:
+      'Cita entre comillas en serif · firma pequeña debajo · fondo de color o foto. ' +
+      'Es el layout pensado para el post horizontal.',
     skeleton: SKELETONS.cita,
   },
   {
