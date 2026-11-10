@@ -55,7 +55,16 @@ type SlideVariant =
   /* Programa de una sesión: qué y a qué hora, con filetes. */
   | { kind: 'agenda'; theme: Theme; title?: string; rows: AgendaRow[] }
   /* Cierre: la llamada a leer el artículo, con la firma y el retrato. */
-  | { kind: 'cierre'; theme: Theme; title: string; author?: string; image?: ImageRef; avatar?: ImageRef };
+  | {
+      kind: 'cierre';
+      theme: Theme;
+      title: string;
+      author?: string;
+      image?: ImageRef;
+      avatar?: ImageRef;
+      /** `false` = hay firma pero no es nadie del equipo. El editor lo avisa. */
+      autorEnEquipo?: boolean;
+    };
 
 /* `bg`, `slug` y `logo` son ortogonales al layout, así que viajan en
    intersección: estrechar por `kind` sigue funcionando y ningún layout

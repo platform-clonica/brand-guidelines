@@ -258,6 +258,10 @@
   overflow:hidden; z-index:3;
 }
 .ix-social .l-cierre .avatar img{width:100%; height:100%; object-fit:cover; display:block;}
+/* El isotipo no es un retrato: se contiene en la caja en lugar de
+   recortarse, y la caja es cuadrada porque la marca lo es. */
+.ix-social .l-cierre .avatar.marca{width:216px; height:216px;}
+.ix-social .l-cierre .avatar.marca img{object-fit:contain;}
 
 /* ───────────────────────────── Exportación ─────────────────────────────
    Al exportar se quita el factor de visualización y se pinta el lienzo a

@@ -153,6 +153,34 @@ Exportando el nodo que ya está pintado, el PNG y la vista previa no pueden dife
 
 ---
 
+## La firma de la tarjeta de cierre
+
+`> autor: Diana Yuste` y el retrato aparece solo. Ni subirlo, ni buscarlo, ni acordarse de cómo se
+llama el archivo.
+
+- **Tolerante al acento.** «Maria Najarro» y «María Najarro» son la misma persona. Nadie se queda
+  sin foto por una tilde.
+- **El nombre de pila basta si no se repite.** «Diana» funciona; «Elena» no, porque hay dos, y una
+  foto equivocada es peor que ninguna foto.
+- **Una segunda imagen en el bloque gana a la automática**, para firmar con alguien de fuera.
+- **Quien no está en el equipo firma con el isotipo**, no con una inicial. Es lo que ya hace la web.
+  Y el editor lo avisa, para que una errata no llegue a publicarse disfrazada de decisión.
+
+### El equipo vive en otro repositorio
+
+La fuente de verdad es `interactius-web`: `lib/data/team.ts` y
+`public/identidad/fotos-team/team.md`. Aquí hacen falta las fotos porque el PNG se genera desde el
+DOM y **una imagen de otro dominio contamina el lienzo**: la exportación se caería.
+
+Copiar datos entre repositorios deriva, así que no es un copia y pega sino un script:
+
+```
+node scripts/sync-equipo.mjs
+```
+
+Copia las fotos y regenera `lib/social/equipo.ts`, que está marcado como generado. Cuando alguien
+entre o salga del equipo, se vuelve a correr.
+
 ## Trampa conocida al escribir
 
 **Un párrafo tiene que ir en una sola línea.** El tokenizador convierte cada línea no vacía en su
@@ -167,5 +195,7 @@ el mismo comportamiento que el deck.
   así que la tarjeta del dispatcher sale con su wordmark y sin icono. Añadir un color ahí es una
   decisión de marca: la toman Alberto o Carlos, no el código.
 - **Galería de imágenes** para cambiar foto y fondo desde la interfaz, como en el Deck Maker.
+- **Resincronizar el equipo** cuando cambie en la web. No hay forma automática de enterarse: los
+  dos repositorios no se hablan.
 - **Guardado y galería de piezas** en Supabase. El esquema se cambia por PR, nunca desde el panel
   (`README.md`).

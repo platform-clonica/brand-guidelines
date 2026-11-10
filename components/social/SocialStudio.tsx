@@ -27,6 +27,19 @@ export function SocialStudio() {
   const deck = useMemo(() => compileSocial(md, canvas), [md, canvas]);
   const total = deck.slides.length;
 
+  /* Avisos. Hoy solo uno, y vale la pena: la foto del autor sale del
+     nombre, así que una errata deja la tarjeta firmada con el isotipo y
+     nadie se entera hasta que está publicada. Mejor decirlo aquí. */
+  const avisos = useMemo(
+    () =>
+      deck.slides.flatMap((s, i) =>
+        s.kind === 'cierre' && s.autorEnEquipo === false
+          ? [`Tarjeta ${i + 1}: «${s.author}» no está en el equipo, así que firma el isotipo.`]
+          : [],
+      ),
+    [deck],
+  );
+
   /* Los nodos reales de cada tarjeta, para exportarlos. Se guardan por
      índice: la exportación tiene que salir del DOM que ya está pintado y no
      de una segunda versión del diseño. */
@@ -222,7 +235,23 @@ export function SocialStudio() {
 
         {/* ── Columna de las tarjetas ── */}
         <section style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-          <div ref={vista} style={{ flex: 1, overflow: 'auto', padding: 24, display: 'flex', justifyContent: 'center' }}>
+          {/* Fondo blanco, y no el crema del editor.
+
+              El crema ES uno de los rellenos de tarjeta (Warm Light), así
+              que una tarjeta clara desaparecía dentro de él. Cualquier
+              neutro de marca que se elija aquí choca con alguno de los
+              cuatro rellenos claros: el color solo no basta.
+
+              Lo que separa de verdad es el FILETE de cada tarjeta, que la
+              hace legible sobre cualquier fondo. Va en el contenedor y no
+              en el lienzo, así que no entra en el PNG. */}
+          <div
+            ref={vista}
+            style={{
+              flex: 1, overflow: 'auto', padding: 24,
+              display: 'flex', justifyContent: 'center', background: colors.white,
+            }}
+          >
             <div className="ix-social">
               {deck.slides.map((slide, i) => (
                 <div
@@ -233,9 +262,14 @@ export function SocialStudio() {
                   onClick={() => setActual(i)}
                   style={{
                     marginBottom: 20,
+                    /* Filete siempre, para que la tarjeta se lea sobre el
+                       fondo sea cual sea su relleno. Es sombra y no borde:
+                       no ocupa sitio y no se confunde con el diseño. */
+                    boxShadow: `0 0 0 1px ${colors.warmDark}`,
                     outline: i === actual ? `2px solid ${colors.dark}` : '2px solid transparent',
                     outlineOffset: 4,
                     cursor: 'pointer',
+                    width: 'fit-content',
                   }}
                 >
                   <SocialCard slide={slide} canvas={canvas} scale={escala} />
@@ -248,10 +282,22 @@ export function SocialStudio() {
           </div>
           <footer style={{ borderTop: `1px solid ${colors.warmDark}`, padding: '10px 20px', background: colors.white, font: `400 11px/1 ${MONO}`, color: colors.ash }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span>
+              <span style={{ whiteSpace: 'nowrap' }}>
                 {total} tarjeta{total === 1 ? '' : 's'} · lienzo {spec.w}×{spec.h} · se exporta a{' '}
                 {spec.w * 2}×{spec.h * 2}
               </span>
+              {avisos.length > 0 && (
+                <span
+                  style={{
+                    color: colors.bordeaux, minWidth: 0,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}
+                  title={avisos.join('\n')}
+                >
+                  · {avisos[0]}
+                  {avisos.length > 1 && ` (+${avisos.length - 1})`}
+                </span>
+              )}
               <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <button
                   type="button"

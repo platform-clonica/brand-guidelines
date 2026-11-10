@@ -23,12 +23,22 @@ export function Cierre({
         <h2 className="headline">{inline(typesetHeadline(slide.title))}</h2>
       </FitText>
       {slide.author && <span className="by">Por {slide.author}</span>}
-      {slide.avatar?.src && (
+      {slide.avatar?.src ? (
         <div className="avatar">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={slide.avatar.src} alt={slide.author ?? ''} />
         </div>
-      )}
+      ) : slide.author ? (
+        /* Hay firma pero no es nadie del equipo. Firma la casa: el isotipo,
+           en negativo porque esta tarjeta siempre va sobre foto. Es lo que
+           ya hace la web desde que se unificaron bajo «Interactius» las
+           firmas de quienes ya no están. Una inicial suelta no diría nada;
+           el isotipo dice lo que de verdad pasa. */
+        <div className="avatar marca">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo/isotipo-negativo.svg" alt="" />
+        </div>
+      ) : null}
     </>
   );
 }

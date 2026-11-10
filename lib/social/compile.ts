@@ -2,6 +2,7 @@ import { parse } from '@/lib/deck/parse';
 import { parseBlock, type BlockModel } from '@/lib/deck/model';
 import type { Token } from '@/lib/deck/types';
 import { LAYOUT_ALIASES, LAYOUT_MAP } from './catalog.ts';
+import { resolverAutor } from './autor.ts';
 import type {
   AgendaRow,
   Background,
@@ -181,15 +182,28 @@ function buildSlide(m: BlockModel): Slide {
     case 'agenda':
       return { ...common, kind, title: m.title || undefined, rows: (m.items ?? []).map(toAgendaRow) };
 
-    case 'cierre':
+    case 'cierre': {
+      /* El retrato sale del nombre. Quien escribe pone `> autor: Diana
+         Yuste` y la foto aparece sola, sin subirla ni buscarla.
+
+         Una segunda imagen en el bloque gana a la automática: hace falta
+         para firmar una pieza con alguien de fuera del equipo, y la regla
+         «lo explícito manda» evita tener que explicar por qué el sistema
+         no deja hacer algo. */
+      const autor = m.meta.autor ? resolverAutor(m.meta.autor) : undefined;
+      const delEquipo = autor?.esRetrato ? { src: autor.foto, alt: autor.nombre } : undefined;
       return {
         ...common,
         kind,
         title: m.title,
         author: m.meta.autor,
         image: img(m.images[0]),
-        avatar: img(m.images[1]),
+        avatar: img(m.images[1]) ?? delEquipo,
+        /* `false` cuando hay autor pero no está en el equipo: el editor lo
+           avisa y la tarjeta firma con el isotipo. */
+        autorEnEquipo: autor ? autor.esRetrato : undefined,
       };
+    }
 
     case 'texto':
     default:
