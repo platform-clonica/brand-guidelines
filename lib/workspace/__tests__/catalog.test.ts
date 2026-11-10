@@ -86,7 +86,7 @@ test('las herramientas que ya existen apuntan a sus rutas reales', () => {
   assert.equal(byId.get('dsmakr')?.href, '/workspace/dsmak_r');
   assert.equal(byId.get('imgr')?.href, '/workspace/img_r');
   assert.equal(byId.get('timer')?.href, '/timer');
-  assert.equal(byId.get('socialmakr')?.href, null);
+  assert.equal(byId.get('socialmakr')?.href, '/workspace/socialmak_r');
 });
 
 test('la ruta de cada herramienta replica el guiño de su wordmark', () => {

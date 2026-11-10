@@ -1,0 +1,79 @@
+'use client';
+
+import './social.css';
+import type { CanvasId, Slide } from '@/lib/social/types';
+import { CANVASES } from '@/lib/social/types';
+import { boxHeight } from '@/lib/social/geometry';
+import { Foot, type Mark } from './Foot';
+import {
+  Agenda,
+  Cierre,
+  Cita,
+  Foto,
+  Lista,
+  Portada,
+  Rotulo,
+  Texto,
+  Titular,
+} from './layouts';
+
+/* Una tarjeta. Elige el layout, pinta el marco y pone el pie.
+
+   El marco es de tamaño fijo y se escala con una transformación, igual que
+   el deck: así la vista previa, la miniatura y el PNG exportado salen del
+   MISMO árbol de nodos. Es lo que evita tener una segunda versión del
+   diseño — el problema que ya tiene la imagen de previsualización de los
+   decks y que el CLAUDE.md del repo señala como fuente de deriva. */
+
+const LAYOUTS_SOBRE_FOTO: Slide['kind'][] = ['portada', 'foto', 'cierre'];
+
+export function SocialCard({
+  slide,
+  canvas,
+  scale = 1,
+}: {
+  slide: Slide;
+  canvas: CanvasId;
+  /** Factor de visualización. La exportación siempre va a 1 y multiplica aparte. */
+  scale?: number;
+}) {
+  const spec = CANVASES[canvas];
+  const boxH = boxHeight(canvas);
+  const onPhoto = LAYOUTS_SOBRE_FOTO.includes(slide.kind);
+  /* Un logo co-marca manda sobre todo; si no, el imagotipo solo en portada. */
+  const mark: Mark = slide.logo?.src ? 'logo' : slide.kind === 'portada' ? 'imagotipo' : 'ninguna';
+  /* El relleno solo manda cuando no hay foto debajo. */
+  const bgClass = !onPhoto && slide.bg ? ` bg-${slide.bg}` : '';
+
+  return (
+    <div
+      className="card"
+      style={
+        {
+          '--cw': `${spec.w}px`,
+          '--ch': `${spec.h}px`,
+          '--s': scale,
+        } as React.CSSProperties
+      }
+    >
+      <div className={`frame theme-${slide.theme}${bgClass} l-${slide.kind}`}>
+        {slide.kind === 'portada' && <Portada slide={slide} boxH={boxH} />}
+        {slide.kind === 'titular' && <Titular slide={slide} boxH={boxH} />}
+        {slide.kind === 'texto' && <Texto slide={slide} boxH={boxH} />}
+        {slide.kind === 'lista' && <Lista slide={slide} boxH={boxH} />}
+        {slide.kind === 'cita' && <Cita slide={slide} boxH={boxH} />}
+        {slide.kind === 'foto' && <Foto slide={slide} boxH={boxH} />}
+        {slide.kind === 'rotulo' && <Rotulo slide={slide} boxH={boxH} />}
+        {slide.kind === 'agenda' && <Agenda slide={slide} boxH={boxH} />}
+        {slide.kind === 'cierre' && <Cierre slide={slide} boxH={boxH} />}
+        <Foot
+          slug={slide.slug}
+          logo={slide.logo}
+          mark={mark}
+          negative={slide.theme === 'dark' || onPhoto}
+          onPhoto={onPhoto}
+        />
+      </div>
+    </div>
+  );
+}
