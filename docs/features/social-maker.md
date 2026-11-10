@@ -53,25 +53,37 @@ constante en los seis. 56/1080 = 5,2 % del ancho.
 
 Vive en `lib/social/typeScale.ts` y se espeja en `components/social/social.css` como `--s-*`.
 
-**La regla, en una frase: la serif se queda en la escala tal cual; la mono corre a ×2.**
+**La regla: los titulares serif se quedan en la escala tal cual; el resto corre a ×2,25.**
 
-- El **serif** solo aparece en titulares, y el peldaño `display` de `lib/typeScale.ts` (96 px) es
-  exactamente el tamaño al que están puestos los titulares de los carruseles publicados. Medido
-  sobre los PNG. No hace falta tocar nada.
-- El **mono** aparece en cuerpo de texto, y ahí la escala web se queda corta: 18 px sobre un
-  lienzo de 1080 se ven a 6,6 px cuando la tarjeta se muestra a 400 px de ancho en un móvil. A ×2
-  (36 px) se ven a 13,3 px, que es la densidad normal de una tarjeta de feed.
+No es un gusto. Se midió el ancho de tinta de cadenas concretas sobre los PNG publicados y se
+buscó qué tamaño las reproduce con la fuente real en el navegador:
 
-Un multiplicador único y explicado es preferible a tres números sueltos: si cambia la escala,
-estos peldaños se recalculan solos.
+| Cadena del diseño | Rol | px derivado |
+|---|---|---|
+| «La abundancia de» | titular | 96 |
+| «No definir el problema real» | elemento de lista | 57 |
+| «Por Martina Gentile» | firma del autor | 49 |
+| «/Miradas/» | slug | 38 |
+| «En un entorno saturado de…» | cuerpo mono | 40 |
 
-**Única excepción serif:** `title-sm` va a 40 y no a 32, porque a 32 quedaría por debajo del
-cuerpo mono (36) e invertiría la jerarquía. Es el intermedio propio del lienzo, equivalente al
-`--title-section` del deck.
+El titular cae exactamente en el peldaño `display` de la escala, así que ahí no hay nada que
+tocar. El resto pide subir, y 2,25 es el factor que lleva el cuerpo mono de 18 a 40,5. Redondeado
+da **40 / 36 / 22**.
+
+La primera versión usaba ×2 y se quedaba corta: el imagotipo salía a 26 px cuando mide 41 en los
+diseños, y el pie entero iba descompensado. **El error fue estimar en lugar de medir.**
 
 > **Pendiente de Alberto.** Esto *extiende* la norma, no la contradice: familias, pesos y la
 > prohibición de la cursiva se respetan enteras. Pero un multiplicador de lienzo es una decisión
 > de sistema y le toca a él confirmarla o cambiarla.
+
+### El imagotipo tiene una sola medida
+
+**41 px de alto**, que con la proporción del SVG (3131×404) dan 318 de ancho. Es exactamente lo
+que miden los dos carruseles de Miradas publicados, al píxel. Un logo que cambia de tamaño según
+la tarjeta deja de ser un logo.
+
+El pie (`--foot-h`) mide lo que mide el imagotipo, y el slug comparte fila.
 
 ---
 
@@ -92,18 +104,55 @@ acaso»: un layout que nadie usa es una papeleta para que alguien lo use mal.
 | `agenda` | Filas de «qué \| cuándo» con filete |
 | `cierre` | Llamada a leer, firma y retrato en la esquina |
 
+Las plantillas de arranque son cuatro: **Miradas** (papelería al pie), **evento** y **workshop**
+(papelería en cabecera) y una en blanco.
+
+**El cierre no lleva pie.** El retrato ocupa la esquina donde iría el slug, y así es en las dos
+piezas publicadas que lo llevan: su pie es la firma a la izquierda y el retrato a la derecha. La
+firma va en **serif**, que es el papel que el sistema reserva a la tipografía de contraste.
+
+El retrato es un **cuadrado de 330 al margen de página**, no pegado al borde: respetar el mismo
+margen que todo lo demás es lo que lo integra en la retícula en vez de dejarlo colgando. Sin
+retrato no se pinta nada; se probó a poner el isotipo y a este tamaño era un bloque de 330 px
+dominando la tarjeta.
+
 Añadir uno es una entrada en `lib/social/catalog.ts` más su componente y su regla CSS.
 
-### El pie es una fila, siempre la misma
+### La papelería va en dos sitios, y eso es lo que da variedad
 
-Izquierda la marca, derecha el slug.
+Las dos existen en los carruseles publicados:
+
+| Colocación | Cómo | Quién la usa |
+|---|---|---|
+| **Al pie** | Imagotipo horizontal abajo a la izquierda, slug enfrente | Los dos de Miradas |
+| **En cabecera** | Imagotipo girado arriba a la izquierda, slug o logo de cliente enfrente | Evento, workshop y Barcelona Design Week |
+
+Se elige con `> marca: arriba` en la portada. No es un capricho de maquetación: es lo que
+distingue una serie de otra de un vistazo en el feed, antes de leer nada.
+
+El imagotipo girado **mide lo mismo que el horizontal**, 318×41, porque es el mismo lockup rotado.
+Medido al píxel en las dos portadas que lo usan: ocupa de (56,56) a (96,372).
 
 **El imagotipo NO va en todas las tarjetas.** En los seis carruseles publicados aparece solo en la
 portada; las interiores llevan únicamente el slug. Ponerlo en las nueve repetiría la firma nueve
 veces y convertiría una marca en un sello de agua.
 
-La excepción es el **logo co-marca** (`> logo: ruta`): cuando una pieza se hace con alguien, ese
-logo sí va en todas, porque lo que identifica no es quién publica sino en el marco de qué.
+### El logo del cliente ocupa el hueco contrario
+
+`> logo: ruta`, y se hereda a toda la pieza igual que el slug: una pieza hecha con alguien lo es de
+principio a fin, y obligar a repetirlo tarjeta a tarjeta sería pedir que alguien se deje una.
+
+- En la **portada** va arriba a la derecha, donde iría el slug.
+- En las **interiores** va abajo a la izquierda, donde iría el imagotipo.
+
+Así nunca compiten por el mismo sitio.
+
+Va en **caja fija de 300×56 y contenido dentro**. Los logos ajenos vienen con proporciones
+imprevisibles (el de la Barcelona Design Week lleva dos líneas y mide 250×55) y fijar solo el alto
+dejaría uno apaisado invadiendo el slug.
+
+Desde el editor se pone con el botón **Logo de cliente**, que abre la galería y escribe el
+metadato en el primer bloque.
 
 ### El slug es texto libre
 

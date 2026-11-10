@@ -8,7 +8,7 @@ import { TEMPLATES, templateById, type TemplateId } from '@/lib/social/templates
 import { exportAll, exportCard, fileName } from '@/lib/social/exportPng';
 import { colors, btn, btnGhost, toolbarBtn, seg, segOn } from '@/components/deck/studio/ui';
 import { ImageGallery } from '@/components/deck/studio/ImageGallery';
-import { countBlockImages, setBlockBackground, setBlockImageAt } from '@/lib/social/source';
+import { countBlockImages, setBlockBackground, setBlockImageAt, setMeta } from '@/lib/social/source';
 import { Paleta } from './studio/Paleta';
 import { SocialCard } from './SocialCard';
 
@@ -33,6 +33,9 @@ export function SocialStudio() {
   /* Qué imagen se está cambiando: el bloque del markdown y, dentro de él,
      cuál de sus imágenes. El cierre tiene dos: el fondo y el retrato. */
   const [ranura, setRanura] = useState<{ bloque: number; pos: number } | null>(null);
+  /* Cuando está activo, lo que se elija en la galería es el logo del
+     cliente y no una foto de tarjeta. */
+  const [eligiendoLogo, setEligiendoLogo] = useState(false);
   const [encima, setEncima] = useState<number | null>(null);
 
   const deck = useMemo(() => compileSocial(md, canvas), [md, canvas]);
@@ -202,6 +205,9 @@ export function SocialStudio() {
           ))}
         </div>
 
+        {/* Desplegable a secas: sin caja ni relleno, para que no compita con
+            los botones que sí son acciones. La flecha es un fondo dibujado
+            y no un carácter, así que no se puede seleccionar con el texto. */}
         <select
           onChange={(e) => {
             const t = templateById(e.target.value as TemplateId);
@@ -210,7 +216,15 @@ export function SocialStudio() {
           }}
           defaultValue="miradas"
           aria-label="Plantilla"
-          style={{ ...toolbarBtn, padding: '8px 10px' }}
+          style={{
+            appearance: 'none', border: 'none', background: 'transparent',
+            font: `500 11px/1 ${MONO}`, letterSpacing: '.04em', color: colors.dark,
+            margin: 0, padding: '0 18px 0 0', cursor: 'pointer',
+            backgroundImage:
+              `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='6'><path d='M0 0h9L4.5 6z' fill='%231C1A17'/></svg>")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right center',
+          }}
         >
           {TEMPLATES.map((t) => (
             <option key={t.id} value={t.id}>{t.nombre}</option>
@@ -225,6 +239,20 @@ export function SocialStudio() {
             /* Burdeos es el color de alerta del sistema, declarado en lib/tokens.ts. */
             <span style={{ font: `500 11px/1.4 ${MONO}`, color: colors.bordeaux, maxWidth: 320 }}>{error}</span>
           )}
+          {/* El logo del cliente se hereda a toda la pieza, así que se pone
+              una vez y no tarjeta a tarjeta. */}
+          <button
+            type="button"
+            style={btnGhost}
+            onClick={() => (deck.logo?.src ? setMd((prev) => setMeta(prev, 0, 'logo', null)) : setEligiendoLogo(true))}
+            title={
+              deck.logo?.src
+                ? 'Quitar el logo del cliente de toda la pieza'
+                : 'Añadir el logo de un cliente: va en la portada arriba a la derecha y al pie de las demás'
+            }
+          >
+            {deck.logo?.src ? 'Quitar logo de cliente' : 'Logo de cliente'}
+          </button>
           <button type="button" style={btnGhost} onClick={descargarUna} disabled={!!exportando}>
             PNG de esta
           </button>
@@ -425,6 +453,16 @@ export function SocialStudio() {
           </footer>
         </section>
       </div>
+
+      {eligiendoLogo && (
+        <ImageGallery
+          onClose={() => setEligiendoLogo(false)}
+          onSelect={(url) => {
+            setMd((prev) => setMeta(prev, 0, 'logo', url));
+            setEligiendoLogo(false);
+          }}
+        />
+      )}
 
       {ranura && (
         <ImageGallery

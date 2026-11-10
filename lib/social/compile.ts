@@ -147,8 +147,20 @@ function buildSlide(m: BlockModel): Slide {
   };
 
   switch (kind) {
-    case 'portada':
-      return { ...common, kind, title: m.title, subtitle: m.subtitle ?? m.body[0], image: img(m.image) };
+    case 'portada': {
+      /* `> marca: arriba` pone la papelería en cabecera. Se aceptan las dos
+         palabras que alguien escribiría sin pensar. */
+      const donde = (m.meta.marca ?? '').toLowerCase();
+      const papeleria = donde === 'arriba' || donde === 'cabecera' ? 'cabecera' : 'pie';
+      return {
+        ...common,
+        kind,
+        title: m.title,
+        subtitle: m.subtitle ?? m.body[0],
+        image: img(m.image),
+        papeleria,
+      };
+    }
 
     case 'titular':
       return { ...common, kind, title: m.title };
@@ -228,5 +240,11 @@ export function compileSocial(md: string, canvas: CanvasId = 'carrusel'): Social
   const deckSlug = slides.find((s) => s.slug)?.slug;
   for (const s of slides) if (!s.slug) s.slug = deckSlug;
 
-  return { slides, canvas, slug: deckSlug, provenance: sources.map((_, i) => i) };
+  /* El logo del cliente se hereda igual que el slug: una pieza hecha con
+     alguien lo es de principio a fin, y obligar a repetirlo en cada tarjeta
+     sería pedir que alguien se deje una. */
+  const deckLogo = slides.find((s) => s.logo?.src)?.logo;
+  for (const s of slides) if (!s.logo?.src) s.logo = deckLogo;
+
+  return { slides, canvas, slug: deckSlug, logo: deckLogo, provenance: sources.map((_, i) => i) };
 }

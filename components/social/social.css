@@ -27,15 +27,19 @@
   --serif:var(--font-ibm-plex-serif), 'IBM Plex Serif', ui-serif, serif;
   --mono:var(--font-ibm-plex-mono), 'IBM Plex Mono', ui-monospace, monospace;
 
-  /* Escala — espeja lib/social/typeScale.ts */
+  /* Escala — espeja lib/social/typeScale.ts.
+     Los valores salen de medir los carruseles publicados, no de estimar.
+     Ver la cabecera de lib/social/typeScale.ts. */
   --s-super:192px;     /* escala `super`, sin tocar */
-  --s-display:96px;    /* escala `display`, sin tocar */
+  --s-display:96px;    /* escala `display`, sin tocar — medido 96 */
   --s-title:64px;      /* escala `title`, sin tocar */
-  --s-title-sm:40px;   /* escala `title-sm` ×1,25 — intermedio del lienzo */
-  --s-body:36px;       /* escala `body` ×2 */
-  --s-body-sm:32px;    /* escala `body-sm` ×2 */
-  --s-caption:20px;    /* escala `caption` ×2 */
-  --s-slug:28px;       /* el slug va en serif: es una firma, no una etiqueta */
+  /* Lista, agenda, firma del autor Y el slug de la esquina. Los cuatro
+     medidos entre 48 y 58 sobre los PNG publicados: un solo peldaño los
+     sostiene y es mejor que inventar un número por rol. */
+  --s-title-sm:48px;   /* escala `title-sm` ×1,5 */
+  --s-body:40px;       /* escala `body` ×2,25 — medido 40 */
+  --s-body-sm:36px;    /* escala `body-sm` ×2,25 */
+  --s-caption:22px;    /* escala `caption` ×2,25 */
 
   --track-caps:.08em;  /* antetítulo en MAYÚSCULAS */
   --track-label:.04em; /* caption que no va en mayúsculas */
@@ -48,7 +52,11 @@
      publicados. Si algún día se escribe una escala de espaciado, este es
      uno de los números que tiene que entrar en ella. */
   --gap:64px;
-  --foot-h:34px;       /* alto reservado al pie */
+  /* Alto del pie: lo fija el elemento más alto de la fila, que es el slug
+     (48). El imagotipo mide 41 y se alinea abajo, que es exactamente la
+     relación que tienen en los carruseles publicados: el slug asoma unos
+     6 px por encima del imagotipo. */
+  --foot-h:48px;
 
   --expo:cubic-bezier(0.16,1,0.3,1);
   --s:1;               /* factor de visualización; la exportación lo ignora */
@@ -109,13 +117,64 @@
   z-index:3;
 }
 .ix-social .foot .slug{
-  font-family:var(--serif); font-weight:400; font-size:var(--s-slug);
+  font-family:var(--serif); font-weight:400; font-size:var(--s-title-sm);
   line-height:1; color:var(--ink); white-space:nowrap;
 }
-.ix-social .foot .mark{height:var(--foot-h); width:auto; display:block;}
-.ix-social .foot .mark.wordmark{height:26px;}
+/* El imagotipo tiene UNA medida y es siempre la misma: 41 px de alto, que
+   con la proporción del SVG (3131×404) dan 318 de ancho. Es exactamente lo
+   que miden los dos carruseles de Miradas publicados, al píxel. Un logo
+   que cambia de tamaño según la tarjeta deja de ser un logo. */
+.ix-social .foot .mark{height:41px; width:auto; display:block;}
+.ix-social .foot .mark.wordmark{height:41px;}
+
+/* El logo del cliente va en CAJA FIJA y contenido dentro. Los logos ajenos
+   vienen con proporciones imprevisibles —el de la Barcelona Design Week
+   lleva dos líneas y mide 250×55— y fijar solo el alto dejaría uno
+   apaisado invadiendo el slug. La caja sale de medir ese: 300×56. */
+.ix-social .mark.cliente{
+  height:56px; width:auto; max-width:300px;
+  object-fit:contain; object-position:left bottom; display:block;
+}
+
 /* El pie sobre foto siempre va en claro: la foto lleva su velo debajo. */
 .ix-social .on-photo .foot .slug{color:var(--warm-light);}
+
+/* ── Cabecera de portada ──
+   La otra colocación de la papelería, la que usan evento, workshop y la
+   Barcelona Design Week. El imagotipo va girado a la izquierda y enfrente
+   queda el logo del cliente, o el slug si no hay cliente. */
+.ix-social .head{
+  position:absolute; left:var(--m); right:var(--m); top:var(--m);
+  display:flex; align-items:flex-start; justify-content:space-between;
+  z-index:3;
+}
+/* La caja mide lo que mide el imagotipo girado: 41 de ancho por 318 de
+   alto. Es el MISMO lockup, no una versión distinta, así que la medida
+   única se mantiene también aquí. Medido al píxel en las dos portadas que
+   lo usan: de (56,56) a (96,372). */
+.ix-social .head .vmark{width:41px; height:318px; position:relative;}
+.ix-social .head .vmark img{
+  position:absolute; top:0; left:0;
+  width:318px; height:41px;
+  /* El reset de Tailwind pone `max-width:100%` a toda imagen, y aquí el
+     contenedor mide 41 px de ancho: sin esto, el imagotipo se recorta a 41
+     y se ve como una astilla. */
+  max-width:none;
+  /* UNA sola transformación, y el desplazamiento DESPUÉS de la rotación.
+     Con la propiedad `translate` separada no funciona: se aplica antes que
+     `transform`, así que la rotación la gira también y el imagotipo acaba
+     fuera de la caja. Aquí se lee de derecha a izquierda: primero gira
+     sobre su esquina, luego se devuelve a la caja. */
+  transform:translate(41px, 0) rotate(90deg);
+  transform-origin:0 0;
+}
+.ix-social .head .slug{
+  font-family:var(--serif); font-weight:400; font-size:var(--s-title-sm);
+  line-height:1; color:var(--ink); white-space:nowrap;
+}
+/* La portada siempre va sobre foto, así que su cabecera va en claro. */
+.ix-social .l-portada .head .slug{color:var(--warm-light);}
+.ix-social .head .mark.cliente{object-position:right top;}
 
 /* ───────────────────────────── Tipografía ───────────────────────────── */
 
@@ -246,30 +305,40 @@
 
 /* · portada — foto, titular serif abajo y subtítulo mono. */
 .ix-social .l-portada .box{display:flex; flex-direction:column; justify-content:flex-end;}
+/* Con la papelería en cabecera, el pie queda libre y el titular llega
+   hasta el margen inferior. Es lo que hace que esta portada respire
+   distinto de la de Miradas aunque use las mismas piezas. */
+.ix-social .l-portada.con-cabecera .box{bottom:var(--m);}
 .ix-social .l-portada .sub{margin-top:24px; max-width:78%;}
 
 /* · foto — texto arriba o abajo, o ninguno. */
 .ix-social .l-foto .box{display:flex; flex-direction:column;}
 .ix-social .l-foto.at-bottom .box{justify-content:flex-end;}
 
-/* · cierre — la llamada a leer, la firma y el retrato. */
+/* · cierre — la llamada a leer, la firma y el retrato.
+
+   Esta tarjeta NO lleva pie: el retrato ocupa la esquina donde iría el
+   slug, y así es en las dos piezas publicadas que lo llevan. Su pie es la
+   firma a la izquierda y el retrato a la derecha.
+
+   La firma va en SERIF, no en mono. Es lo que hacen los dos carruseles
+   publicados, y tiene sentido: es una firma, que es exactamente el papel
+   que el sistema le da a la tipografía de contraste. */
 .ix-social .l-cierre .box{display:flex; flex-direction:column; justify-content:flex-start;}
 .ix-social .l-cierre .by{
-  position:absolute; left:var(--m); bottom:calc(var(--m) + var(--foot-h) + 28px);
-  font-family:var(--mono); font-weight:400; font-size:var(--s-body-sm);
-  color:var(--warm-light); z-index:3;
+  position:absolute; left:var(--m); bottom:var(--m);
+  font-family:var(--serif); font-weight:300; font-size:var(--s-title-sm);
+  line-height:1; color:var(--warm-light); z-index:3;
 }
-/* El retrato muerde el borde derecho: es lo que hacen las dos piezas
-   publicadas que lo llevan, y evita que quede flotando en medio. */
+/* El retrato es un cuadrado de 330 al margen de página, no pegado al
+   borde. Medido sobre las piezas publicadas: 331×331 en una y 328 de ancho
+   en la otra. Que respete el mismo margen que todo lo demás es lo que lo
+   integra en la retícula en vez de dejarlo colgando de la esquina. */
 .ix-social .l-cierre .avatar{
-  position:absolute; right:0; bottom:0; width:216px; height:227px;
+  position:absolute; right:var(--m); bottom:var(--m); width:330px; height:330px;
   overflow:hidden; z-index:3;
 }
 .ix-social .l-cierre .avatar img{width:100%; height:100%; object-fit:cover; display:block;}
-/* El isotipo no es un retrato: se contiene en la caja en lugar de
-   recortarse, y la caja es cuadrada porque la marca lo es. */
-.ix-social .l-cierre .avatar.marca{width:216px; height:216px;}
-.ix-social .l-cierre .avatar.marca img{object-fit:contain;}
 
 /* ───────────────────────────── Exportación ─────────────────────────────
    Al exportar se quita el factor de visualización y se pinta el lienzo a

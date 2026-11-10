@@ -14,23 +14,36 @@
    algún intermedio propio.
 
    LA REGLA, EN UNA FRASE
-   La familia **serif se queda en la escala tal cual**; la familia **mono
-   corre a ×2** sobre el lienzo social.
+   Los titulares serif se quedan en la escala tal cual; el resto corre a
+   **×2,25** sobre el lienzo social.
 
-   De dónde sale ese ×2, porque no es un gusto:
+   De dónde sale, porque no es un gusto. Se midió el ancho de tinta de
+   cadenas concretas sobre los PNG publicados y se buscó qué tamaño las
+   reproduce con la fuente real en el navegador:
 
-   - El serif solo aparece en titulares, y el peldaño `display` de la escala
-     (96 px) es exactamente el tamaño al que están puestos los titulares de
-     los seis carruseles que Interactius ya tiene publicados. Medido sobre
-     los PNG, no estimado. No hace falta tocar nada.
-   - El mono aparece en cuerpo de texto, y ahí la escala se queda corta por
-     el motivo de arriba: 18 px sobre un lienzo de 1080 se ven a 6,6 px
-     cuando la tarjeta se muestra a 400 px de ancho. Ilegible. A ×2 (36 px)
-     se ven a 13,3 px, que es la densidad normal de una tarjeta de feed y
-     coincide con lo que esos mismos carruseles publicados ya hacen (~34 px).
+       «La abundancia de»                 titular     →  96 px
+       «No definir el problema real»      lista       →  57 px
+       «Por Martina Gentile»              firma       →  49 px
+       «/Miradas/»                        slug        →  49 px
+       «En un entorno saturado de…»       cuerpo mono →  40 px
 
-   Un multiplicador único y explicado es preferible a tres números sueltos:
-   si mañana cambia la escala, estos peldaños se recalculan solos.
+   El titular cae exactamente en el peldaño `display` de la escala, así que
+   ahí no hay nada que tocar. El resto pide subir, y 2,25 es el factor que
+   lleva el cuerpo mono de 18 a 40,5. Redondeado da 40 / 36 / 22.
+
+   La primera versión de este archivo usaba ×2 y se quedaba corta: el
+   imagotipo salía a 26 px cuando mide 41 en los diseños, y el pie entero
+   iba descompensado. El error fue estimar en lugar de medir.
+
+   Y la segunda dejó el slug a 40 por una medición mala: la ventana con la
+   que se recortó el PNG cortaba la barra inicial, así que salían 174 px de
+   ancho cuando son 217. Con la ventana entera da 49. Moraleja barata: al
+   medir sobre un recorte, comprobar antes que el recorte contiene la pieza
+   entera. Se verificó en tres tarjetas distintas, que dan 217 × 45 las
+   tres, al píxel.
+
+   Un multiplicador único y explicado es preferible a números sueltos: si
+   mañana cambia la escala, estos peldaños se recalculan solos.
 
    PENDIENTE DE ALBERTO
    Esto **extiende** la norma, no la contradice: familias, pesos y la
@@ -60,8 +73,8 @@ export type SocialScaleEntry = {
 /** Ancho del lienzo para el que está calculada esta escala. */
 export const SOCIAL_BASE_WIDTH = 1080;
 
-/** El mono corre a ×2 sobre la escala web. Ver la cabecera de este archivo. */
-export const MONO_CANVAS_FACTOR = 2;
+/** Factor del lienzo sobre la escala web. Ver la cabecera de este archivo. */
+export const CANVAS_FACTOR = 2.25;
 
 export const socialTypeScale: readonly SocialScaleEntry[] = [
   {
@@ -98,50 +111,58 @@ export const socialTypeScale: readonly SocialScaleEntry[] = [
   {
     id: 'title-sm',
     cssVar: '--s-title-sm',
-    px: 40,
+    px: 48,
     lineHeight: 1.3,
     family: 'serif',
-    weights: [400],
-    origen: 'escala `title-sm` (2rem) ×1,25',
+    weights: [300, 400],
+    origen: 'escala `title-sm` (2rem) ×1,5',
     uso:
-      'Entradilla serif y elementos de lista con cuerpo serif. Único peldaño serif que se ' +
-      'separa de la escala: a 32 px quedaba por debajo del cuerpo mono (36), que invierte la ' +
-      'jerarquía. Es el intermedio propio del lienzo, equivalente al `--title-section` del deck.',
+      'Elementos de lista, filas de agenda, la firma del autor y el slug de la esquina. Medidos ' +
+      '58, 49 y 49 sobre los PNG publicados: un solo peldaño los sostiene a los cuatro, que es ' +
+      'mejor que inventar un número por rol. El slug va en serif y no en mono porque es una ' +
+      'firma, no una etiqueta de interfaz.',
   },
   {
     id: 'body',
     cssVar: '--s-body',
-    px: 36,
+    px: 40,
     lineHeight: 1.55,
     family: 'mono',
     weights: [400, 500, 600],
-    origen: 'escala `body` (1,125rem) ×2',
+    origen: 'escala `body` (1,125rem) ×2,25 — medido 40',
     uso: 'Cuerpo de texto de la tarjeta. El tamaño por defecto de todo lo que se lee seguido.',
   },
   {
     id: 'body-sm',
     cssVar: '--s-body-sm',
-    px: 32,
+    px: 36,
     lineHeight: 1.55,
     family: 'mono',
     weights: [400, 500, 600],
-    origen: 'escala `body-sm` (1rem) ×2',
+    origen: 'escala `body-sm` (1rem) ×2,25',
     uso: 'Cuerpo secundario: subtítulo de portada, pie de foto, texto de apoyo.',
   },
   {
     id: 'caption',
     cssVar: '--s-caption',
-    px: 20,
+    px: 22,
     lineHeight: 1.4,
     letterSpacing: '0.04em',
     family: 'mono',
     weights: [400, 500, 600],
-    origen: 'escala `caption` (0,625rem) ×2',
-    uso: 'Antetítulo, autoría, numeración de lista y el slug de la esquina.',
+    origen: 'escala `caption` (0,625rem) ×2,25',
+    uso: 'Antetítulo, numeración de lista y notas auxiliares.',
   },
 ];
 
-/** El slug de la esquina (`/Miradas/`, `/Eventos/`, `/Summer Fest/`…) va en serif,
-    no en mono: es una firma, no una etiqueta de interfaz. Lo usan los seis
-    carruseles publicados y es el único elemento serif a tamaño de caption. */
-export const SLUG_PX = 28;
+/* El imagotipo tiene UNA medida y es siempre la misma, en los nueve
+   layouts: 41 px de alto, que con la proporción del SVG (3131×404) dan 318
+   de ancho. Es exactamente lo que miden los dos carruseles de Miradas
+   publicados, al píxel. Un logo que cambia de tamaño según la tarjeta deja
+   de ser un logo. */
+export const WORDMARK_H = 41;
+
+/* El retrato de la tarjeta de cierre: cuadrado, y al mismo margen de página
+   que todo lo demás. Medido 331×331 en una pieza publicada y 328 de ancho
+   en la otra. */
+export const AVATAR_PX = 330;

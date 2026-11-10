@@ -8,7 +8,7 @@
    copia plausible: tiene que ser evidente que hay que sustituirlo y no
    puede colarse en una publicación real si alguien se lo deja. */
 
-export type TemplateId = 'miradas' | 'evento' | 'vacio';
+export type TemplateId = 'miradas' | 'evento' | 'workshop' | 'vacio';
 
 export type SocialTemplate = {
   id: TemplateId;
@@ -84,6 +84,8 @@ const EVENTO = `[ly: portada] {dark}
 
 ## Qué se hizo y para quién, en una línea
 
+> marca: arriba
+
 > slug: /Eventos/
 
 ![Imagen del universo visual](/universo/universo-02.jpg)
@@ -130,6 +132,70 @@ NOMBRE DE QUIEN LO DIJO
 # La pregunta con la que quieres que se queden.
 `;
 
+const WORKSHOP = `[ly: portada] {dark}
+
+# Nombre del workshop
+
+## La llegada del vibe coding y la inteligencia artificial está transformando la manera de crear productos digitales.
+
+> marca: arriba
+
+> slug: /Knowledge/
+
+![Imagen del universo visual](/universo/universo-04.jpg)
+
+---
+
+[ly: rotulo] {dark}
+
+Cuerpo que da el contexto de la sesión: qué se planteó, para quién y con qué intención.
+
+## Reto
+
+---
+
+[ly: agenda] {warm-light}
+
+## Programa
+
+- Apertura e icebreaker | 09:00
+- Fase contextual | 09:30
+- Empatía | 10:00
+- Divergencia | 11:00
+- Convergencia | 11:45
+- Prototipado | 12:15
+- Pitches y deliberación | 13:30
+- Cierre | 15:00
+
+---
+
+[ly: foto]
+
+![Foto de la sesión](/universo/universo-03.jpg)
+
+---
+
+[ly: rotulo] {dark}
+
+Lo que se aprendió por el camino, en el tono con el que se contaría a alguien que no estuvo.
+
+## Insights
+
+---
+
+[ly: cita] {opal}
+
+> La frase que resume lo que pasó en la sala.
+
+NOMBRE DE QUIEN LO DIJO
+
+---
+
+[ly: titular] {dark}
+
+# La pregunta con la que quieres que se queden.
+`;
+
 export const TEMPLATES: readonly SocialTemplate[] = [
   {
     id: 'miradas',
@@ -142,6 +208,12 @@ export const TEMPLATES: readonly SocialTemplate[] = [
     nombre: 'Carrusel de evento',
     descripcion: 'Portada, fotos, programa, rótulos y cita. El de lo que se hace en directo.',
     md: EVENTO,
+  },
+  {
+    id: 'workshop',
+    nombre: 'Carrusel de workshop',
+    descripcion: 'Portada con la marca en cabecera, reto, programa, insights y cierre.',
+    md: WORKSHOP,
   },
   {
     id: 'vacio',

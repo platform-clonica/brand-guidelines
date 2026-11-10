@@ -47,6 +47,32 @@ export function countBlockImages(md: string, blockIndex: number): number {
   return (b.text.match(IMG_RE) ?? []).length;
 }
 
+/* Pone (o quita) un metadato `> clave: valor` en un bloque. Lo usa el
+   control de logo de cliente: escribe en el PRIMER bloque, porque el logo
+   se hereda a toda la pieza igual que el slug, y una pieza hecha con
+   alguien lo es de principio a fin. */
+export function setMeta(md: string, blockIndex: number, clave: string, valor: string | null): string {
+  const blocks = splitSourceBlocks(md);
+  const b = blocks[blockIndex];
+  if (!b) return md;
+  const re = new RegExp(`^>[ \t]*${clave}:[ \t]*.*$`, 'im');
+  let texto: string;
+  if (re.test(b.text)) {
+    texto = valor === null ? b.text.replace(re, '').replace(/\n{3,}/g, '\n\n') : b.text.replace(re, `> ${clave}: ${valor}`);
+  } else if (valor === null) {
+    return md;
+  } else {
+    /* Detrás de los titulares y antes de las imágenes, que es donde se
+       escriben los metadatos a mano. */
+    const img = b.text.search(/^!\[/m);
+    texto =
+      img >= 0
+        ? `${b.text.slice(0, img).replace(/\s*$/, '')}\n\n> ${clave}: ${valor}\n\n${b.text.slice(img)}`
+        : `${b.text.replace(/\s*$/, '')}\n\n> ${clave}: ${valor}\n`;
+  }
+  return md.slice(0, b.start) + texto + md.slice(b.end);
+}
+
 const MARKERS = new Set(LAYOUTS.map((l) => l.marker));
 /* `[ \t]*$` y no `\s*$`: con `\s*` la expresión se tragaba el salto de
    línea que cierra la línea, y al reescribir desaparecía una línea en

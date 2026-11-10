@@ -36,9 +36,21 @@ export type RichNode =
   | { t: 'quote'; text: string };
 
 type SlideVariant =
-  /* Portada: foto a sangre, imagotipo arriba o abajo a la izquierda, slug
-     enfrente, titular serif grande y subtítulo mono. */
-  | { kind: 'portada'; theme: Theme; title: string; subtitle?: string; image?: ImageRef }
+  /* Portada: foto a sangre, titular serif grande y subtítulo mono.
+
+     `papeleria` dice dónde va la marca, y es la pieza que da variedad entre
+     series sin inventar diseños nuevos:
+       'pie'      imagotipo horizontal abajo, slug enfrente  (Miradas)
+       'cabecera' imagotipo girado arriba, logo o slug enfrente
+                  (evento, workshop, Barcelona Design Week) */
+  | {
+      kind: 'portada';
+      theme: Theme;
+      title: string;
+      subtitle?: string;
+      image?: ImageRef;
+      papeleria?: 'pie' | 'cabecera';
+    }
   /* Un titular serif y nada más. El layout que más se repite en los seis
      carruseles publicados. */
   | { kind: 'titular'; theme: Theme; title: string }
@@ -128,6 +140,8 @@ export type SocialDeck = {
   canvas: CanvasId;
   /** Slug por defecto de toda la pieza; cada tarjeta puede pisarlo. */
   slug?: string;
+  /** Logo de cliente por defecto; se hereda igual que el slug. */
+  logo?: ImageRef;
   /** `provenance[i]` es el bloque de markdown que produjo la tarjeta i. */
   provenance?: (number | null)[];
 };

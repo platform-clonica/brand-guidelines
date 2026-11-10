@@ -23,9 +23,15 @@ export type LayoutCatalogEntry = {
 const IMG = '![Imagen del universo visual](/universo/universo-01.jpg)';
 
 const SKELETONS: Record<string, string> = {
+  /* `> marca: arriba` pone la papelería en cabecera, con el imagotipo
+     girado. Va comentado en el esqueleto porque las dos colocaciones son
+     legítimas y la de Miradas es la que más se usa; quitarle el comentario
+     es un gesto, acordarse de que existe no lo es. */
   portada: `# Titular de la portada
 
 ## Una línea que explica de qué va el carrusel
+
+> slug: /Miradas/
 
 ${IMG}`,
 
@@ -79,7 +85,9 @@ export const LAYOUTS: readonly LayoutCatalogEntry[] = [
     marker: 'portada',
     kind: 'portada',
     nombre: 'Portada',
-    slots: 'Foto a sangre · titular serif abajo · subtítulo mono · imagotipo y slug al pie',
+    slots:
+      'Foto a sangre · titular serif abajo · subtítulo mono · papelería al pie, o en cabecera ' +
+      'con «> marca: arriba»',
     skeleton: SKELETONS.portada,
   },
   {

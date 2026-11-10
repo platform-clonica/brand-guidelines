@@ -4,7 +4,7 @@ import './social.css';
 import type { CanvasId, Slide } from '@/lib/social/types';
 import { CANVASES } from '@/lib/social/types';
 import { boxHeight } from '@/lib/social/geometry';
-import { Foot, type Mark } from './Foot';
+import { Foot, Head, type Mark } from './Foot';
 import {
   Agenda,
   Cierre,
@@ -40,7 +40,11 @@ export function SocialCard({
   const spec = CANVASES[canvas];
   const boxH = boxHeight(canvas);
   const onPhoto = LAYOUTS_SOBRE_FOTO.includes(slide.kind);
-  /* Un logo co-marca manda sobre todo; si no, el imagotipo solo en portada. */
+  /* La portada puede llevar la papelería en cabecera en vez de al pie. Es
+     lo que distingue la serie de Miradas de las de evento y workshop, y lo
+     que da variedad en el feed sin inventar un diseño nuevo. */
+  const enCabecera = slide.kind === 'portada' && slide.papeleria === 'cabecera';
+  /* Un logo de cliente manda sobre todo; si no, el imagotipo solo en portada. */
   const mark: Mark = slide.logo?.src ? 'logo' : slide.kind === 'portada' ? 'imagotipo' : 'ninguna';
   /* El relleno solo manda cuando no hay foto debajo. */
   const bgClass = !onPhoto && slide.bg ? ` bg-${slide.bg}` : '';
@@ -56,7 +60,9 @@ export function SocialCard({
         } as React.CSSProperties
       }
     >
-      <div className={`frame theme-${slide.theme}${bgClass} l-${slide.kind}`}>
+      <div
+        className={`frame theme-${slide.theme}${bgClass} l-${slide.kind}${enCabecera ? ' con-cabecera' : ''}`}
+      >
         {slide.kind === 'portada' && <Portada slide={slide} boxH={boxH} />}
         {slide.kind === 'titular' && <Titular slide={slide} boxH={boxH} />}
         {slide.kind === 'texto' && <Texto slide={slide} boxH={boxH} />}
@@ -66,13 +72,20 @@ export function SocialCard({
         {slide.kind === 'rotulo' && <Rotulo slide={slide} boxH={boxH} />}
         {slide.kind === 'agenda' && <Agenda slide={slide} boxH={boxH} />}
         {slide.kind === 'cierre' && <Cierre slide={slide} boxH={boxH} />}
-        <Foot
-          slug={slide.slug}
-          logo={slide.logo}
-          mark={mark}
-          negative={slide.theme === 'dark' || onPhoto}
-          onPhoto={onPhoto}
-        />
+        {/* El cierre no lleva papelería: su esquina derecha la ocupa el
+            retrato y su izquierda, la firma. Pintar además el slug los
+            solaparía. */}
+        {slide.kind === 'cierre' ? null : enCabecera ? (
+          <Head slug={slide.slug} logo={slide.logo} negative />
+        ) : (
+          <Foot
+            slug={slide.slug}
+            logo={slide.logo}
+            mark={mark}
+            negative={slide.theme === 'dark' || onPhoto}
+            onPhoto={onPhoto}
+          />
+        )}
       </div>
     </div>
   );

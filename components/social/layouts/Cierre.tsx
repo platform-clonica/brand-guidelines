@@ -6,9 +6,14 @@ import { Photo } from '../Photo';
 
 /* La última tarjeta: la llamada a leer el artículo, la firma y el retrato.
 
-   El retrato muerde la esquina inferior derecha en lugar de flotar centrado.
-   Sin foto de quien firma, no se pinta nada: un hueco vacío diría que falta
-   algo, y aquí no falta — hay artículos que firma la casa. */
+   El retrato es un cuadrado al mismo margen de página que todo lo demás,
+   no pegado al borde.
+
+   Sin retrato no se pinta nada. Se probó a poner el isotipo en su lugar,
+   como hace la web cuando una pieza la firma la casa, y a este tamaño era
+   un error: allí es un avatar pequeño en una lista y aquí sería un bloque
+   de 330 px dominando la tarjeta. Una firma sin cara se sostiene sola; el
+   editor ya avisa de que ese nombre no está en el equipo. */
 export function Cierre({
   slide,
   boxH,
@@ -27,16 +32,6 @@ export function Cierre({
         <div className="avatar">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={slide.avatar.src} alt={slide.author ?? ''} />
-        </div>
-      ) : slide.author ? (
-        /* Hay firma pero no es nadie del equipo. Firma la casa: el isotipo,
-           en negativo porque esta tarjeta siempre va sobre foto. Es lo que
-           ya hace la web desde que se unificaron bajo «Interactius» las
-           firmas de quienes ya no están. Una inicial suelta no diría nada;
-           el isotipo dice lo que de verdad pasa. */
-        <div className="avatar marca">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo/isotipo-negativo.svg" alt="" />
         </div>
       ) : null}
     </>
