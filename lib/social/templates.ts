@@ -159,7 +159,7 @@ Cuerpo de texto que da el contexto de lo que se muestra debajo y prepara al lect
 
 > La frase citada, tal cual se dijo.
 
-NOMBRE DE QUIEN LO DIJO
+> autor: Nombre Apellido
 
 ---
 
@@ -223,7 +223,7 @@ Lo que se aprendió por el camino, en el tono con el que se contaría a alguien 
 
 > La frase que resume lo que pasó en la sala.
 
-NOMBRE DE QUIEN LO DIJO
+> autor: Nombre Apellido
 
 ---
 

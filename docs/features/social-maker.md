@@ -227,8 +227,21 @@ Las comillas **las pone el sistema**, no quien escribe: salen siempre las mismas
 las angulares («»), que son las del castellano y las que aparecen en los carruseles publicados. Si
 alguien las teclea igualmente, se le quitan antes para no doblarlas.
 
-La firma va debajo, pequeña, y sale de `> autor: Nombre Apellido`. Mantiene el slug como cualquier
-otra tarjeta, y admite fondo de color o foto.
+La firma va debajo, pequeña, y sale de `> autor: Nombre Apellido`. **Esa línea va escrita en el
+bloque**, no oculta: se edita como cualquier otro texto. Mantiene el slug como cualquier otra
+tarjeta, y admite fondo de color o foto.
+
+Quién firma la cita, de lo más explícito a lo más implícito:
+
+1. Un `> autor:` en esa tarjeta.
+2. Una línea en MAYÚSCULAS en esa tarjeta.
+3. **El autor de la pieza**, declarado en cualquier otra tarjeta (normalmente la de cierre).
+
+Lo tercero es lo que evita repetirlo: un carrusel de Miradas lo firma alguien, y lo normal es que
+la cita sea suya. Si se cita a otra persona, se escribe en la tarjeta y gana.
+
+Por eso el compilador hace **dos pasadas**: el autor suele declararse en la tarjeta de cierre, que
+es la última, así que no basta con llevar el dato hacia delante.
 
 ### Bajar la exposición de la foto
 

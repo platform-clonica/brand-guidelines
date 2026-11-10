@@ -139,7 +139,7 @@ function img(ref: ImageRef | undefined): ImageRef | undefined {
   return ref?.src ? ref : undefined;
 }
 
-function buildSlide(m: BlockModel): Slide {
+function buildSlide(m: BlockModel, autorPieza?: string): Slide {
   const kind = kindOf(m);
   const app = appearanceOf(m.tokens, m.headings[0]?.text ?? '');
 
@@ -196,7 +196,14 @@ function buildSlide(m: BlockModel): Slide {
 
     case 'cita': {
       const text = m.quotes.find((q) => !/^[\p{L} ]+:\s*.+$/u.test(q)) ?? m.title;
-      return { ...common, kind, text, source: m.eyebrow ?? m.meta.autor };
+      /* Quién firma la cita, de lo más explícito a lo más implícito:
+         un `> autor:` en esta tarjeta, una línea en mayúsculas en esta
+         tarjeta, o el autor de la pieza.
+
+         Lo último es lo que hace que no haya que repetirlo: un carrusel de
+         Miradas lo firma alguien, y lo normal es que la cita sea suya. Si
+         se cita a otra persona, se escribe en la tarjeta y gana. */
+      return { ...common, kind, text, source: m.meta.autor ?? m.eyebrow ?? autorPieza };
     }
 
     case 'foto':
@@ -222,13 +229,14 @@ function buildSlide(m: BlockModel): Slide {
          para firmar una pieza con alguien de fuera del equipo, y la regla
          «lo explícito manda» evita tener que explicar por qué el sistema
          no deja hacer algo. */
-      const autor = m.meta.autor ? resolverAutor(m.meta.autor) : undefined;
+      const nombre = m.meta.autor ?? autorPieza;
+      const autor = nombre ? resolverAutor(nombre) : undefined;
       const delEquipo = autor?.esRetrato ? { src: autor.foto, alt: autor.nombre } : undefined;
       return {
         ...common,
         kind,
         title: m.title,
-        author: m.meta.autor,
+        author: nombre,
         image: img(m.images[0]),
         avatar: img(m.images[1]) ?? delEquipo,
         /* `false` cuando hay autor pero no está en el equipo: el editor lo
@@ -251,7 +259,15 @@ function buildSlide(m: BlockModel): Slide {
 
 export function compileSocial(md: string, canvas: CanvasId = 'carrusel'): SocialDeck {
   const sources = parse(md);
-  const slides = sources.map((src, i) => buildSlide(parseBlock(src.tokens, i, sources.length)));
+
+  /* Dos pasadas. En la primera se leen los bloques y se busca quién firma
+     la pieza; en la segunda se construyen las tarjetas, que ya pueden
+     heredarlo. El autor suele declararse en la tarjeta de cierre, es
+     decir la última, así que no vale con llevar el dato hacia delante. */
+  const modelos = sources.map((src, i) => parseBlock(src.tokens, i, sources.length));
+  const autorPieza = modelos.find((m) => m.meta.autor)?.meta.autor;
+
+  const slides = modelos.map((m) => buildSlide(m, autorPieza));
 
   /* El slug de la pieza es el primero que alguien declare. Las demás
      tarjetas lo heredan y cualquiera puede pisarlo con su propio
