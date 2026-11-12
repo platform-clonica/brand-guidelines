@@ -35,7 +35,10 @@ export function Paleta({
         Fondo de la tarjeta
       </p>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      {/* `nowrap` y las muestras repartiéndose el ancho: los cinco fondos
+          tienen que caber en una línea. Son un grupo de opción, y partido
+          en dos filas se lee como dos grupos. */}
+      <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 4 }}>
         {FONDOS.map((f) => {
           const elegido = actual === f.token;
           return (
@@ -50,7 +53,13 @@ export function Paleta({
                    cambia lo que tiene que cambiar: el relleno de la
                    izquierda, para que entre la muestra. */
                 ...toolbarBtn,
-                display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px 5px 5px',
+                /* `flex: 1 1 auto` con `minWidth: 0`: los cinco se reparten
+                   el ancho que haya y caben en una línea sea cual sea la
+                   ventana. Sin eso bastaba un píxel de menos para que el
+                   último saltara a una segunda fila. */
+                flex: '1 1 auto', minWidth: 0, overflow: 'hidden',
+                display: 'flex', alignItems: 'center', gap: 5, padding: '4px 6px 4px 4px',
+                font: `500 10px/1 ${MONO}`, letterSpacing: 0,
                 cursor: deshabilitado ? 'not-allowed' : 'pointer',
                 opacity: deshabilitado ? 0.45 : 1,
                 /* El elegido se marca con el filete, no con otro color: el

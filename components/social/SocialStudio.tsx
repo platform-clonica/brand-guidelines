@@ -47,6 +47,10 @@ const MONO = 'var(--font-ibm-plex-mono, monospace)';
    los dos editores no pueden separarse visualmente por descuido. */
 
 export function SocialStudio({ user }: { user?: SessionUser } = {}) {
+  /* Al abrir, siempre el carrusel de Miradas. La plantilla va en estado y
+     no en `defaultValue`: así el desplegable no puede quedarse enseñando
+     una cosa mientras el texto es otra. */
+  const [plantilla, setPlantilla] = useState<TemplateId>('miradas');
   const [md, setMd] = useState(() => templateById('miradas').md);
   const [canvas, setCanvas] = useState<CanvasId>('carrusel');
   const [titulo, setTitulo] = useState('Carrusel sin título');
@@ -271,7 +275,9 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
       <SocialToolbar titulo={titulo} onTitulo={setTitulo} user={user}>
         {/* Lienzo */}
         <div style={{ display: 'flex', gap: 0 }}>
-          {(Object.keys(CANVASES) as CanvasId[]).map((id) => (
+          {/* El post va primero para que «Carrusel» quede pegado al
+              desplegable de plantillas, que es lo que más se usa junto. */}
+          {(['post', 'carrusel'] as CanvasId[]).map((id) => (
             <button
               key={id}
               type="button"
@@ -290,10 +296,11 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
         <select
           onChange={(e) => {
             const t = templateById(e.target.value as TemplateId);
+            setPlantilla(t.id);
             setMd(t.md);
             setActual(0);
           }}
-          defaultValue="miradas"
+          value={plantilla}
           aria-label="Plantilla"
           style={{
             appearance: 'none', border: 'none', background: 'transparent',
@@ -409,7 +416,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
             </div>
 
             {panel === 'tarjeta' && (
-              <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.white }}>
+              <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.warmLight }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {LAYOUTS.map((l) => (
                     <button
@@ -427,7 +434,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
             )}
 
             {panel === 'foto' && (
-              <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.white }}>
+              <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.warmLight }}>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <button
                     type="button"
