@@ -16,9 +16,14 @@ import { WORDMARK_H } from '@/lib/social/typeScale';
    si la pieza es con alguien, su logo. Repetirlo nueve veces convertiría
    una marca en un sello de agua.
 
-   EL LOGO DE CLIENTE OCUPA EL HUECO CONTRARIO. En la portada va arriba a la
-   derecha, donde iría el slug; en las interiores va abajo a la izquierda,
-   donde iría el imagotipo. Así nunca compiten por el mismo sitio. */
+   EL LOGO DE CLIENTE VA SIEMPRE ABAJO A LA IZQUIERDA, en todas las slides
+   y también en la portada. Un logo que cambia de sitio entre slides deja
+   de leerse como una firma constante y se lee como un elemento más de la
+   maqueta.
+
+   Eso obliga a que una portada con la papelería en cabecera lleve además
+   un pie, aunque solo sea para el logo: arriba quedan el imagotipo girado
+   y el slug, y abajo el logo. Es opcional; sin logo no hay pie. */
 
 export type Mark = 'imagotipo' | 'logo' | 'ninguna';
 
@@ -63,13 +68,13 @@ export function Foot({ slug, logo, mark, negative, onPhoto }: Props) {
   );
 }
 
-/* Cabecera de portada: imagotipo girado a la izquierda y, enfrente, el logo
-   del cliente si lo hay o el slug si no.
+/* Cabecera de portada: imagotipo girado a la izquierda y el slug enfrente.
+   El logo del cliente NO va aquí: va al pie, como en el resto de slides.
 
    El imagotipo girado mide lo mismo que el horizontal —318×41— porque es el
    mismo lockup rotado. Medido al píxel en las portadas de evento y de
    workshop: ocupa de (56,56) a (96,372). */
-export function Head({ slug, logo, negative }: Omit<Props, 'mark' | 'onPhoto'>) {
+export function Head({ slug, negative }: Omit<Props, 'mark' | 'onPhoto' | 'logo'>) {
   const src = negative ? '/logo/interactius-negativo.svg' : '/logo/interactius-positivo.svg';
   return (
     <div className="head">
@@ -77,7 +82,7 @@ export function Head({ slug, logo, negative }: Omit<Props, 'mark' | 'onPhoto'>) 
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt="Interactius" />
       </div>
-      {logo?.src ? <Logo logo={logo} /> : slug ? <span className="slug">{slug}</span> : <span />}
+      {slug ? <span className="slug">{slug}</span> : <span />}
     </div>
   );
 }

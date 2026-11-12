@@ -48,6 +48,9 @@ export function SocialCard({
      lo que distingue la serie de Miradas de las de evento y workshop, y lo
      que da variedad en el feed sin inventar un diseño nuevo. */
   const enCabecera = slide.kind === 'portada' && slide.papeleria === 'cabecera';
+  /* Una portada de cabecera con logo necesita además un pie para él: el
+     logo va abajo a la izquierda en todas las slides, sin excepción. */
+  const conPieDeLogo = enCabecera && Boolean(slide.logo?.src);
   /* Un logo de cliente manda sobre todo; si no, el imagotipo solo en portada. */
   const mark: Mark = slide.logo?.src ? 'logo' : slide.kind === 'portada' ? 'imagotipo' : 'ninguna';
   /* El relleno solo manda cuando no hay foto debajo. */
@@ -65,7 +68,7 @@ export function SocialCard({
       }
     >
       <div
-        className={`frame theme-${slide.theme}${bgClass} l-${slide.kind}${enCabecera ? ' con-cabecera' : ''}${conFondo ? ' on-photo' : ''}`}
+        className={`frame theme-${slide.theme}${bgClass} l-${slide.kind}${enCabecera ? ' con-cabecera' : ''}${conPieDeLogo ? ' con-pie-logo' : ''}${conFondo ? ' on-photo' : ''}`}
       >
         {/* La foto de fondo va la PRIMERA, debajo de todo lo demás. */}
         {conFondo && <Photo image={slide.fondo} scrim="full" exposicion={slide.exposicion} />}
@@ -81,7 +84,10 @@ export function SocialCard({
             retrato y su izquierda, la firma. Pintar además el slug los
             solaparía. */}
         {slide.kind === 'cierre' ? null : enCabecera ? (
-          <Head slug={slide.slug} logo={slide.logo} negative />
+          <>
+            <Head slug={slide.slug} negative />
+            {conPieDeLogo && <Foot logo={slide.logo} mark="logo" negative onPhoto />}
+          </>
         ) : (
           <Foot
             slug={slide.slug}

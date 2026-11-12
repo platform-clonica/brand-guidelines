@@ -253,14 +253,18 @@ veces y convertiría una marca en un sello de agua.
 ### El logo del cliente ocupa el hueco contrario
 
 `> logo: ruta`, y se hereda a toda la pieza igual que el slug: una pieza hecha con alguien lo es de
-principio a fin, y obligar a repetirlo tarjeta a tarjeta sería pedir que alguien se deje una.
+principio a fin, y obligar a repetirlo slide a slide sería pedir que alguien se deje una.
 
-- En la **portada** va arriba a la derecha, donde iría el slug.
-- En las **interiores** va abajo a la izquierda, donde iría el imagotipo.
+**Va siempre abajo a la izquierda, en todas las slides y también en la portada.** Un logo que
+cambia de sitio entre slides deja de leerse como una firma constante y pasa a leerse como un
+elemento más de la maqueta.
 
-Así nunca compiten por el mismo sitio.
+Eso obliga a que una portada con la papelería en cabecera lleve además un pie, aunque solo sea
+para el logo: arriba quedan el imagotipo girado y el slug, y abajo el logo. **Es opcional**: sin
+logo no hay pie y el titular llega hasta el margen inferior.
 
-Va en **caja fija de 300×56 y contenido dentro**. Los logos ajenos vienen con proporciones
+Va en **caja fija de 340×68 y contenido dentro**. Es más alto que el pie (56) a propósito: se sale
+hacia arriba, que es sitio libre, y por abajo sigue apoyado en el margen como todo lo demás. Los logos ajenos vienen con proporciones
 imprevisibles (el de la Barcelona Design Week lleva dos líneas y mide 250×55) y fijar solo el alto
 dejaría uno apaisado invadiendo el slug.
 

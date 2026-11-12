@@ -175,7 +175,11 @@
    seguridad que el <img> del deck. Verificado además que la máscara
    sobrevive a la exportación a PNG. */
 .ix-social .mark.cliente{
-  width:300px; height:56px; display:block;
+  /* Más grande que el imagotipo de la casa, y más que los 56 del pie: es
+     la firma de con quién se hace la pieza y tiene que leerse. Se sale del
+     alto del pie hacia ARRIBA, que es sitio libre; por abajo sigue apoyado
+     en el margen como todo lo demás. */
+  width:340px; height:68px; display:block;
   background:var(--ink);
   -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
   -webkit-mask-size:contain; mask-size:contain;
@@ -422,6 +426,9 @@
    pegado al margen superior. */
 .ix-social .l-portada .box{display:flex; flex-direction:column; justify-content:flex-start;}
 .ix-social .l-portada.con-cabecera .box{justify-content:flex-end; bottom:var(--m);}
+/* Con logo de cliente, la portada de cabecera SÍ tiene pie, así que el
+   titular deja de llegar al margen inferior. */
+.ix-social .l-portada.con-pie-logo .box{bottom:calc(var(--m) + var(--foot-h) + var(--foot-aire));}
 .ix-social .l-portada .sub{margin-top:24px; max-width:78%;}
 
 /* · imagen — texto arriba o abajo, o ninguno.
