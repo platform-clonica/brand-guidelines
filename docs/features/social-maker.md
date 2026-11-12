@@ -482,6 +482,13 @@ no es propia: es la misma anatomía que `DeckToolbar`, `FormToolbar` y `DsToolba
 Los valores salen de ahí también: fondo Warm Light, filete Warm Dark, `padding: 10px 16px`. Antes
 iba sobre blanco y con un «SOCIAL MAKER» escrito a mano en mayúsculas, que no era de la familia.
 
+**Los botones son los de `components/deck/studio/ui.ts`, y hay que usar el correcto.** Las acciones
+secundarias van con `toolbarBtn` (fondo blanco, filete Warm Dark), la principal con `btn` (relleno
+oscuro) y los grupos de opción con `seg` / `segOn`. Estuvieron un tiempo con `btnGhost`, que lleva
+filete OSCURO y fondo transparente: ese es el botón de los modales, no el de una barra, y cantaba
+al lado del Deck Maker. Las pestañas de los paneles y las muestras de la paleta también parten de
+ahí en vez de tener estilo propio.
+
 El wordmark **SocialMak_r** se añade a `components/studio/Wordmark.tsx`, donde ya estaban los de
 las otras cuatro herramientas. Ese componente ya contemplaba este caso: su comentario explica que
 el `viewBox` se calcula en vez de fijarse precisamente porque «SocialMak_r» tiene 11 caracteres y

@@ -1,7 +1,7 @@
 'use client';
 
 import { FONDOS, type FondoOpcion } from '@/lib/social/fondos';
-import { colors } from '@/components/deck/studio/ui';
+import { colors, toolbarBtn } from '@/components/deck/studio/ui';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
@@ -46,19 +46,22 @@ export function Paleta({
               disabled={Boolean(deshabilitado)}
               title={deshabilitado ?? `${f.nombre} — se escribe {${f.token}}${f.nota ? `. ${f.nota}` : ''}`}
               style={{
-                display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px 6px 6px',
-                background: 'transparent', cursor: deshabilitado ? 'not-allowed' : 'pointer',
+                /* Parte del botón de barra de la casa (`toolbarBtn`) y solo
+                   cambia lo que tiene que cambiar: el relleno de la
+                   izquierda, para que entre la muestra. */
+                ...toolbarBtn,
+                display: 'flex', alignItems: 'center', gap: 8, padding: '5px 10px 5px 5px',
+                cursor: deshabilitado ? 'not-allowed' : 'pointer',
                 opacity: deshabilitado ? 0.45 : 1,
                 /* El elegido se marca con el filete, no con otro color: el
                    color ya está ocupado diciendo cuál es el fondo. */
                 border: `1px solid ${elegido ? colors.dark : colors.warmDark}`,
-                font: `400 11px/1 ${MONO}`, color: colors.dark, whiteSpace: 'nowrap',
               }}
             >
               <span
                 aria-hidden="true"
                 style={{
-                  width: 26, height: 26, background: f.hex, color: f.tinta,
+                  width: 24, height: 24, background: f.hex, color: f.tinta,
                   border: `1px solid ${colors.warmDark}`,
                   display: 'grid', placeItems: 'center',
                   font: `400 11px/1 ${MONO}`,

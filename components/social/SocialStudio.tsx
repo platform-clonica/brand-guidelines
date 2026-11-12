@@ -6,7 +6,7 @@ import { CANVASES, EXPORT_SCALE, type CanvasId } from '@/lib/social/types';
 import { LAYOUTS } from '@/lib/social/catalog';
 import { TEMPLATES, templateById, type TemplateId } from '@/lib/social/templates';
 import { exportAll, exportCard, fileName } from '@/lib/social/exportPng';
-import { colors, btn, btnGhost, toolbarBtn, seg, segOn } from '@/components/deck/studio/ui';
+import { colors, btn, toolbarBtn, seg, segOn } from '@/components/deck/studio/ui';
 import type { SessionUser } from '@/lib/auth/sessionUser';
 import { SocialToolbar } from './studio/SocialToolbar';
 import { ImageGallery } from '@/components/deck/studio/ImageGallery';
@@ -341,7 +341,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
           />
           <button
             type="button"
-            style={btnGhost}
+            style={toolbarBtn}
             disabled={subiendoLogo}
             onClick={() =>
               deck.logo?.src
@@ -356,7 +356,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
           >
             {subiendoLogo ? 'Subiendo…' : deck.logo?.src ? 'Quitar logo de cliente' : 'Logo de cliente'}
           </button>
-          <button type="button" style={btnGhost} onClick={descargarUna} disabled={!!exportando}>
+          <button type="button" style={toolbarBtn} onClick={descargarUna} disabled={!!exportando}>
             PNG de esta
           </button>
           <button type="button" style={btn} onClick={descargarTodas} disabled={!!exportando}>
@@ -399,13 +399,8 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
                     key={t.id}
                     type="button"
                     onClick={() => cambiarPanel(activa ? null : t.id)}
-                    style={{
-                      flex: 1, padding: '10px 8px', cursor: 'pointer',
-                      border: 'none', borderRight: `1px solid ${colors.warmDark}`,
-                      background: activa ? colors.white : 'transparent',
-                      color: activa ? colors.dark : colors.ash,
-                      font: `500 10px/1 ${MONO}`, letterSpacing: '.06em', textTransform: 'uppercase',
-                    }}
+                    aria-expanded={activa}
+                    style={activa ? { ...seg, ...segOn } : seg}
                   >
                     {t.label}
                   </button>
