@@ -324,11 +324,11 @@ Para que la foto sea la protagonista está el layout `foto`.
 
 Desde el editor hay **dos sitios**, y los dos hacen falta:
 
-- El panel **Foto de la tarjeta** en la columna izquierda, con *Añadir foto* / *Cambiar foto* /
-  *Quitar foto* y el control de exposición. Actúa sobre la tarjeta seleccionada.
+- La pestaña **Foto** bajo el editor, con *Añadir* / *Cambiar* / *Quitar*, el estilo con IA y la
+  exposición. Actúa sobre la tarjeta seleccionada.
 - Un rótulo al **pasar por encima** de la propia tarjeta.
 
-El panel existe porque el rótulo por hover no se encontraba: quien edita mira a la columna
+La pestaña existe porque el rótulo por hover no se encontraba: quien edita mira a la columna
 izquierda, que es donde están las demás acciones. Una función que no se ve es una función que no
 existe.
 
@@ -438,6 +438,20 @@ color no se elige a ojo: cambiarlo movió la garantía sin que se notara en pant
 y lo contrasta con `lib/tokens.ts`: todo color de la paleta, la serif solo en 300/400, la mono solo
 en 400/500/600 y cero cursiva. Verificado que falla cuando se incumple, no solo que pasa cuando
 todo está bien.
+
+## La columna de edición
+
+Los tres paneles (**Añadir tarjeta**, **Foto**, **Fondo**) van en una fila de pestañas y
+**cerrados de salida**. Antes iban apilados y abiertos: unos 300 px que le comían el sitio al
+texto, que es donde de verdad se trabaja. Con la fila cerrada el editor pasa de ~510 a ~808 px de
+alto en una pantalla de portátil.
+
+Se abre una y se cierra la anterior, así que el alto del bloque está acotado pase lo que pase.
+Cuál quedó abierta se recuerda en el navegador, como el zoom.
+
+**Clicar una tarjeta lleva el cursor a su bloque** en el texto y lo acerca a la vista, igual que el
+Deck Maker (`jumpToSource` en `DeckStudio`). Clicar una tarjeta es la forma natural de decir
+«quiero editar esta», y sin eso hay que buscarla a mano en un texto de cien líneas.
 
 ## Los metadatos son una lista cerrada
 

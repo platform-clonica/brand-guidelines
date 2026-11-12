@@ -11,6 +11,7 @@ import { ImageGallery } from '@/components/deck/studio/ImageGallery';
 import { AiEditModal } from '@/components/images/AiEditModal';
 import { ToastProvider } from '@/components/ui/Toast';
 import { buscarFoto, type FotoDelBanco } from '@/lib/social/estiloIA';
+import { splitSourceBlocks } from '@/lib/deck/source';
 import {
   countBlockImages,
   removeBlockImageAt,
@@ -24,6 +25,15 @@ import { SocialCard } from './SocialCard';
 /* Los layouts que llevan foto a sangre. En ellos manda la imagen, así que
    el relleno de color no pinta nada y la paleta se apaga. */
 const CON_FOTO: readonly string[] = ['portada', 'foto', 'cierre'];
+
+/* Los tres paneles de edición, en una fila de pestañas. Cerrados de
+   salida: el sitio es del texto, que es donde se trabaja. */
+type PanelId = 'tarjeta' | 'foto' | 'fondo';
+const PESTANAS: { id: PanelId; label: string }[] = [
+  { id: 'tarjeta', label: 'Añadir tarjeta' },
+  { id: 'foto', label: 'Foto' },
+  { id: 'fondo', label: 'Fondo' },
+];
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
@@ -48,6 +58,26 @@ export function SocialStudio() {
   /* La foto del banco sobre la que se va a aplicar el estilo con IA. */
   const [estilo, setEstilo] = useState<FotoDelBanco | null>(null);
   const [buscando, setBuscando] = useState(false);
+  /* Qué panel está abierto, o ninguno. Se recuerda en el navegador: es una
+     preferencia de pantalla, como el zoom, no algo de la pieza. */
+  const [panel, setPanel] = useState<PanelId | null>(null);
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem('socialmakr:panel');
+      if (v && PESTANAS.some((t) => t.id === v)) setPanel(v as PanelId);
+    } catch {
+      /* Modo privado o almacenamiento bloqueado: se queda cerrado. */
+    }
+  }, []);
+  const cambiarPanel = useCallback((id: PanelId | null) => {
+    setPanel(id);
+    try {
+      if (id) localStorage.setItem('socialmakr:panel', id);
+      else localStorage.removeItem('socialmakr:panel');
+    } catch {
+      /* Ídem: se pierde al cerrar, la sesión funciona igual. */
+    }
+  }, []);
   const [encima, setEncima] = useState<number | null>(null);
 
   const deck = useMemo(() => compileSocial(md, canvas), [md, canvas]);
@@ -69,6 +99,7 @@ export function SocialStudio() {
   /* Los nodos reales de cada tarjeta, para exportarlos. Se guardan por
      índice: la exportación tiene que salir del DOM que ya está pintado y no
      de una segunda versión del diseño. */
+  const textarea = useRef<HTMLTextAreaElement>(null);
   const nodos = useRef<(HTMLDivElement | null)[]>([]);
   nodos.current.length = total;
 
@@ -160,16 +191,35 @@ export function SocialStudio() {
      modal saltaría siempre. Seleccionar y luego actuar es el patrón de
      toda la vida y conserva el gesto de «clico en la imagen y la cambio»,
      que es lo que se pidió. */
+  /* Lleva el cursor del editor al bloque de esa tarjeta y lo acerca a la
+     vista. Igual que el Deck Maker (`jumpToSource` en DeckStudio): clicar
+     una tarjeta es la forma natural de decir «quiero editar esta», y sin
+     esto hay que buscarla a mano en un texto de cien líneas. */
+  const irAlTexto = useCallback(
+    (i: number) => {
+      const ta = textarea.current;
+      if (!ta) return;
+      const b = splitSourceBlocks(md)[bloqueDe(i)];
+      if (!b) return;
+      ta.focus();
+      ta.setSelectionRange(b.start, b.start);
+      const ratio = md.length ? b.start / md.length : 0;
+      ta.scrollTop = Math.max(0, ratio * ta.scrollHeight - ta.clientHeight / 3);
+    },
+    [md, bloqueDe],
+  );
+
   const alClicar = useCallback(
     (e: React.MouseEvent, i: number) => {
       const yaEstaba = actual === i;
       setActual(i);
+      irAlTexto(i);
       if (!yaEstaba) return;
       const t = e.target as HTMLElement;
       if (t.closest('.avatar')) setRanura({ bloque: bloqueDe(i), pos: 1 });
       else if (t.closest('.photo')) setRanura({ bloque: bloqueDe(i), pos: 0 });
     },
-    [actual, bloqueDe],
+    [actual, bloqueDe, irAlTexto],
   );
 
   const slideActual = deck.slides[actual];
@@ -311,6 +361,7 @@ export function SocialStudio() {
         {/* ── Columna del texto ── */}
         <section style={{ width: '38%', minWidth: 340, display: 'flex', flexDirection: 'column', borderRight: `1px solid ${colors.warmDark}` }}>
           <textarea
+            ref={textarea}
             value={md}
             onChange={(e) => setMd(e.target.value)}
             spellCheck={false}
@@ -321,138 +372,158 @@ export function SocialStudio() {
               tabSize: 2,
             }}
           />
-          {/* Galería de layouts: añade un bloque al final y salta a él. */}
-          <div style={{ borderTop: `1px solid ${colors.warmDark}`, padding: 12, background: colors.warmLight }}>
-            <p style={{ font: `500 10px/1 ${MONO}`, letterSpacing: '.08em', textTransform: 'uppercase', color: colors.ash, margin: '0 0 10px' }}>
-              Añadir tarjeta
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {LAYOUTS.map((l) => (
-                <button
-                  key={l.marker}
-                  type="button"
-                  onClick={() => insertar(`[ly: ${l.marker}]\n\n${l.skeleton}`)}
-                  title={l.slots}
-                  style={{ ...toolbarBtn, padding: '7px 9px' }}
-                >
-                  {l.nombre}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Los tres paneles de edición, en PESTAÑAS y cerrados de salida.
 
-          {/* Panel de la foto de la tarjeta seleccionada.
+              Antes iban apilados y abiertos: unos 300 px que le comían el
+              sitio al texto, que es donde de verdad se trabaja. Ahora la
+              fila de pestañas ocupa unos 38 px, se abre la que haga falta y
+              se cierra sola la anterior, así que el alto del bloque está
+              acotado pase lo que pase.
 
-              Existe porque el control por hover sobre la propia tarjeta,
-              que también sigue ahí, no se encuentra: quien edita mira a la
-              columna de la izquierda, que es donde están las demás
-              acciones. Una función que no se ve es una función que no
-              existe. */}
-          <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.warmLight }}>
-            <p
-              style={{
-                font: `500 10px/1 ${MONO}`, letterSpacing: '.08em', textTransform: 'uppercase',
-                color: colors.ash, margin: '0 0 10px',
-              }}
-            >
-              Foto de la tarjeta
-            </p>
-
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                disabled={!slideActual}
-                onClick={() => slideActual && setRanura({ bloque: bloqueDe(actual), pos: 0 })}
-                style={{ ...toolbarBtn, padding: '7px 9px', opacity: slideActual ? 1 : 0.45 }}
-              >
-                {conFotoActual ? 'Cambiar foto' : 'Añadir foto'}
-              </button>
-
-              {/* Quitar solo vale para la foto de fondo. En los layouts que
-                  la llevan de serie no tiene sentido: una portada sin foto
-                  no es una portada. */}
-              <button
-                type="button"
-                disabled={!slideActual?.fondo?.src}
-                title={
-                  slideActual && CON_FOTO.includes(slideActual.kind)
-                    ? `Una tarjeta de «${slideActual.kind}» lleva foto por diseño: no se puede quitar, solo cambiar.`
-                    : undefined
-                }
-                onClick={() => setMd((prev) => removeBlockImageAt(prev, bloqueDe(actual), 0))}
-                style={{
-                  ...toolbarBtn, padding: '7px 9px',
-                  opacity: slideActual?.fondo?.src ? 1 : 0.45,
-                  cursor: slideActual?.fondo?.src ? 'pointer' : 'not-allowed',
-                }}
-              >
-                Quitar foto
-              </button>
-
-              {/* Aplica la directiva de imagen de la marca con IA. Es el
-                  mismo motor de IMG_r, con la misma cuota: aquí solo se
-                  abre su modal sin tener que salir del editor. */}
-              <button
-                type="button"
-                disabled={!urlFotoActual || buscando}
-                onClick={() => void aplicarEstilo()}
-                title="Aplica la directiva de imagen de Interactius con IA. Gasta cuota de IMG_r."
-                style={{
-                  ...toolbarBtn, padding: '7px 9px',
-                  opacity: urlFotoActual ? 1 : 0.45,
-                  cursor: urlFotoActual ? 'pointer' : 'not-allowed',
-                }}
-              >
-                {buscando ? 'Abriendo…' : 'Estilo Interactius'}
-              </button>
-            </div>
-
-            {/* Exposición: solo baja. El velo del layout es lo que
-                garantiza que el texto se lea encima de cualquier foto, así
-                que subirlo por encima de ahí sería poder publicar algo
-                ilegible. */}
-            <p
-              style={{
-                font: `400 10px/1 ${MONO}`, color: colors.ash,
-                margin: '14px 0 8px', display: 'flex', justifyContent: 'space-between',
-              }}
-            >
-              <span>Exposición</span>
-              <span style={{ fontVariantNumeric: 'tabular-nums' }}>
-                {conFotoActual ? `${exposicionActual} %` : '—'}
-              </span>
-            </p>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={5}
-              value={exposicionActual}
-              disabled={!conFotoActual}
-              aria-label="Exposición de la foto"
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                setMd((prev) =>
-                  /* 100 es el valor normal: en vez de escribirlo, se quita
-                     la línea. Un markdown lleno de metadatos que no hacen
-                     nada es más difícil de leer. */
-                  setMeta(prev, bloqueDe(actual), 'exposicion', v >= 100 ? null : String(v)),
+              Cuál quedó abierta se recuerda en el navegador: es una
+              preferencia de pantalla, como el zoom, no algo de la pieza. */}
+          <div style={{ borderTop: `1px solid ${colors.warmDark}`, background: colors.warmLight }}>
+            <div style={{ display: 'flex' }}>
+              {PESTANAS.map((t) => {
+                const activa = panel === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => cambiarPanel(activa ? null : t.id)}
+                    style={{
+                      flex: 1, padding: '10px 8px', cursor: 'pointer',
+                      border: 'none', borderRight: `1px solid ${colors.warmDark}`,
+                      background: activa ? colors.white : 'transparent',
+                      color: activa ? colors.dark : colors.ash,
+                      font: `500 10px/1 ${MONO}`, letterSpacing: '.06em', textTransform: 'uppercase',
+                    }}
+                  >
+                    {t.label}
+                  </button>
                 );
-              }}
-              style={{ width: '100%', accentColor: colors.dark, opacity: conFotoActual ? 1 : 0.4 }}
-            />
+              })}
+            </div>
+
+            {panel === 'tarjeta' && (
+              <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.white }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {LAYOUTS.map((l) => (
+                    <button
+                      key={l.marker}
+                      type="button"
+                      onClick={() => insertar(`[ly: ${l.marker}]\n\n${l.skeleton}`)}
+                      title={l.slots}
+                      style={{ ...toolbarBtn, padding: '7px 9px' }}
+                    >
+                      {l.nombre}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {panel === 'foto' && (
+              <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.white }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    disabled={!slideActual}
+                    onClick={() => slideActual && setRanura({ bloque: bloqueDe(actual), pos: 0 })}
+                    style={{ ...toolbarBtn, padding: '7px 9px', opacity: slideActual ? 1 : 0.45 }}
+                  >
+                    {conFotoActual ? 'Cambiar foto' : 'Añadir foto'}
+                  </button>
+
+                  {/* Quitar solo vale para la foto de fondo. En los layouts
+                      que la llevan de serie no tiene sentido: una portada
+                      sin foto no es una portada. */}
+                  <button
+                    type="button"
+                    disabled={!slideActual?.fondo?.src}
+                    title={
+                      slideActual && CON_FOTO.includes(slideActual.kind)
+                        ? `Una tarjeta de «${slideActual.kind}» lleva foto por diseño: no se puede quitar, solo cambiar.`
+                        : undefined
+                    }
+                    onClick={() => setMd((prev) => removeBlockImageAt(prev, bloqueDe(actual), 0))}
+                    style={{
+                      ...toolbarBtn, padding: '7px 9px',
+                      opacity: slideActual?.fondo?.src ? 1 : 0.45,
+                      cursor: slideActual?.fondo?.src ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    Quitar foto
+                  </button>
+
+                  {/* El estilo de marca con IA. Es el motor de IMG_r y su
+                      misma cuota; aquí solo se abre su modal. */}
+                  <button
+                    type="button"
+                    disabled={!urlFotoActual || buscando}
+                    onClick={() => void aplicarEstilo()}
+                    title="Aplica la directiva de imagen de Interactius con IA. Gasta cuota de IMG_r."
+                    style={{
+                      ...toolbarBtn, padding: '7px 9px',
+                      opacity: urlFotoActual ? 1 : 0.45,
+                      cursor: urlFotoActual ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    {buscando ? 'Abriendo…' : 'Estilo Interactius'}
+                  </button>
+                </div>
+
+                {/* Exposición: solo baja. El velo del layout es lo que
+                    garantiza que el texto se lea encima de cualquier foto,
+                    así que subirlo por encima de ahí sería poder publicar
+                    algo ilegible. */}
+                <p
+                  style={{
+                    font: `400 10px/1 ${MONO}`, color: colors.ash,
+                    margin: '14px 0 8px', display: 'flex', justifyContent: 'space-between',
+                  }}
+                >
+                  <span>Exposición</span>
+                  <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    {conFotoActual ? `${exposicionActual} %` : '—'}
+                  </span>
+                </p>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={exposicionActual}
+                  disabled={!conFotoActual}
+                  aria-label="Exposición de la foto"
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setMd((prev) =>
+                      /* 100 es el valor normal: en vez de escribirlo, se
+                         quita la línea. Un markdown lleno de metadatos que
+                         no hacen nada es más difícil de leer. */
+                      setMeta(prev, bloqueDe(actual), 'exposicion', v >= 100 ? null : String(v)),
+                    );
+                  }}
+                  style={{ width: '100%', accentColor: colors.dark, opacity: conFotoActual ? 1 : 0.4 }}
+                />
+              </div>
+            )}
+
+            {panel === 'fondo' && (
+              <Paleta
+                actual={slideActual && !CON_FOTO.includes(slideActual.kind) && !slideActual.fondo?.src
+                  ? (slideActual.theme === 'dark' ? 'dark' : (slideActual.bg ?? 'warm-light'))
+                  : undefined}
+                deshabilitado={paletaApagada}
+                onElegir={(f) => {
+                  if (!slideActual) return;
+                  setMd((prev) => setBlockBackground(prev, bloqueDe(actual), slideActual.kind, f.token));
+                }}
+              />
+            )}
           </div>
 
-          <Paleta
-            actual={slideActual && !CON_FOTO.includes(slideActual.kind) && !slideActual.fondo?.src
-              ? (slideActual.theme === 'dark' ? 'dark' : (slideActual.bg ?? 'warm-light'))
-              : undefined}
-            deshabilitado={paletaApagada}
-            onElegir={(f) => {
-              if (!slideActual) return;
-              setMd((prev) => setBlockBackground(prev, bloqueDe(actual), slideActual.kind, f.token));
-            }}
-          />
         </section>
 
         {/* ── Columna de las tarjetas ── */}
