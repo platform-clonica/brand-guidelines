@@ -65,13 +65,6 @@ Segundo párrafo, si hace falta.`,
 
 Un segundo párrafo, si el argumento lo pide.`,
 
-  agenda: `## Programa
-
-- Apertura | 09:00
-- Primera sesión | 09:30
-- Pausa | 11:00
-- Cierre | 15:00`,
-
   /* Sin retrato: en este repo no hay fotos de equipo, y un esqueleto que
      apunta a un archivo inexistente enseña un icono roto la primera vez que
      alguien lo usa. El retrato es la SEGUNDA imagen del bloque y se añade
@@ -138,13 +131,6 @@ export const LAYOUTS: readonly LayoutCatalogEntry[] = [
     skeleton: SKELETONS.parrafo,
   },
   {
-    marker: 'agenda',
-    kind: 'agenda',
-    nombre: 'Agenda',
-    slots: 'Título · filas de «qué | cuándo» con filete',
-    skeleton: SKELETONS.agenda,
-  },
-  {
     marker: 'cierre',
     kind: 'cierre',
     nombre: 'Cierre',
@@ -179,7 +165,11 @@ export const LAYOUT_ALIASES: Record<string, string> = {
   parágrafo: 'parrafo',
   prosa: 'parrafo',
   paragraph: 'parrafo',
-  programa: 'agenda',
+  /* `agenda` fue un layout: filas de «qué | cuándo» con filete. Se retiró
+     el 12/11/2026 porque no se usa. Queda como alias de `lista` para que un
+     bloque ya escrito no se quede sin pintar. */
+  agenda: 'lista',
+  programa: 'lista',
   closing: 'cierre',
   final: 'cierre',
 };

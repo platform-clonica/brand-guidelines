@@ -25,14 +25,12 @@
                 alta, claro cuando asienta algo concreto.
      Evento     la foto marca el compás. Plano, foto, plano, foto. Lo que
                 se cuenta pasó en un sitio, y el sitio se ve.
-     Workshop   bloques oscuros que enmarcan el dato claro. El oscuro
-                domina y el claro es lo que hay que retener.
 
    El ritmo vive en el markdown de la plantilla, no en código: quien parte
    de ella lo hereda y puede romperlo a mano en cualquier tarjeta. Un ritmo
    que no se pudiera romper sería una cárcel, no un punto de partida. */
 
-export type TemplateId = 'miradas' | 'insights' | 'evento' | 'workshop' | 'vacio';
+export type TemplateId = 'miradas' | 'insights' | 'evento' | 'libre';
 
 export type SocialTemplate = {
   id: TemplateId;
@@ -138,17 +136,6 @@ El contexto en una o dos frases, para quien llega sin saber de qué va.
 
 ---
 
-[ly: agenda] {warm-light}
-
-## Programa
-
-- Apertura | 09:00
-- Primera sesión | 09:30
-- Pausa | 11:00
-- Cierre | 15:00
-
----
-
 [ly: texto] {dark}
 
 Cuerpo de texto que recoge lo que salió de la sesión, en el tono con el que se contaría a alguien que no estuvo.
@@ -158,70 +145,6 @@ Cuerpo de texto que recoge lo que salió de la sesión, en el tono con el que se
 [ly: cita] {opal}
 
 > La frase citada, tal cual se dijo.
-
-> autor: Nombre Apellido
-
----
-
-[ly: titular] {dark}
-
-# La pregunta con la que quieres que se queden.
-`;
-
-const WORKSHOP = `[ly: portada] {dark}
-
-# Nombre del workshop
-
-## La llegada del vibe coding y la inteligencia artificial está transformando la manera de crear productos digitales.
-
-> marca: arriba
-
-> slug: /Knowledge/
-
-![Imagen del universo visual](/universo/universo-04.jpg)
-
----
-
-[ly: texto] {dark}
-
-## El reto
-
-Cuerpo que da el contexto de la sesión: qué se planteó, para quién y con qué intención.
-
----
-
-[ly: agenda] {warm-light}
-
-## Programa
-
-- Apertura e icebreaker | 09:00
-- Fase contextual | 09:30
-- Empatía | 10:00
-- Divergencia | 11:00
-- Convergencia | 11:45
-- Prototipado | 12:15
-- Pitches y deliberación | 13:30
-- Cierre | 15:00
-
----
-
-[ly: foto]
-
-![Foto de la sesión](/universo/universo-03.jpg)
-
----
-
-[ly: texto] {dark}
-
-## Lo que se aprendió
-
-El recorrido, en el tono con el que se contaría a alguien que no estuvo.
-
----
-
-[ly: cita] {opal}
-
-> La frase que resume lo que pasó en la sala.
 
 > autor: Nombre Apellido
 
@@ -290,31 +213,25 @@ El razonamiento largo: dónde se complica, qué se fragmenta, quién acaba asumi
 export const TEMPLATES: readonly SocialTemplate[] = [
   {
     id: 'miradas',
-    nombre: 'Carrusel de Miradas',
+    nombre: 'Miradas',
     descripcion: 'Portada, desarrollo del argumento y cierre con firma. El de los artículos.',
     md: MIRADAS,
   },
   {
     id: 'insights',
-    nombre: 'Carrusel de Insights',
+    nombre: 'Insights',
     descripcion: 'Un concepto que merece contarse, sin artículo detrás. Cierra con la pregunta, no con un enlace.',
     md: INSIGHTS,
   },
   {
     id: 'evento',
-    nombre: 'Carrusel de evento',
-    descripcion: 'Portada, fotos, programa, rótulos y cita. El de lo que se hace en directo.',
+    nombre: 'Evento',
+    descripcion: 'Portada, fotos, lo que salió y una cita. El de lo que se hace en directo.',
     md: EVENTO,
   },
   {
-    id: 'workshop',
-    nombre: 'Carrusel de workshop',
-    descripcion: 'Portada con la marca en cabecera, reto, programa, insights y cierre.',
-    md: WORKSHOP,
-  },
-  {
-    id: 'vacio',
-    nombre: 'En blanco',
+    id: 'libre',
+    nombre: 'Libre',
     descripcion: 'Una sola tarjeta para empezar de cero.',
     md: `[ly: titular] {warm-light}
 

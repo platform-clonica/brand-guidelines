@@ -7,7 +7,6 @@ import { boxHeight } from '@/lib/social/geometry';
 import { Foot, Head, type Mark } from './Foot';
 import { Photo } from './Photo';
 import {
-  Agenda,
   Cierre,
   Cita,
   Foto,
@@ -77,7 +76,6 @@ export function SocialCard({
         {slide.kind === 'cita' && <Cita slide={slide} boxH={boxH} />}
         {slide.kind === 'foto' && <Foto slide={slide} boxH={boxH} />}
         {slide.kind === 'parrafo' && <Parrafo slide={slide} boxH={boxH} />}
-        {slide.kind === 'agenda' && <Agenda slide={slide} boxH={boxH} />}
         {slide.kind === 'cierre' && <Cierre slide={slide} boxH={boxH} />}
         {/* El cierre no lleva papelería: su esquina derecha la ocupa el
             retrato y su izquierda, la firma. Pintar además el slug los

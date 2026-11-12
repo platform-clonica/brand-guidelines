@@ -27,9 +27,6 @@ export type ImageRef = { src?: string; alt?: string; alignY?: number };
    en la misma línea. `- **Sin confianza no hay conversión.** Permisos…` */
 export type ListItem = { lead?: string; text: string };
 
-/* Fila de agenda: lo que pasa y cuándo. `- Obertura i icebreaker | 09:00` */
-export type AgendaRow = { label: string; time?: string };
-
 export type RichNode =
   | { t: 'p'; text: string }
   | { t: 'ul'; items: ListItem[] }
@@ -62,8 +59,6 @@ type SlideVariant =
   | { kind: 'cita'; theme: Theme; text: string; source?: string }
   /* Foto a sangre, con texto serif opcional encima. */
   | { kind: 'foto'; theme: Theme; image?: ImageRef; text?: string; position?: 'top' | 'bottom' }
-  /* Programa de una sesión: qué y a qué hora, con filetes. */
-  | { kind: 'agenda'; theme: Theme; title?: string; rows: AgendaRow[] }
   /* Cuerpo de texto en serif, sin titular. El mismo papel que la
      diapositiva `paragraph` del deck: un párrafo que razona en vez de
      informar, así que no lleva titular que lo resuma. */

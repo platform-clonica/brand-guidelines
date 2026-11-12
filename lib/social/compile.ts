@@ -4,7 +4,6 @@ import type { Token } from '@/lib/deck/types';
 import { LAYOUT_ALIASES, LAYOUT_MAP } from './catalog.ts';
 import { resolverAutor } from './autor.ts';
 import type {
-  AgendaRow,
   Background,
   CanvasId,
   ImageRef,
@@ -126,7 +125,6 @@ function kindOf(m: BlockModel): SlideKind {
   }
   if (m.isFirst && m.image) return 'portada';
   if (m.quotes.some((q) => !esMetadato(q))) return 'cita';
-  if (m.items?.some((i) => i.includes('|'))) return 'agenda';
   if (m.items?.length) return 'lista';
   if (m.image && !m.body.length) return 'foto';
   if (m.title && !m.body.length) return 'titular';
@@ -143,13 +141,6 @@ function toListItem(raw: string): ListItem {
   const m = raw.match(/^\*\*(.+?)\*\*\s*([\s\S]*)$/);
   if (m) return { lead: m[1].trim(), text: m[2].trim() };
   return { text: raw.trim() };
-}
-
-/* `- Apertura | 09:00` → qué y cuándo. Sin barra, la fila va sin hora. */
-function toAgendaRow(raw: string): AgendaRow {
-  const at = raw.lastIndexOf('|');
-  if (at < 0) return { label: raw.trim() };
-  return { label: raw.slice(0, at).trim(), time: raw.slice(at + 1).trim() };
 }
 
 /* Los párrafos y las listas del bloque, en el orden en que se escribieron.
@@ -250,9 +241,6 @@ function buildSlide(m: BlockModel, autorPieza?: string): Slide {
     case 'parrafo':
       return { ...common, kind, body: richBody(m.tokens) };
 
-    case 'agenda':
-      return { ...common, kind, title: m.title || undefined, rows: (m.items ?? []).map(toAgendaRow) };
-
     case 'cierre': {
       /* El retrato sale del nombre. Quien escribe pone `> autor: Diana
          Yuste` y la foto aparece sola, sin subirla ni buscarla.
@@ -300,7 +288,14 @@ export function compileSocial(md: string, canvas: CanvasId = 'carrusel'): Social
      la pieza; en la segunda se construyen las tarjetas, que ya pueden
      heredarlo. El autor suele declararse en la tarjeta de cierre, es
      decir la última, así que no vale con llevar el dato hacia delante. */
-  const modelos = sources.map((src, i) => parseBlock(src.tokens, i, sources.length));
+  /* Un bloque vacío no es una tarjeta. Pasa al borrar una del medio y
+     dejarse el separador, y lo que salía era una tarjeta en blanco que se
+     exportaba igual que las demás: un PNG vacío en el carrusel. Un bloque
+     que solo trae su marcador tampoco pinta nada, así que tampoco cuenta. */
+  const conContenido = sources.filter(
+    (src) => src.tokens.some((t) => t.t !== 'layout'),
+  );
+  const modelos = conContenido.map((src, i) => parseBlock(src.tokens, i, conContenido.length));
   const autorPieza = modelos.find((m) => m.meta.autor)?.meta.autor;
 
   const slides = modelos.map((m) => buildSlide(m, autorPieza));
@@ -318,5 +313,14 @@ export function compileSocial(md: string, canvas: CanvasId = 'carrusel'): Social
   const deckLogo = slides.find((s) => s.logo?.src)?.logo;
   for (const s of slides) if (!s.logo?.src) s.logo = deckLogo;
 
-  return { slides, canvas, slug: deckSlug, logo: deckLogo, provenance: sources.map((_, i) => i) };
+  /* `provenance` apunta al bloque REAL del markdown, no a la posición en
+     la lista ya filtrada: es lo que usa el editor para llevar el cursor al
+     sitio correcto cuando se clica una tarjeta. */
+  return {
+    slides,
+    canvas,
+    slug: deckSlug,
+    logo: deckLogo,
+    provenance: conContenido.map((src) => src.index),
+  };
 }

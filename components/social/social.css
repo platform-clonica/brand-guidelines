@@ -322,22 +322,6 @@
 .ix-social .prosa p + p{margin-top:1.05em;}
 .ix-social .prosa strong{font-weight:400;}
 
-/* · agenda — qué y a qué hora. */
-.ix-social .agenda li{
-  display:flex; align-items:baseline; justify-content:space-between; gap:32px;
-  padding:20px 0; border-bottom:1px solid var(--rule);
-}
-.ix-social .agenda li:first-child{padding-top:0;}
-.ix-social .agenda .what{
-  font-family:var(--serif); font-weight:300; font-size:var(--s-title-sm);
-  line-height:1.25; color:var(--ink);
-}
-.ix-social .agenda .when{
-  font-family:var(--serif); font-weight:300; font-size:var(--s-title-sm);
-  line-height:1.25; color:var(--ink); font-variant-numeric:tabular-nums; flex:0 0 auto;
-}
-.ix-social .l-agenda .headline{margin-bottom:var(--gap);}
-
 /* ───────────────────────────── Foto ─────────────────────────────
    La foto va a sangre y el texto encima, así que necesita un velo. Dos
    gradientes, no una capa plana: oscurecen la zona del texto sin apagar la

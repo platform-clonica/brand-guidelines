@@ -116,7 +116,6 @@ acaso»: un layout que nadie usa es una papeleta para que alguien lo use mal.
 | `lista` | Titular + elementos numerados con filete |
 | `cita` | Cita entre comillas, firma pequeña debajo. El pensado para el post horizontal |
 | `foto` | Foto a sangre con texto encima, arriba o abajo, o sin texto |
-| `agenda` | Filas de «qué \| cuándo» con filete |
 | `parrafo` | Cuerpo de texto en serif, sin titular. El de los carruseles de Insights |
 | `cierre` | Llamada a leer, firma y retrato en la esquina |
 
@@ -127,8 +126,15 @@ viuda**: a ese tamaño, atar la última palabra corta a la anterior crea una tir
 la caja y deja una palabra suelta en la línea de antes, que es justo el defecto que la regla
 quería evitar.
 
-Las plantillas de arranque son cinco: **Miradas**, **Insights**, **evento**, **workshop** y una en
-blanco. Las dos primeras llevan la papelería al pie; evento y workshop, en cabecera.
+Las plantillas de arranque son cuatro: **Miradas**, **Insights**, **Evento** y **Libre**. Las dos
+primeras llevan la papelería al pie; evento, en cabecera.
+
+Hubo una quinta, **workshop**, que se retiró el 12/11/2026: era la de evento con otro slug, y dos
+plantillas que solo se diferencian en una palabra no son dos plantillas. El slug es texto libre,
+así que un carrusel de workshop se escribe poniendo `/Knowledge/`.
+
+También se retiró el layout **`agenda`** (filas de «qué | cuándo»), porque no se usa. `[ly: agenda]`
+sigue aceptándose como alias de `lista` para que un bloque ya escrito no se quede sin pintar.
 
 ### Miradas e Insights no son lo mismo
 
@@ -159,7 +165,6 @@ carácter de la pieza entera.
 |---|---|---|
 | Miradas | Oscuro · claros encadenados · un oscuro que corta · cierre | El claro domina y el oscuro puntúa: es una pieza para leer |
 | Evento | Plano · foto · plano · foto | Lo que se cuenta pasó en un sitio, y el sitio se ve |
-| Workshop | Bloques oscuros que enmarcan el dato claro | El oscuro domina y el claro es lo que hay que retener |
 
 El ritmo vive en el markdown de la plantilla, **no en código**: quien parte de ella lo hereda y
 puede romperlo a mano en cualquier tarjeta. Un ritmo que no se pudiera romper sería una cárcel, no
@@ -175,6 +180,13 @@ retrato no se pinta nada; se probó a poner el isotipo y a este tamaño era un b
 dominando la tarjeta.
 
 Añadir uno es una entrada en `lib/social/catalog.ts` más su componente y su regla CSS.
+
+### Un bloque vacío no es una tarjeta
+
+Pasa al borrar una del medio y dejarse el separador. Lo que salía era una tarjeta en blanco que se
+exportaba igual que las demás: **un PNG vacío dentro del carrusel**. Ahora el compilador la salta,
+y `provenance` apunta al bloque real para que clicar una tarjeta siga llevando el cursor a su
+sitio.
 
 ### Un titular nunca va debajo del texto pequeño ni pegado al pie
 
