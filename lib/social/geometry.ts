@@ -10,10 +10,12 @@ import { CANVASES, type CanvasId } from './types.ts';
 
 /** `--m` en social.css. */
 export const MARGIN = 56;
-/** `--foot-h` en social.css. */
-export const FOOT_H = 34;
-/** Aire entre el final de la caja de contenido y el pie. */
-export const FOOT_GAP = 24;
+/** `--foot-h` en social.css. Lo fija el slug, que es lo más alto del pie. */
+export const FOOT_H = 56;
+/** `--foot-aire` en social.css: el aire entre el contenido y el pie, que
+    es el mismo margen de página. Nada se acerca al pie más de lo que se
+    acerca al borde. */
+export const FOOT_GAP = MARGIN;
 
 export function boxWidth(canvas: CanvasId): number {
   return CANVASES[canvas].w - MARGIN * 2;

@@ -14,7 +14,6 @@ import {
   Lista,
   Parrafo,
   Portada,
-  Rotulo,
   Texto,
   Titular,
 } from './layouts';
@@ -78,7 +77,6 @@ export function SocialCard({
         {slide.kind === 'cita' && <Cita slide={slide} boxH={boxH} />}
         {slide.kind === 'foto' && <Foto slide={slide} boxH={boxH} />}
         {slide.kind === 'parrafo' && <Parrafo slide={slide} boxH={boxH} />}
-        {slide.kind === 'rotulo' && <Rotulo slide={slide} boxH={boxH} />}
         {slide.kind === 'agenda' && <Agenda slide={slide} boxH={boxH} />}
         {slide.kind === 'cierre' && <Cierre slide={slide} boxH={boxH} />}
         {/* El cierre no lleva papelería: su esquina derecha la ocupa el

@@ -21,6 +21,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { colorsAccent, colorsBase, typography } from '../tokens.ts';
+import { FOOT_GAP, FOOT_H, MARGIN } from '../social/geometry.ts';
 
 const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -74,6 +75,22 @@ test('los pesos de cada familia son los que permite lib/tokens.ts', () => {
     if (/var\(--mono\)/.test(bloque) && !mono.has(n)) fuera.push(`mono ${n} en ${selector}`);
   }
   assert.deepEqual(fuera, [], `pesos fuera de norma: ${fuera.join(' · ')}`);
+});
+
+test('la geometría de geometry.ts es la que declara social.css', () => {
+  /* FitText necesita el alto de la caja como número y el CSS solo lo sabe
+     después de pintar, así que los dos tienen una copia. Si se separan, el
+     ajuste cree que hay más sitio del que hay y el texto se mete en el
+     pie. Ya pasó: el pie subió de 34 a 56 en el CSS y `geometry.ts` se
+     quedó en 34. */
+  const leer = (nombre: string) => {
+    const m = css.match(new RegExp(`${nombre}\\s*:\\s*(\\d+)px`));
+    assert.ok(m, `social.css no declara ${nombre}`);
+    return Number(m![1]);
+  };
+  assert.equal(leer('--m'), MARGIN, 'el margen no coincide');
+  assert.equal(leer('--foot-h'), FOOT_H, 'el alto del pie no coincide');
+  assert.equal(leer('--foot-aire'), FOOT_GAP, 'el aire sobre el pie no coincide');
 });
 
 test('no hay cursiva en el lienzo social', () => {

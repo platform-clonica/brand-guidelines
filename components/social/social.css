@@ -63,6 +63,11 @@
      publicados. Si algún día se escribe una escala de espaciado, este es
      uno de los números que tiene que entrar en ella. */
   --gap:64px;
+  /* Aire entre el final del contenido y el pie. Es el MARGEN DE PÁGINA, no
+     un número suelto: nada debe acercarse al pie más de lo que se acerca
+     al borde. Estuvo en 24 y un titular anclado abajo quedaba pegado a la
+     fila del imagotipo. */
+  --foot-aire:56px;
   /* Alto del pie: lo fija el elemento más alto de la fila, que es el slug.
      El imagotipo se alinea abajo y asoma algo menos, que es la relación
      que tienen en los carruseles publicados. */
@@ -114,7 +119,7 @@
   pointer-events:none;
   position:absolute;
   left:var(--m); right:var(--m); top:var(--m);
-  bottom:calc(var(--m) + var(--foot-h) + 24px);
+  bottom:calc(var(--m) + var(--foot-h) + var(--foot-aire));
 }
 
 /* ───────────────────────────── Pie ─────────────────────────────
@@ -301,13 +306,6 @@
   letter-spacing:var(--track-label); color:var(--ink-soft);
 }
 
-/* · rotulo — cuerpo mono arriba, rótulo serif grande abajo. */
-.ix-social .l-rotulo .box{display:flex; flex-direction:column; justify-content:space-between;}
-.ix-social .l-rotulo .label{
-  font-family:var(--serif); font-weight:300; font-size:var(--s-display);
-  line-height:1; color:var(--ink);
-}
-
 /* · parrafo — cuerpo de texto en serif, sin titular.
 
    Medido en el carrusel de Insights: 59 px con interlineado 60, o sea una
@@ -411,9 +409,14 @@
 .ix-social .l-portada.con-cabecera .box{justify-content:flex-end; bottom:var(--m);}
 .ix-social .l-portada .sub{margin-top:24px; max-width:78%;}
 
-/* · foto — texto arriba o abajo, o ninguno. */
-.ix-social .l-foto .box{display:flex; flex-direction:column;}
-.ix-social .l-foto.at-bottom .box{justify-content:flex-end;}
+/* · foto — texto arriba o abajo, o ninguno.
+
+   El selector va sobre la PROPIA caja, no sobre un descendiente: `box`,
+   `l-foto` y `at-bottom` conviven en el mismo elemento (es el que pinta
+   FitText), así que `.l-foto.at-bottom .box` no casaba con nada y
+   `> posicion: abajo` no hacía nada desde el primer día. */
+.ix-social .box.l-foto{display:flex; flex-direction:column;}
+.ix-social .box.at-bottom{justify-content:flex-end;}
 
 /* · cierre — la llamada a leer, la firma y el retrato.
 

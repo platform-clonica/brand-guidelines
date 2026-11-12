@@ -62,8 +62,6 @@ type SlideVariant =
   | { kind: 'cita'; theme: Theme; text: string; source?: string }
   /* Foto a sangre, con texto serif opcional encima. */
   | { kind: 'foto'; theme: Theme; image?: ImageRef; text?: string; position?: 'top' | 'bottom' }
-  /* Cuerpo mono arriba, rótulo serif grande abajo. */
-  | { kind: 'rotulo'; theme: Theme; label: string; body: RichNode[] }
   /* Programa de una sesión: qué y a qué hora, con filetes. */
   | { kind: 'agenda'; theme: Theme; title?: string; rows: AgendaRow[] }
   /* Cuerpo de texto en serif, sin titular. El mismo papel que la

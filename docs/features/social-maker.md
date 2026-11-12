@@ -115,7 +115,6 @@ acaso»: un layout que nadie usa es una papeleta para que alguien lo use mal.
 | `lista` | Titular + elementos numerados con filete |
 | `cita` | Cita entre comillas, firma pequeña debajo. El pensado para el post horizontal |
 | `foto` | Foto a sangre con texto encima, arriba o abajo, o sin texto |
-| `rotulo` | Cuerpo mono arriba, rótulo serif grande abajo |
 | `agenda` | Filas de «qué \| cuándo» con filete |
 | `parrafo` | Cuerpo de texto en serif, sin titular. El de los carruseles de Insights |
 | `cierre` | Llamada a leer, firma y retrato en la esquina |
@@ -175,6 +174,18 @@ retrato no se pinta nada; se probó a poner el isotipo y a este tamaño era un b
 dominando la tarjeta.
 
 Añadir uno es una entrada en `lib/social/catalog.ts` más su componente y su regla CSS.
+
+### Un titular nunca va debajo del texto pequeño ni pegado al pie
+
+Regla de Martina del 12/11/2026, y tiene consecuencias de sistema, no de plantilla.
+
+**Se retiró el layout `rotulo`** (cuerpo mono arriba, titular serif grande abajo). Esa colocación
+era su única razón de ser, así que sin ella no quedaba layout. Venía del carrusel de workshop de
+referencia, y es uno de esos casos en que el diseño trae un error: manda el manual. `[ly: rotulo]`
+sigue aceptándose como alias de `texto` para que un bloque ya escrito no se quede sin pintar.
+
+**Y el aire sobre el pie pasó de 24 px al margen de página (56).** Nada debe acercarse al pie más
+de lo que se acerca al borde. Vive en `--foot-aire`.
 
 ### La papelería va en dos sitios, y eso es lo que da variedad
 

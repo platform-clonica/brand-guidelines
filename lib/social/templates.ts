@@ -182,11 +182,11 @@ const WORKSHOP = `[ly: portada] {dark}
 
 ---
 
-[ly: rotulo] {dark}
+[ly: texto] {dark}
+
+## El reto
 
 Cuerpo que da el contexto de la sesión: qué se planteó, para quién y con qué intención.
-
-## Reto
 
 ---
 
@@ -211,11 +211,11 @@ Cuerpo que da el contexto de la sesión: qué se planteó, para quién y con qu�
 
 ---
 
-[ly: rotulo] {dark}
+[ly: texto] {dark}
 
-Lo que se aprendió por el camino, en el tono con el que se contaría a alguien que no estuvo.
+## Lo que se aprendió
 
-## Insights
+El recorrido, en el tono con el que se contaría a alguien que no estuvo.
 
 ---
 

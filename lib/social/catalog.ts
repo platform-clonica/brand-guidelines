@@ -65,11 +65,6 @@ Segundo párrafo, si hace falta.`,
 
 Un segundo párrafo, si el argumento lo pide.`,
 
-  rotulo: `Cuerpo de texto que ocupa la parte de arriba de la tarjeta y
-explica el contexto de lo que se muestra.
-
-## Rótulo`,
-
   agenda: `## Programa
 
 - Apertura | 09:00
@@ -143,13 +138,6 @@ export const LAYOUTS: readonly LayoutCatalogEntry[] = [
     skeleton: SKELETONS.parrafo,
   },
   {
-    marker: 'rotulo',
-    kind: 'rotulo',
-    nombre: 'Rótulo',
-    slots: 'Cuerpo mono arriba · rótulo serif grande abajo',
-    skeleton: SKELETONS.rotulo,
-  },
-  {
     marker: 'agenda',
     kind: 'agenda',
     nombre: 'Agenda',
@@ -182,7 +170,12 @@ export const LAYOUT_ALIASES: Record<string, string> = {
   quote: 'cita',
   photo: 'foto',
   imagen: 'foto',
-  label: 'rotulo',
+  /* `rotulo` fue un layout: cuerpo mono arriba y titular serif grande
+     abajo. Se retiró el 12/11/2026 porque un titular nunca va debajo del
+     texto pequeño ni pegado al pie, y esa era su única razón de ser. Queda
+     como alias para que un bloque ya escrito no se quede sin pintar. */
+  rotulo: 'texto',
+  label: 'texto',
   parágrafo: 'parrafo',
   prosa: 'parrafo',
   paragraph: 'parrafo',
