@@ -71,12 +71,25 @@ Vive en `lib/social/typeScale.ts` y se espeja en `components/social/social.css` 
 | Peldaño | px | Para qué |
 |---|---|---|
 | `--s-xl` | 192 | El titular del **cierre**. Es el único texto de su slide |
-| `--s-l` | 96 | El titular de la **portada**, y solo ese |
-| `--s-m` | 64 | **Cualquier** titular interior, la cita y el párrafo serif |
-| `--s-s` | 48 | Los **elementos de lista**, por debajo del titular que los encabeza |
+| `--s-l` | 120 | El titular de la **portada**, y solo ese |
+| `--s-m` | 80 | **Cualquier** titular interior, la cita y el párrafo serif |
+| `--s-s` | 60 | Los **elementos de lista**, por debajo del titular que los encabeza |
 | `--s-pie` | 56 | Slug y firma. No es contenido, es papelería |
-| `--s-mono` | 40 | **Todo** el texto en mono, sin excepción |
-| `--s-micro` | 22 | Antetítulo y numeración. Es una etiqueta, no texto corrido |
+| `--s-mono` | 46 | **Todo** el texto en mono, sin excepción |
+| `--s-micro` | 24 | Antetítulo y numeración. Es una etiqueta, no texto corrido |
+
+Los valores salieron de medir los carruseles publicados (96 / 64 / 48 / 40) y el equipo los subió
+el 12/11/2026: en un lienzo de 1080 hay sitio de sobra y las piezas no van densas. La escala sube
+un escalón sin tocar las proporciones. El medido de cada peldaño queda anotado en su `origen`.
+
+**La mono no llega al margen derecho**: se queda un margen de página antes. Una monoespaciada
+rinde líneas muy parejas, y sin ese aire el bloque parece una caja maciza pegada al borde.
+
+**El número de una lista va levantado de la línea base.** Las dos bases ya coincidían exactamente
+—medido, diferencia cero— y aun así el número se veía caído: mide la mitad que el texto y,
+apoyado en la misma base, queda colgando por debajo de su altura de mayúsculas. El diseño de
+referencia hace lo mismo: el número apoya 5 px por encima de la base del texto. Se expresa como
+fracción del peldaño para que no haya que recalcularlo.
 
 Antes había siete peldaños repartidos por capricho de cada layout, y se notaba al pasar de una
 slide a otra. Unificado el 12/11/2026 por decisión de Martina, junto con dos reglas más:

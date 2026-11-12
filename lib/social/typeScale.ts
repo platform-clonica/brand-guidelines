@@ -23,8 +23,11 @@
    decisión de Martina.
 
    LA REGLA DE LOS VALORES
-   Los titulares serif se quedan en la escala tal cual; el resto corre a
-   **×2,25** sobre el lienzo social.
+   Los valores salieron de medir los carruseles publicados y el equipo los
+   subió después, el 12/11/2026: en un lienzo de 1080 hay sitio de sobra y
+   las piezas no van densas. La escala entera sube un escalón sin tocar las
+   proporciones entre peldaños. El medido de cada uno queda anotado en su
+   `origen` para que se pueda volver.
 
    De dónde sale, porque no es un gusto. Se midió el ancho de tinta de
    cadenas concretas sobre los PNG publicados y se buscó qué tamaño las
@@ -99,32 +102,32 @@ export const socialTypeScale: readonly SocialScaleEntry[] = [
   {
     id: 'l',
     cssVar: '--s-l',
-    px: 96,
+    px: 120,
     lineHeight: 1.1,
     letterSpacing: '-0.01em',
     family: 'serif',
     weights: [300],
-    origen: 'escala `display` (6rem), sin tocar',
+    origen: 'escala `display` (6rem) ×1,25',
     uso: 'El titular de la portada, y solo ese. Medido 96 en los carruseles publicados.',
   },
   {
     id: 'm',
     cssVar: '--s-m',
-    px: 64,
+    px: 80,
     lineHeight: 1.15,
     family: 'serif',
     weights: [300, 400],
-    origen: 'escala `title` (4rem), sin tocar',
+    origen: 'escala `title` (4rem) ×1,25',
     uso: 'CUALQUIER titular interior, la cita y el párrafo serif. Un solo tamaño para todos.',
   },
   {
     id: 's',
     cssVar: '--s-s',
-    px: 48,
+    px: 60,
     lineHeight: 1.3,
     family: 'serif',
     weights: [300, 400],
-    origen: 'escala `title-sm` (2rem) ×1,5',
+    origen: 'escala `title-sm` (2rem) ×1,875',
     uso: 'Los elementos de una lista. Por debajo del titular que los encabeza, que va a M.',
   },
   {
@@ -142,11 +145,11 @@ export const socialTypeScale: readonly SocialScaleEntry[] = [
   {
     id: 'mono',
     cssVar: '--s-mono',
-    px: 40,
+    px: 46,
     lineHeight: 1.55,
     family: 'mono',
     weights: [400, 500, 600],
-    origen: 'escala `body` (1,125rem) ×2,25 — medido 40',
+    origen: 'escala `body` (1,125rem) ×2,55 — medido 40, subido a 46',
     uso:
       'TODO el texto en mono, sin excepción: cuerpo, subtítulo de portada y texto de apoyo. ' +
       'Un solo tamaño, decisión de Martina: los saltos de 40 a 36 se notaban al pasar de una ' +
@@ -155,12 +158,12 @@ export const socialTypeScale: readonly SocialScaleEntry[] = [
   {
     id: 'micro',
     cssVar: '--s-micro',
-    px: 22,
+    px: 24,
     lineHeight: 1.4,
     letterSpacing: '0.04em',
     family: 'mono',
     weights: [400, 500, 600],
-    origen: 'escala `caption` (0,625rem) ×2,25',
+    origen: 'escala `caption` (0,625rem) ×2,4',
     uso:
       'Antetítulo y numeración de lista. Es mono también, pero no es texto corrido: es una ' +
       'etiqueta, y por eso no entra en la regla del tamaño único.',

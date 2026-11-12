@@ -45,13 +45,17 @@
      Antes había siete tamaños repartidos por capricho de cada layout y se
      notaba al pasar de una slide a otra. Decisión de Martina del
      12/11/2026. */
+  /* Los valores salieron de medir los carruseles publicados, y el equipo
+     los subió después: en un lienzo de 1080 hay sitio de sobra y las
+     piezas no van densas. La escala sube un escalón entero, sin tocar las
+     proporciones entre peldaños. */
   --s-xl:192px;
-  --s-l:96px;
-  --s-m:64px;
-  --s-s:48px;
+  --s-l:120px;     /* medido 96 */
+  --s-m:80px;      /* medido 64 */
+  --s-s:60px;      /* medido 48 */
   --s-pie:56px;
-  --s-mono:40px;
-  --s-micro:22px;
+  --s-mono:46px;   /* medido 40 */
+  --s-micro:24px;
 
   --track-caps:.08em;  /* antetítulo en MAYÚSCULAS */
   --track-label:.04em; /* caption que no va en mayúsculas */
@@ -244,7 +248,14 @@
 .ix-social .headline.xl{font-size:var(--s-xl); line-height:1;}
 
 /* Cuerpo en mono. */
-.ix-social .copy{font-family:var(--mono); font-weight:400; font-size:var(--s-mono); line-height:1.55; color:var(--ink);}
+.ix-social .copy{
+  font-family:var(--mono); font-weight:400; font-size:var(--s-mono);
+  line-height:1.55; color:var(--ink);
+  /* La mono no llega al margen derecho: se queda un margen de página
+     antes. Una monoespaciada rinde líneas muy parejas, así que sin este
+     aire el bloque parece una caja maciza pegada al borde. */
+  max-width:calc(100% - var(--m));
+}
 
 .ix-social .copy p + p{margin-top:1.55em;}
 
@@ -287,7 +298,20 @@
 .ix-social .items li:first-child{padding-top:0;}
 .ix-social .items .n{
   font-family:var(--mono); font-weight:400; font-size:var(--s-micro);
-  color:var(--ink-soft); flex:0 0 auto; min-width:22px;
+  color:var(--ink-soft); flex:0 0 auto; min-width:26px;
+  /* El número se levanta un poco de la línea base.
+
+     Las dos líneas base ya coincidían exactamente —medido, diferencia
+     cero— y aun así el número se veía caído: es la mitad de alto que el
+     texto, y apoyado en la misma base queda colgando por debajo de su
+     altura de mayúsculas.
+
+     El diseño de referencia hace justamente esto: medido en el carrusel
+     publicado, el número apoya 5 px por encima de la base del texto, con
+     lo que su centro óptico cae dentro de la banda de mayúsculas. Se
+     expresa como fracción del peldaño para que no haya que recalcularlo
+     si cambia. */
+  position:relative; top:calc(var(--s-s) * -0.09);
 }
 .ix-social .items .t{
   font-family:var(--serif); font-weight:300; font-size:var(--s-s);
