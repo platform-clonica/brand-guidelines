@@ -9,6 +9,8 @@ import { exportAll, exportCard, fileName } from '@/lib/social/exportPng';
 import { colors, btn, input, toolbarBtn, seg, segOn } from '@/components/deck/studio/ui';
 import type { SessionUser } from '@/lib/auth/sessionUser';
 import { ALTO_BARRA, SocialToolbar, TEXTO_BARRA } from './studio/SocialToolbar';
+import { useAutosave } from '@/lib/hooks/useAutosave';
+import { guardarPieza } from '@/lib/social/api';
 import { ImageGallery } from '@/components/deck/studio/ImageGallery';
 import { AiEditModal } from '@/components/images/AiEditModal';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -48,18 +50,31 @@ const PESTANAS: { id: PanelId; label: string }[] = [
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
 /* El editor: markdown a la izquierda, tarjetas a la derecha.
-   Misma mecánica que el Deck Maker a propósito — quien sepa usar uno sabe
+   Misma mecánica que el Deck Maker a propósito, y quien sepa usar uno sabe
    usar el otro. El cromo reutiliza `components/deck/studio/ui.ts`, así que
    los dos editores no pueden separarse visualmente por descuido. */
 
-export function SocialStudio({ user }: { user?: SessionUser } = {}) {
+export function SocialStudio({
+  user,
+  postId,
+  initialName,
+  initialMd,
+  initialCanvas,
+}: {
+  user?: SessionUser;
+  /** Sin id no se guarda nada: es el editor abierto fuera de una pieza. */
+  postId?: string;
+  initialName?: string;
+  initialMd?: string;
+  initialCanvas?: CanvasId;
+} = {}) {
   /* Al abrir, siempre el carrusel de Miradas. La plantilla va en estado y
      no en `defaultValue`: así el desplegable no puede quedarse enseñando
      una cosa mientras el texto es otra. */
   const [plantilla, setPlantilla] = useState<TemplateId>('miradas');
-  const [md, setMd] = useState(() => templateById('miradas').md);
-  const [canvas, setCanvas] = useState<CanvasId>('carrusel');
-  const [titulo, setTitulo] = useState('Carrusel sin título');
+  const [md, setMd] = useState(() => initialMd ?? templateById('miradas').md);
+  const [canvas, setCanvas] = useState<CanvasId>(initialCanvas ?? 'carrusel');
+  const [titulo, setTitulo] = useState(initialName ?? 'Carrusel sin título');
   const [actual, setActual] = useState(0);
   const [exportando, setExportando] = useState<null | string>(null);
   const [error, setError] = useState<string | null>(null);
@@ -119,6 +134,29 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
   useEffect(() => {
     if (actual >= total) setActual(Math.max(0, total - 1));
   }, [total, actual]);
+
+  /* Guardado automático. El markdown es la fuente de verdad, así que basta
+     con él, el nombre y el lienzo: las slides se compilan al abrir.
+
+     `enabled` cuelga de que haya id: el editor también se puede montar sin
+     pieza (la página de pruebas del repo lo hace) y ahí no hay dónde
+     guardar. */
+  const porGuardar = useMemo(() => ({ name: titulo, md, canvas }), [titulo, md, canvas]);
+  const { saveState, dirty } = useAutosave({
+    enabled: Boolean(postId),
+    value: porGuardar,
+    save: (v) => guardarPieza(postId!, v),
+  });
+
+  /* Aviso del navegador al cerrar con cambios sin guardar. El editor no
+     tiene «guardar» a mano: si se cierra la pestaña a los dos segundos de
+     escribir, lo tecleado no ha llegado todavía. */
+  useEffect(() => {
+    if (!dirty) return;
+    const avisar = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', avisar);
+    return () => window.removeEventListener('beforeunload', avisar);
+  }, [dirty]);
 
   const spec = CANVASES[canvas];
 
@@ -385,6 +423,17 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
         </select>
 
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          {postId && (
+            <span style={{ font: `400 11px/1 ${MONO}`, color: saveState === 'error' ? colors.bordeaux : colors.ash }}>
+              {saveState === 'saving'
+                ? 'Guardando…'
+                : saveState === 'error'
+                  ? 'No se ha podido guardar'
+                  : dirty
+                    ? 'Sin guardar'
+                    : 'Guardado'}
+            </span>
+          )}
           {exportando && (
             <span style={{ font: `400 11px/1 ${MONO}`, color: colors.ash }}>{exportando}</span>
           )}
@@ -586,7 +635,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
                 >
                   <span>Exposición</span>
                   <span style={{ fontVariantNumeric: 'tabular-nums' }}>
-                    {conImagenActual ? `${exposicionActual} %` : '—'}
+                    {conImagenActual ? `${exposicionActual} %` : 'sin imagen'}
                   </span>
                 </p>
                 <input
