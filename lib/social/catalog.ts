@@ -55,7 +55,7 @@ Segundo párrafo, si hace falta.`,
      no una etiqueta. */
   cita: `> La frase citada, tal cual se dijo.
 
-> autor: Nombre Apellido`,
+> autor: Yolanda Delgado`,
 
   imagen: `${IMG}
 
@@ -65,13 +65,16 @@ Segundo párrafo, si hace falta.`,
 
 Un segundo párrafo, si el argumento lo pide.`,
 
-  /* Sin retrato: en este repo no hay fotos de equipo, y un esqueleto que
-     apunta a un archivo inexistente enseña un icono roto la primera vez que
-     alguien lo usa. El retrato es la SEGUNDA imagen del bloque y se añade
-     desde la galería. */
+  /* El autor va con un nombre REAL del equipo, no con «Nombre Apellido».
+     Es la única manera de que se vea que el retrato aparece solo: con un
+     nombre inventado la esquina sale vacía y parece que la función no
+     existe. Se sustituye al escribir, como el resto del esqueleto.
+
+     El retrato es la SEGUNDA imagen del bloque si se quiere poner uno a
+     mano; si no, sale del nombre. */
   cierre: `# Artículo completo en nuestro blog.
 
-> autor: Nombre Apellido
+> autor: Yolanda Delgado
 
 ${IMG}`,
 };

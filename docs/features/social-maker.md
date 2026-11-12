@@ -297,7 +297,7 @@ Las comillas **las pone el sistema**, no quien escribe: salen siempre las mismas
 las angulares («»), que son las del castellano y las que aparecen en los carruseles publicados. Si
 alguien las teclea igualmente, se le quitan antes para no doblarlas.
 
-La firma va debajo, pequeña, y sale de `> autor: Nombre Apellido`. **Esa línea va escrita en el
+La firma va debajo, pequeña, y sale de `> autor: Yolanda Delgado`. **Esa línea va escrita en el
 bloque**, no oculta: se edita como cualquier otro texto. Mantiene el slug como cualquier otra
 tarjeta, y admite fondo de color o foto.
 
@@ -442,6 +442,9 @@ llama el archivo.
 - **El nombre de pila basta si no se repite.** «Diana» funciona; «Elena» no, porque hay dos, y una
   foto equivocada es peor que ninguna foto.
 - **Una segunda imagen en el bloque gana a la automática**, para firmar con alguien de fuera.
+- **El esqueleto trae un nombre REAL del equipo**, no «Nombre Apellido». Es la única manera de que
+  se vea que el retrato aparece solo: con un nombre inventado la esquina sale vacía y parece que la
+  función no existe. Se sustituye al escribir, como el resto del esqueleto.
 - **Quien no está en el equipo firma con el isotipo**, no con una inicial. Es lo que ya hace la web.
   Y el editor lo avisa, para que una errata no llegue a publicarse disfrazada de decisión.
 

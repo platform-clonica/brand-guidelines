@@ -6,7 +6,7 @@ import { CANVASES, EXPORT_SCALE, type CanvasId } from '@/lib/social/types';
 import { LAYOUTS } from '@/lib/social/catalog';
 import { TEMPLATES, templateById, type TemplateId } from '@/lib/social/templates';
 import { exportAll, exportCard, fileName } from '@/lib/social/exportPng';
-import { colors, btn, toolbarBtn, seg, segOn } from '@/components/deck/studio/ui';
+import { colors, btn, input, toolbarBtn, seg, segOn } from '@/components/deck/studio/ui';
 import type { SessionUser } from '@/lib/auth/sessionUser';
 import { SocialToolbar } from './studio/SocialToolbar';
 import { ImageGallery } from '@/components/deck/studio/ImageGallery';
@@ -304,9 +304,13 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
           ))}
         </div>
 
-        {/* Desplegable a secas: sin caja ni relleno, para que no compita con
-            los botones que sí son acciones. La flecha es un fondo dibujado
-            y no un carácter, así que no se puede seleccionar con el texto. */}
+        {/* El desplegable de plantillas, con el campo de la casa: el mismo
+            `input` que usa el selector de DSMak_r, con la flecha dibujada
+            como fondo para que no se pueda seleccionar junto al texto.
+
+            `marginLeft` aparte del `gap` de la barra: pegado al control de
+            lienzo los dos se leían como un solo grupo, y son cosas
+            distintas. */}
         <select
           onChange={(e) => {
             const t = templateById(e.target.value as TemplateId);
@@ -317,13 +321,14 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
           value={plantilla}
           aria-label="Plantilla"
           style={{
-            appearance: 'none', border: 'none', background: 'transparent',
-            font: `500 11px/1 ${MONO}`, letterSpacing: '.04em', color: colors.dark,
-            margin: 0, padding: '0 18px 0 0', cursor: 'pointer',
+            ...input,
+            width: 'auto', marginLeft: 8, cursor: 'pointer',
+            appearance: 'none', padding: '8px 26px 8px 10px',
+            font: `500 12px/1 ${MONO}`, letterSpacing: '.02em',
             backgroundImage:
               `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='6'><path d='M0 0h9L4.5 6z' fill='%231C1A17'/></svg>")`,
             backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right center',
+            backgroundPosition: 'right 9px center',
           }}
         >
           {TEMPLATES.map((t) => (

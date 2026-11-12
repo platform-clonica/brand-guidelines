@@ -95,7 +95,7 @@ La última frase es la que se lleva quien lo lea.
 
 # Artículo completo en nuestro blog.
 
-> autor: Nombre Apellido
+> autor: Yolanda Delgado
 
 ![Imagen del universo visual](/universo/universo-01.jpg)
 `;
@@ -146,7 +146,7 @@ Cuerpo de texto que recoge lo que salió de la sesión, en el tono con el que se
 
 > La frase citada, tal cual se dijo.
 
-> autor: Nombre Apellido
+> autor: Yolanda Delgado
 
 ---
 
