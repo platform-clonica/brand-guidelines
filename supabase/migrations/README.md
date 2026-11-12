@@ -53,6 +53,12 @@ app ya comprueba la unicidad antes de escribir, así que el índice es la garant
 primera línea de defensa — el código funciona igual antes y después de aplicarla. **Si hubiera
 slugs duplicadas en la tabla, el índice fallará al crearse**: resolverlas primero.
 
+`20261112120000_create_social_posts.sql` (SocialMak_r) es **aditiva**: crea `social_posts` con su
+RLS y no toca ninguna tabla existente. **Hay que aplicarla antes de que la herramienta sirva de
+algo**: sin ella la lanzadera responde error y el editor no guarda. El resto del Social Maker
+(escribir, previsualizar y exportar a PNG) funciona sin base de datos, así que la herramienta no
+se rompe entera: solo no recuerda.
+
 `20261001100000_images_bank.sql` (IMG_r) es **aditiva** y ya está aplicada: el 1 de octubre de 2026,
 registrada en remoto como `20261001131350 images_bank`. Añade columnas a `images` con `name` todavía
 nullable, las funciones `image_uses` y `team_member_names`, y los límites del bucket `deck-images`
