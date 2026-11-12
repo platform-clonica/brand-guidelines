@@ -345,7 +345,8 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
                sin color. */
             backgroundColor: colors.white, color: colors.dark,
             border: `1px solid ${colors.warmDark}`, borderRadius: 0,
-            padding: '8px 26px 8px 10px',
+            /* Al mismo alto que el resto del grupo de la izquierda: 26. */
+            padding: '6px 24px 6px 9px',
             font: `500 12px/1 ${MONO}`, letterSpacing: '.02em',
             backgroundImage:
               `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='6'><path d='M0 0h9L4.5 6z' fill='%231C1A17'/></svg>")`,

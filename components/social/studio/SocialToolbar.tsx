@@ -56,8 +56,17 @@ export function SocialToolbar({
         onChange={(e) => onTitulo(e.target.value)}
         aria-label="Nombre de la pieza"
         style={{
-          font: `500 13px/1 ${MONO}`, letterSpacing: '.02em', color: colors.dark,
-          padding: '7px 8px', minWidth: 180, maxWidth: 260,
+          /* Mismo alto que los segmentos de lienzo que tiene al lado: 26,
+             que es lo que mide `seg`. Con 13/7 de relleno medía 33 y se
+             leía como una caja encajada a la fuerza entre controles más
+             bajos.
+
+             El alto va FIJO y no calculado por el relleno: un <input> no
+             encoge su caja de contenido por debajo del alto normal de
+             línea de su fuente, así que por relleno se quedaba en 29. */
+          height: 26, boxSizing: 'border-box',
+          font: `500 12px/1 ${MONO}`, letterSpacing: '.02em', color: colors.dark,
+          padding: '0 8px', minWidth: 180, maxWidth: 260,
           border: `1px solid ${colors.warmDark}`, background: colors.white,
         }}
       />
