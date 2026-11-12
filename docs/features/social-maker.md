@@ -3,6 +3,7 @@
 Editor de imágenes para redes. Markdown a la izquierda, tarjetas a la derecha, descarga en PNG.
 
 - **Ruta:** `/workspace/socialmak_r` (detrás de login, como el resto del workspace).
+- **Cromo:** el del workspace, no uno propio. Ver «La barra es la de la casa» más abajo.
 - **Catálogo:** la herramienta ya estaba declarada en `lib/workspace/catalog.ts` como
   «Próximamente»; ahora apunta a su ruta.
 
@@ -468,6 +469,26 @@ color no se elige a ojo: cambiarlo movió la garantía sin que se notara en pant
 y lo contrasta con `lib/tokens.ts`: todo color de la paleta, la serif solo en 300/400, la mono solo
 en 400/500/600 y cero cursiva. Verificado que falla cuando se incumple, no solo que pasa cuando
 todo está bien.
+
+## La barra es la de la casa
+
+La herramienta vive en `brand.interactius.com/workspace` junto al Deck Maker, el Form Maker y los
+demás, y quien salta de una a otra tiene que reconocer dónde está sin pensarlo. Así que la barra
+no es propia: es la misma anatomía que `DeckToolbar`, `FormToolbar` y `DsToolbar`.
+
+**Imagotipo** (vuelve al workspace) · separador · **marca de la herramienta** · separador ·
+**nombre de la pieza** · acciones · **menú de usuario**.
+
+Los valores salen de ahí también: fondo Warm Light, filete Warm Dark, `padding: 10px 16px`. Antes
+iba sobre blanco y con un «SOCIAL MAKER» escrito a mano en mayúsculas, que no era de la familia.
+
+El wordmark **SocialMak_r** se añade a `components/studio/Wordmark.tsx`, donde ya estaban los de
+las otras cuatro herramientas. Ese componente ya contemplaba este caso: su comentario explica que
+el `viewBox` se calcula en vez de fijarse precisamente porque «SocialMak_r» tiene 11 caracteres y
+un ancho fijo lo recortaría por la derecha.
+
+La página pasa a leer la sesión para que la barra lleve el menú de usuario, igual que las demás.
+Eso la convierte en dinámica (`ƒ` en el build), que es lo que ya son `deckmak_r` y el resto.
 
 ## La columna de edición
 

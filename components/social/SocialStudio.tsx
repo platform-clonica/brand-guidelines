@@ -7,6 +7,8 @@ import { LAYOUTS } from '@/lib/social/catalog';
 import { TEMPLATES, templateById, type TemplateId } from '@/lib/social/templates';
 import { exportAll, exportCard, fileName } from '@/lib/social/exportPng';
 import { colors, btn, btnGhost, toolbarBtn, seg, segOn } from '@/components/deck/studio/ui';
+import type { SessionUser } from '@/lib/auth/sessionUser';
+import { SocialToolbar } from './studio/SocialToolbar';
 import { ImageGallery } from '@/components/deck/studio/ImageGallery';
 import { AiEditModal } from '@/components/images/AiEditModal';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -44,7 +46,7 @@ const MONO = 'var(--font-ibm-plex-mono, monospace)';
    usar el otro. El cromo reutiliza `components/deck/studio/ui.ts`, así que
    los dos editores no pueden separarse visualmente por descuido. */
 
-export function SocialStudio() {
+export function SocialStudio({ user }: { user?: SessionUser } = {}) {
   const [md, setMd] = useState(() => templateById('miradas').md);
   const [canvas, setCanvas] = useState<CanvasId>('carrusel');
   const [titulo, setTitulo] = useState('Carrusel sin título');
@@ -265,27 +267,8 @@ export function SocialStudio() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: colors.warmLight }}>
-      {/* ── Barra superior ── */}
-      <header
-        style={{
-          display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px',
-          borderBottom: `1px solid ${colors.warmDark}`, background: colors.white, flexWrap: 'wrap',
-        }}
-      >
-        <strong style={{ font: `600 12px/1 ${MONO}`, letterSpacing: '.08em', textTransform: 'uppercase' }}>
-          Social Maker
-        </strong>
-
-        <input
-          value={titulo}
-          onChange={(e) => setTitulo(e.target.value)}
-          aria-label="Nombre de la pieza"
-          style={{
-            font: `400 12px/1 ${MONO}`, padding: '9px 10px', minWidth: 220,
-            border: `1px solid ${colors.warmDark}`, background: colors.warmLight, color: colors.dark,
-          }}
-        />
-
+      {/* La barra es la del workspace, no una propia: ver SocialToolbar. */}
+      <SocialToolbar titulo={titulo} onTitulo={setTitulo} user={user}>
         {/* Lienzo */}
         <div style={{ display: 'flex', gap: 0 }}>
           {(Object.keys(CANVASES) as CanvasId[]).map((id) => (
@@ -335,13 +318,6 @@ export function SocialStudio() {
             /* Burdeos es el color de alerta del sistema, declarado en lib/tokens.ts. */
             <span style={{ font: `500 11px/1.4 ${MONO}`, color: colors.bordeaux, maxWidth: 320 }}>{error}</span>
           )}
-          {/* El logo del cliente se hereda a toda la pieza, así que se pone
-              una vez y no tarjeta a tarjeta.
-
-              Se sube igual que en el Deck Maker: a su bucket de assets, no
-              al banco de imágenes. Un logo de cliente no es una foto del
-              universo visual y no tiene por qué aparecer en la galería que
-              usa todo el equipo. */}
           <input
             ref={inputLogo}
             type="file"
@@ -378,11 +354,7 @@ export function SocialStudio() {
                 : 'Sube un SVG. Se pinta con la tinta de cada tarjeta, así que da igual el color que traiga.'
             }
           >
-            {subiendoLogo
-              ? 'Subiendo…'
-              : deck.logo?.src
-                ? 'Quitar logo de cliente'
-                : 'Logo de cliente'}
+            {subiendoLogo ? 'Subiendo…' : deck.logo?.src ? 'Quitar logo de cliente' : 'Logo de cliente'}
           </button>
           <button type="button" style={btnGhost} onClick={descargarUna} disabled={!!exportando}>
             PNG de esta
@@ -391,7 +363,7 @@ export function SocialStudio() {
             Descargar {total} en .zip
           </button>
         </span>
-      </header>
+      </SocialToolbar>
 
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* ── Columna del texto ── */}
