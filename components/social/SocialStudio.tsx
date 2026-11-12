@@ -423,17 +423,20 @@ export function SocialStudio({
         </select>
 
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-          {postId && (
-            <span style={{ font: `400 11px/1 ${MONO}`, color: saveState === 'error' ? colors.bordeaux : colors.ash }}>
-              {saveState === 'saving'
+          {/* Sin pieza detrás no hay nada que guardar, y callarse sería peor
+              que decirlo: quien escribe tiene que saber que al cerrar la
+              pestaña se lo lleva el viento. */}
+          <span style={{ font: `400 11px/1 ${MONO}`, color: !postId || saveState === 'error' ? colors.bordeaux : colors.ash }}>
+            {!postId
+              ? 'Borrador: esto no se guarda'
+              : saveState === 'saving'
                 ? 'Guardando…'
                 : saveState === 'error'
                   ? 'No se ha podido guardar'
                   : dirty
                     ? 'Sin guardar'
                     : 'Guardado'}
-            </span>
-          )}
+          </span>
           {exportando && (
             <span style={{ font: `400 11px/1 ${MONO}`, color: colors.ash }}>{exportando}</span>
           )}

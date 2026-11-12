@@ -112,8 +112,26 @@ export function SocialGallery({ user }: { user: SessionUser }) {
 
       <div style={{ maxWidth: 1120, margin: '0 auto', padding: '40px 32px 64px' }}>
         {error && (
-          /* Burdeos: el color de alerta del sistema, declarado en lib/tokens.ts. */
-          <div style={{ font: `400 12px/1.4 ${MONO}`, color: colors.bordeaux, marginBottom: 20 }}>{error}</div>
+          /* Burdeos: el color de alerta del sistema, declarado en lib/tokens.ts.
+             La salida al borrador va aquí y no en la barra: no es una opción
+             del flujo normal, es lo que hace falta cuando la lista no carga.
+             Listar necesita la base de datos; escribir y exportar no, y
+             sería absurdo dejar la herramienta inaccesible por eso. */
+          <div
+            style={{
+              display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap',
+              marginBottom: 20,
+            }}
+          >
+            <span style={{ font: `400 12px/1.4 ${MONO}`, color: colors.bordeaux }}>{error}</span>
+            <button
+              type="button"
+              onClick={() => router.push('/workspace/socialmak_r/borrador')}
+              style={toolbarBtn}
+            >
+              Escribir sin guardar
+            </button>
+          </div>
         )}
 
         <div
