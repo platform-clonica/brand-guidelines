@@ -117,6 +117,7 @@ acaso»: un layout que nadie usa es una papeleta para que alguien lo use mal.
 | `foto` | Foto a sangre con texto encima, arriba o abajo, o sin texto |
 | `rotulo` | Cuerpo mono arriba, rótulo serif grande abajo |
 | `agenda` | Filas de «qué \| cuándo» con filete |
+| `parrafo` | Cuerpo de texto en serif, sin titular. El de los carruseles de Insights |
 | `cierre` | Llamada a leer, firma y retrato en la esquina |
 
 El titular del cierre va al peldaño **`super` (192)** y no al `display` del resto: es el único
@@ -126,8 +127,27 @@ viuda**: a ese tamaño, atar la última palabra corta a la anterior crea una tir
 la caja y deja una palabra suelta en la línea de antes, que es justo el defecto que la regla
 quería evitar.
 
-Las plantillas de arranque son cuatro: **Miradas** (papelería al pie), **evento** y **workshop**
-(papelería en cabecera) y una en blanco.
+Las plantillas de arranque son cinco: **Miradas**, **Insights**, **evento**, **workshop** y una en
+blanco. Las dos primeras llevan la papelería al pie; evento y workshop, en cabecera.
+
+### Miradas e Insights no son lo mismo
+
+| | Miradas | Insights |
+|---|---|---|
+| Qué es | Presenta un artículo del blog | Un concepto que merece contarse, **sin artículo detrás** |
+| Slug | `/Miradas/` | `/Insights/` |
+| Cómo cierra | Tarjeta de **cierre**: «Artículo completo en nuestro blog», con firma y retrato | **Sin cierre.** Remata con la pregunta que deja abierta |
+
+Que un Insight no lleve cierre no es un descuido: **no tiene adónde mandar.** Poner la llamada a
+leer sería prometer un artículo que no existe.
+
+Su ritmo alterna razonamiento y dato: párrafo serif sobre oscuro para pensar en voz alta, titular
+más cuerpo mono sobre claro para asentar lo concreto.
+
+> **Una desviación observada en los diseños de Insights.** Las tarjetas oscuras de referencia usan
+> **negro puro `#000000`**, no el oscuro de marca `#1C1A17`. Es plano y exacto, no un artefacto de
+> compresión. La plantilla usa el token de marca; queda anotado para que lo decidan Alberto y
+> Martina.
 
 ### Cada plantilla trae su ritmo de fondos
 
@@ -397,6 +417,15 @@ node scripts/sync-equipo.mjs
 
 Copia las fotos y regenera `lib/social/equipo.ts`, que está marcado como generado. Cuando alguien
 entre o salga del equipo, se vuelve a correr.
+
+## Los metadatos son una lista cerrada
+
+`slug`, `autor`, `logo`, `marca`, `exposicion`, `posicion`, `cliente`. Y la lista tiene que estar
+cerrada: antes se reconocía un metadato con el patrón «unas palabras, dos puntos, el resto», y eso
+**se tragaba la prosa**. «El razonamiento largo: dónde se complica» desaparecía de la tarjeta sin
+avisar, y los dos puntos son una construcción habitual en la voz de la casa.
+
+Añadir una clave nueva es añadirla a `CLAVES_META` en `lib/social/compile.ts`.
 
 ## Cómo funciona pulsar Enter
 

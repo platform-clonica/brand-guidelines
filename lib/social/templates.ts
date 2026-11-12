@@ -21,6 +21,8 @@
      Miradas    respiración larga. Oscuro, luego claros encadenados, y un
                 oscuro que corta antes del cierre. El claro domina y el
                 oscuro puntúa: es una pieza para leer.
+     Insights   alterna razonamiento y dato. Oscuro cuando piensa en voz
+                alta, claro cuando asienta algo concreto.
      Evento     la foto marca el compás. Plano, foto, plano, foto. Lo que
                 se cuenta pasó en un sitio, y el sitio se ve.
      Workshop   bloques oscuros que enmarcan el dato claro. El oscuro
@@ -30,7 +32,7 @@
    de ella lo hereda y puede romperlo a mano en cualquier tarjeta. Un ritmo
    que no se pudiera romper sería una cárcel, no un punto de partida. */
 
-export type TemplateId = 'miradas' | 'evento' | 'workshop' | 'vacio';
+export type TemplateId = 'miradas' | 'insights' | 'evento' | 'workshop' | 'vacio';
 
 export type SocialTemplate = {
   id: TemplateId;
@@ -232,12 +234,73 @@ Lo que se aprendió por el camino, en el tono con el que se contaría a alguien 
 # La pregunta con la que quieres que se queden.
 `;
 
+/* Insights: un concepto que merece contarse, SIN artículo detrás.
+
+   Es lo que lo separa de Miradas, y no es un matiz de tono: un carrusel de
+   Miradas presenta un artículo del blog y termina mandando a leerlo. Un
+   Insight no tiene adónde mandar, así que NO LLEVA TARJETA DE CIERRE.
+   Cierra con la pregunta que deja abierta, que es su forma de rematar.
+
+   El ritmo alterna razonamiento y dato: párrafo serif sobre oscuro para
+   pensar en voz alta, titular más cuerpo mono sobre claro para asentar lo
+   concreto. Sale de las seis tarjetas del carrusel de pagos agénticos. */
+const INSIGHTS = `[ly: portada] {dark}
+
+# El titular del concepto, tal como lo contarías en voz alta.
+
+> slug: /Insights/
+
+![Imagen del universo visual](/universo/universo-02.jpg)
+
+---
+
+[ly: parrafo] {dark}
+
+El planteamiento, en serif: qué está pasando y por qué merece mirarse.
+
+Y el giro que lo hace interesante, en un segundo párrafo.
+
+---
+
+[ly: texto] {warm-light}
+
+## El concepto, nombrado
+
+El dato concreto que lo sostiene, en mono. Aquí va lo que se puede comprobar.
+
+---
+
+[ly: texto] {warm-light}
+
+## ¿La pregunta que abre el asunto?
+
+El matiz que la pregunta deja ver, con el detalle que haga falta.
+
+---
+
+[ly: parrafo] {dark}
+
+El razonamiento largo: dónde se complica, qué se fragmenta, quién acaba asumiéndolo.
+
+---
+
+[ly: titular] {warm-dark}
+
+# ¿La pregunta con la que quieres que se queden?
+`;
+
 export const TEMPLATES: readonly SocialTemplate[] = [
   {
     id: 'miradas',
     nombre: 'Carrusel de Miradas',
     descripcion: 'Portada, desarrollo del argumento y cierre con firma. El de los artículos.',
     md: MIRADAS,
+  },
+  {
+    id: 'insights',
+    nombre: 'Carrusel de Insights',
+    descripcion: 'Un concepto que merece contarse, sin artículo detrás. Cierra con la pregunta, no con un enlace.',
+    md: INSIGHTS,
   },
   {
     id: 'evento',

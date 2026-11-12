@@ -12,6 +12,7 @@ import {
   Cita,
   Foto,
   Lista,
+  Parrafo,
   Portada,
   Rotulo,
   Texto,
@@ -76,6 +77,7 @@ export function SocialCard({
         {slide.kind === 'lista' && <Lista slide={slide} boxH={boxH} />}
         {slide.kind === 'cita' && <Cita slide={slide} boxH={boxH} />}
         {slide.kind === 'foto' && <Foto slide={slide} boxH={boxH} />}
+        {slide.kind === 'parrafo' && <Parrafo slide={slide} boxH={boxH} />}
         {slide.kind === 'rotulo' && <Rotulo slide={slide} boxH={boxH} />}
         {slide.kind === 'agenda' && <Agenda slide={slide} boxH={boxH} />}
         {slide.kind === 'cierre' && <Cierre slide={slide} boxH={boxH} />}

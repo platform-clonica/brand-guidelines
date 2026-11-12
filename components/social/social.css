@@ -282,6 +282,22 @@
   line-height:1; color:var(--ink);
 }
 
+/* · parrafo — cuerpo de texto en serif, sin titular.
+
+   Medido en el carrusel de Insights: 59 px con interlineado 60, o sea una
+   interlínea de 1,02. Se usa el peldaño `title` (64) de la escala, un 8 %
+   por encima, con 1,05: a 1,02 las líneas se tocan y un texto largo se
+   lee peor de lo que se ve en una maqueta corta.
+
+   El mismo papel que `.paragraph p` del deck, que pone el cuerpo largo en
+   la tipografía de contraste. */
+.ix-social .prosa{
+  font-family:var(--serif); font-weight:300; font-size:var(--s-title);
+  line-height:1.05; color:var(--ink);
+}
+.ix-social .prosa p + p{margin-top:1.05em;}
+.ix-social .prosa strong{font-weight:400;}
+
 /* · agenda — qué y a qué hora. */
 .ix-social .agenda li{
   display:flex; align-items:baseline; justify-content:space-between; gap:32px;

@@ -61,6 +61,10 @@ Segundo párrafo, si hace falta.`,
 
 # Texto que va encima de la foto`,
 
+  parrafo: `Un párrafo en serif que razona en vez de informar. Ocupa la tarjeta entera, sin titular que lo resuma.
+
+Un segundo párrafo, si el argumento lo pide.`,
+
   rotulo: `Cuerpo de texto que ocupa la parte de arriba de la tarjeta y
 explica el contexto de lo que se muestra.
 
@@ -132,6 +136,13 @@ export const LAYOUTS: readonly LayoutCatalogEntry[] = [
     skeleton: SKELETONS.foto,
   },
   {
+    marker: 'parrafo',
+    kind: 'parrafo',
+    nombre: 'Párrafo serif',
+    slots: 'Cuerpo de texto en serif, sin titular. El de los carruseles de Insights',
+    skeleton: SKELETONS.parrafo,
+  },
+  {
     marker: 'rotulo',
     kind: 'rotulo',
     nombre: 'Rótulo',
@@ -172,6 +183,9 @@ export const LAYOUT_ALIASES: Record<string, string> = {
   photo: 'foto',
   imagen: 'foto',
   label: 'rotulo',
+  parágrafo: 'parrafo',
+  prosa: 'parrafo',
+  paragraph: 'parrafo',
   programa: 'agenda',
   closing: 'cierre',
   final: 'cierre',

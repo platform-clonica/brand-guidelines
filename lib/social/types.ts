@@ -66,6 +66,10 @@ type SlideVariant =
   | { kind: 'rotulo'; theme: Theme; label: string; body: RichNode[] }
   /* Programa de una sesión: qué y a qué hora, con filetes. */
   | { kind: 'agenda'; theme: Theme; title?: string; rows: AgendaRow[] }
+  /* Cuerpo de texto en serif, sin titular. El mismo papel que la
+     diapositiva `paragraph` del deck: un párrafo que razona en vez de
+     informar, así que no lleva titular que lo resuma. */
+  | { kind: 'parrafo'; theme: Theme; body: RichNode[] }
   /* Cierre: la llamada a leer el artículo, con la firma y el retrato. */
   | {
       kind: 'cierre';

@@ -36,6 +36,35 @@ import type {
      ![alt](ruta)         imagen
      LÍNEA EN MAYÚSCULAS  antetítulo */
 
+/* Las claves de metadato que existen de verdad.
+   ─────────────────────────────────────────────────────────────────────────
+   Hace falta la lista cerrada. Antes se reconocía un metadato con el patrón
+   «unas palabras, dos puntos, el resto», y eso **se tragaba la prosa**:
+   «El razonamiento largo: dónde se complica» desaparecía de la tarjeta sin
+   avisar, y los dos puntos son una construcción habitual en la voz de la
+   casa.
+
+   Con la lista cerrada, una frase solo se descarta si empieza por una
+   clave que el sistema sabe leer. Añadir una clave nueva es añadirla aquí
+   y en el lugar donde se usa, que es justo el recordatorio que conviene
+   tener delante. */
+const CLAVES_META = new Set([
+  'slug',
+  'autor',
+  'logo',
+  'marca',
+  'exposicion',
+  'posicion',
+  'cliente',
+]);
+
+const CLAVE_VALOR = /^([\p{L} ]+):\s*.+$/u;
+
+export function esMetadato(texto: string): boolean {
+  const m = texto.match(CLAVE_VALOR);
+  return m ? CLAVES_META.has(m[1].trim().toLowerCase()) : false;
+}
+
 /* Rellenos admitidos. `dark` es el único que cambia la tinta; los claros la
    conservan, que es lo que les da el contraste. Los alias existen para no
    pelearse con el nombre al escribir. */
@@ -96,7 +125,7 @@ function kindOf(m: BlockModel): SlideKind {
     if (mapped) return mapped;
   }
   if (m.isFirst && m.image) return 'portada';
-  if (m.quotes.some((q) => !/^[\p{L} ]+:\s*.+$/u.test(q))) return 'cita';
+  if (m.quotes.some((q) => !esMetadato(q))) return 'cita';
   if (m.items?.some((i) => i.includes('|'))) return 'agenda';
   if (m.items?.length) return 'lista';
   if (m.image && !m.body.length) return 'foto';
@@ -129,11 +158,11 @@ function richBody(tokens: Token[]): RichNode[] {
   const out: RichNode[] = [];
   for (const t of tokens) {
     if (t.t === 'p') {
-      if (/^[\p{L} ]+:\s*.+$/u.test(t.text)) continue;
+      if (esMetadato(t.text)) continue;
       out.push({ t: 'p', text: t.text });
     }
     if (t.t === 'ul') out.push({ t: 'ul', items: t.items.map(toListItem) });
-    if (t.t === 'quote' && !/^[\p{L} ]+:\s*.+$/u.test(t.text)) out.push({ t: 'quote', text: t.text });
+    if (t.t === 'quote' && !esMetadato(t.text)) out.push({ t: 'quote', text: t.text });
   }
   return out;
 }
@@ -198,7 +227,7 @@ function buildSlide(m: BlockModel, autorPieza?: string): Slide {
       };
 
     case 'cita': {
-      const text = m.quotes.find((q) => !/^[\p{L} ]+:\s*.+$/u.test(q)) ?? m.title;
+      const text = m.quotes.find((q) => !esMetadato(q)) ?? m.title;
       /* Quién firma la cita, de lo más explícito a lo más implícito:
          un `> autor:` en esta tarjeta, una línea en mayúsculas en esta
          tarjeta, o el autor de la pieza.
@@ -217,6 +246,9 @@ function buildSlide(m: BlockModel, autorPieza?: string): Slide {
         text: m.title || undefined,
         position: m.meta.posicion === 'abajo' ? 'bottom' : 'top',
       };
+
+    case 'parrafo':
+      return { ...common, kind, body: richBody(m.tokens) };
 
     case 'rotulo':
       return { ...common, kind, label: m.title, body: richBody(m.tokens) };

@@ -6,4 +6,5 @@ export { Cita } from './Cita';
 export { Foto } from './Foto';
 export { Rotulo } from './Rotulo';
 export { Agenda } from './Agenda';
+export { Parrafo } from './Parrafo';
 export { Cierre } from './Cierre';
