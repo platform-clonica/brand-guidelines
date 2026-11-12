@@ -504,6 +504,14 @@ no es propia: es la misma anatomía que `DeckToolbar`, `FormToolbar` y `DsToolba
 Los valores salen de ahí también: fondo Warm Light, filete Warm Dark, `padding: 10px 16px`. Antes
 iba sobre blanco y con un «SOCIAL MAKER» escrito a mano en mayúsculas, que no era de la familia.
 
+**Toda la barra comparte alto y tamaño de texto**, declarados en `ALTO_BARRA` y `TEXTO_BARRA`
+(`SocialToolbar.tsx`): 31 px y 11/500, que son los de `toolbarBtn`. Antes había cinco alturas
+distintas porque cada control traía las suyas. El alto va fijo y no por relleno: un `<input>` no
+encoge su caja de contenido por debajo del alto normal de línea de su fuente.
+
+La única excepción es el avatar del menú de usuario (34), que es el `UserMenu` compartido y mide
+lo mismo en el Deck Maker y en FormMak_r.
+
 **Los botones son los de `components/deck/studio/ui.ts`, y hay que usar el correcto.** Las acciones
 secundarias van con `toolbarBtn` (fondo blanco, filete Warm Dark), la principal con `btn` (relleno
 oscuro) y los grupos de opción con `seg` / `segOn`. Estuvieron un tiempo con `btnGhost`, que lleva

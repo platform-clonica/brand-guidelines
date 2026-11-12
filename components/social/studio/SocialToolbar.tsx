@@ -7,6 +7,19 @@ import { colors } from '@/components/deck/studio/ui';
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
+/* El alto y el texto de TODOS los controles de la barra.
+
+   La referencia es `toolbarBtn` de `components/deck/studio/ui.ts`, que es
+   el botón secundario de la casa: 11 px a 500 y 31 de alto. Antes la barra
+   tenía cinco alturas distintas (26, 29, 30, 31 y 33) porque cada control
+   traía las suyas; ahora todos parten de aquí.
+
+   El alto va fijo y no calculado por el relleno: un <input> no encoge su
+   caja de contenido por debajo del alto normal de línea de su fuente, así
+   que por relleno se quedaba más alto por mucho que se apretara. */
+export const ALTO_BARRA = 31;
+export const TEXTO_BARRA = `500 11px/1 ${MONO}`;
+
 /* Barra superior del Social Maker.
 
    MISMA ANATOMÍA QUE EL RESTO DEL WORKSPACE, y eso no es estética: la
@@ -56,17 +69,9 @@ export function SocialToolbar({
         onChange={(e) => onTitulo(e.target.value)}
         aria-label="Nombre de la pieza"
         style={{
-          /* Mismo alto que los segmentos de lienzo que tiene al lado: 26,
-             que es lo que mide `seg`. Con 13/7 de relleno medía 33 y se
-             leía como una caja encajada a la fuerza entre controles más
-             bajos.
-
-             El alto va FIJO y no calculado por el relleno: un <input> no
-             encoge su caja de contenido por debajo del alto normal de
-             línea de su fuente, así que por relleno se quedaba en 29. */
-          height: 26, boxSizing: 'border-box',
-          font: `500 12px/1 ${MONO}`, letterSpacing: '.02em', color: colors.dark,
-          padding: '0 8px', minWidth: 180, maxWidth: 260,
+          height: ALTO_BARRA, boxSizing: 'border-box',
+          font: TEXTO_BARRA, letterSpacing: '.04em', color: colors.dark,
+          padding: '0 10px', minWidth: 180, maxWidth: 260,
           border: `1px solid ${colors.warmDark}`, background: colors.white,
         }}
       />

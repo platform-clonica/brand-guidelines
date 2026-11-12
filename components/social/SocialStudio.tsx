@@ -8,7 +8,7 @@ import { TEMPLATES, templateById, type TemplateId } from '@/lib/social/templates
 import { exportAll, exportCard, fileName } from '@/lib/social/exportPng';
 import { colors, btn, input, toolbarBtn, seg, segOn } from '@/components/deck/studio/ui';
 import type { SessionUser } from '@/lib/auth/sessionUser';
-import { SocialToolbar } from './studio/SocialToolbar';
+import { ALTO_BARRA, SocialToolbar, TEXTO_BARRA } from './studio/SocialToolbar';
 import { ImageGallery } from '@/components/deck/studio/ImageGallery';
 import { AiEditModal } from '@/components/images/AiEditModal';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -296,7 +296,12 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
               key={id}
               type="button"
               onClick={() => setCanvas(id)}
-              style={canvas === id ? { ...seg, ...segOn } : seg}
+              style={{
+                ...(canvas === id ? { ...seg, ...segOn } : seg),
+                height: ALTO_BARRA, boxSizing: 'border-box',
+                padding: '0 12px', font: TEXTO_BARRA, letterSpacing: '.04em',
+                textTransform: 'none',
+              }}
               title={`${CANVASES[id].nombre} · ${CANVASES[id].w}×${CANVASES[id].h} (${CANVASES[id].ratio})`}
             >
               {CANVASES[id].nombre}
@@ -309,8 +314,9 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
         <label
           htmlFor="tipologia"
           style={{
-            font: `500 10px/1 ${MONO}`, letterSpacing: '.08em', textTransform: 'uppercase',
+            font: TEXTO_BARRA, letterSpacing: '.04em',
             color: colors.ash, marginLeft: 12, whiteSpace: 'nowrap',
+            display: 'inline-flex', alignItems: 'center', height: ALTO_BARRA,
           }}
         >
           Tipología post
@@ -345,9 +351,9 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
                sin color. */
             backgroundColor: colors.white, color: colors.dark,
             border: `1px solid ${colors.warmDark}`, borderRadius: 0,
-            /* Al mismo alto que el resto del grupo de la izquierda: 26. */
-            padding: '6px 24px 6px 9px',
-            font: `500 12px/1 ${MONO}`, letterSpacing: '.02em',
+            height: ALTO_BARRA, boxSizing: 'border-box',
+            padding: '0 26px 0 10px',
+            font: TEXTO_BARRA, letterSpacing: '.04em',
             backgroundImage:
               `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='6'><path d='M0 0h9L4.5 6z' fill='%231C1A17'/></svg>")`,
             backgroundRepeat: 'no-repeat',
@@ -390,7 +396,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
           />
           <button
             type="button"
-            style={toolbarBtn}
+            style={{ ...toolbarBtn, height: ALTO_BARRA, boxSizing: 'border-box', padding: '0 12px' }}
             disabled={subiendoLogo}
             onClick={() =>
               deck.logo?.src
@@ -405,10 +411,22 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
           >
             {subiendoLogo ? 'Subiendo…' : deck.logo?.src ? 'Quitar logo' : 'Añadir logo'}
           </button>
-          <button type="button" style={toolbarBtn} onClick={descargarUna} disabled={!!exportando}>
+          <button
+            type="button"
+            style={{ ...toolbarBtn, height: ALTO_BARRA, boxSizing: 'border-box', padding: '0 12px' }}
+            onClick={descargarUna}
+            disabled={!!exportando}
+          >
             PNG de esta
           </button>
-          <button type="button" style={btn} onClick={descargarTodas} disabled={!!exportando}>
+          {/* El principal mide 33 en `ui.ts` y aquí se iguala a 31: en esta
+              barra manda que todos los controles tengan el mismo alto. */}
+          <button
+            type="button"
+            style={{ ...btn, height: ALTO_BARRA, boxSizing: 'border-box', padding: '0 12px' }}
+            onClick={descargarTodas}
+            disabled={!!exportando}
+          >
             Descargar {total} en .zip
           </button>
         </span>
@@ -706,7 +724,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
               })}
             </div>
           </div>
-          <footer style={{ borderTop: `1px solid ${colors.warmDark}`, padding: '10px 20px', background: colors.white, font: `400 11px/1 ${MONO}`, color: colors.ash }}>
+          <footer style={{ borderTop: `1px solid ${colors.warmDark}`, padding: '10px 20px', background: colors.warmLight, font: `400 11px/1 ${MONO}`, color: colors.ash }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ whiteSpace: 'nowrap' }}>
                 {total} slide{total === 1 ? '' : 's'} · lienzo {spec.w}×{spec.h}
