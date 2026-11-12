@@ -251,6 +251,11 @@ function buildSlide(m: BlockModel, autorPieza?: string): Slide {
       return { ...common, kind, body: richBody(m.tokens) };
 
     case 'rotulo':
+      /* Un rótulo SIN rótulo no es nada: el layout reserva media tarjeta
+         para una palabra grande y sin ella queda un hueco. Si alguien
+         borra el titular, la tarjeta pasa a ser un bloque de texto, que es
+         lo que de verdad ha quedado. Mejor eso que publicar un vacío. */
+      if (!m.title) return { ...common, kind: 'texto', eyebrow: m.eyebrow, body: richBody(m.tokens) };
       return { ...common, kind, label: m.title, body: richBody(m.tokens) };
 
     case 'agenda':

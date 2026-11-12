@@ -149,11 +149,9 @@ El contexto en una o dos frases, para quien llega sin saber de qué va.
 
 ---
 
-[ly: rotulo] {dark}
+[ly: texto] {dark}
 
-Cuerpo de texto que da el contexto de lo que se muestra debajo y prepara al lector para el rótulo.
-
-## Insights
+Cuerpo de texto que recoge lo que salió de la sesión, en el tono con el que se contaría a alguien que no estuvo.
 
 ---
 
