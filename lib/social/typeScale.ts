@@ -13,7 +13,16 @@
    el CLAUDE.md del repo, que por eso declara los peldaños como px y añade
    algún intermedio propio.
 
-   LA REGLA, EN UNA FRASE
+   LOS NOMBRES SON EL PAPEL, NO EL TAMAÑO
+   Una slide no elige un tamaño: elige qué es. XL para el cierre, L para la
+   portada, M para cualquier titular interior, S para los elementos de
+   lista, y UN SOLO tamaño de mono para todo lo que se lee seguido.
+
+   Antes había siete peldaños repartidos por capricho de cada layout y se
+   notaba al pasar de una slide a otra. Unificado el 12/11/2026 por
+   decisión de Martina.
+
+   LA REGLA DE LOS VALORES
    Los titulares serif se quedan en la escala tal cual; el resto corre a
    **×2,25** sobre el lienzo social.
 
@@ -78,82 +87,83 @@ export const CANVAS_FACTOR = 2.25;
 
 export const socialTypeScale: readonly SocialScaleEntry[] = [
   {
-    id: 'super',
-    cssVar: '--s-super',
+    id: 'xl',
+    cssVar: '--s-xl',
     px: 192,
     lineHeight: 1.0,
     family: 'serif',
     weights: [300],
     origen: 'escala `super` (12rem), sin tocar',
-    uso: 'Portada de una sola palabra o titular brevísimo. Rara vez cabe otra cosa.',
+    uso: 'El titular del cierre. Es el único texto de su slide, así que puede y debe ocupar.',
   },
   {
-    id: 'display',
-    cssVar: '--s-display',
+    id: 'l',
+    cssVar: '--s-l',
     px: 96,
     lineHeight: 1.1,
     letterSpacing: '-0.01em',
     family: 'serif',
     weights: [300],
     origen: 'escala `display` (6rem), sin tocar',
-    uso: 'Titular principal de una tarjeta. Es el peldaño por defecto de un carrusel.',
+    uso: 'El titular de la portada, y solo ese. Medido 96 en los carruseles publicados.',
   },
   {
-    id: 'title',
-    cssVar: '--s-title',
+    id: 'm',
+    cssVar: '--s-m',
     px: 64,
     lineHeight: 1.15,
     family: 'serif',
     weights: [300, 400],
     origen: 'escala `title` (4rem), sin tocar',
-    uso: 'Titular secundario, rótulo de sección al pie, cita larga que no cabe en `display`.',
+    uso: 'CUALQUIER titular interior, la cita y el párrafo serif. Un solo tamaño para todos.',
   },
   {
-    id: 'title-sm',
-    cssVar: '--s-title-sm',
-    px: 56,
+    id: 's',
+    cssVar: '--s-s',
+    px: 48,
     lineHeight: 1.3,
     family: 'serif',
     weights: [300, 400],
-    origen: 'escala `title-sm` (2rem) ×1,75',
-    uso:
-      'Elementos de lista, filas de agenda, la firma del autor y el slug de la esquina. Medidos ' +
-      '58, 49 y 49 sobre los PNG publicados: un solo peldaño los sostiene a los cuatro, que es ' +
-      'mejor que inventar un número por rol. El slug va en serif y no en mono porque es una ' +
-      'firma, no una etiqueta de interfaz. A 56 queda un 17 % POR ENCIMA de los diseños de ' +
-      'referencia, por decisión de Martina: en el feed los veía pequeños. Se subió el peldaño ' +
-      'entero y no solo el slug, para que la esquina no grite más que el contenido.',
+    origen: 'escala `title-sm` (2rem) ×1,5',
+    uso: 'Los elementos de una lista. Por debajo del titular que los encabeza, que va a M.',
   },
   {
-    id: 'body',
-    cssVar: '--s-body',
+    id: 'pie',
+    cssVar: '--s-pie',
+    px: 56,
+    lineHeight: 1.0,
+    family: 'serif',
+    weights: [300, 400],
+    origen: 'intermedio propio del lienzo',
+    uso:
+      'El slug de la esquina y la firma del cierre. No es contenido, es papelería, y por eso ' +
+      'tiene su propio peldaño en vez de compartirlo con los titulares.',
+  },
+  {
+    id: 'mono',
+    cssVar: '--s-mono',
     px: 40,
     lineHeight: 1.55,
     family: 'mono',
     weights: [400, 500, 600],
     origen: 'escala `body` (1,125rem) ×2,25 — medido 40',
-    uso: 'Cuerpo de texto de la tarjeta. El tamaño por defecto de todo lo que se lee seguido.',
+    uso:
+      'TODO el texto en mono, sin excepción: cuerpo, subtítulo de portada y texto de apoyo. ' +
+      'Un solo tamaño, decisión de Martina: los saltos de 40 a 36 se notaban al pasar de una ' +
+      'slide a otra y no decían nada.',
   },
   {
-    id: 'body-sm',
-    cssVar: '--s-body-sm',
-    px: 36,
-    lineHeight: 1.55,
-    family: 'mono',
-    weights: [400, 500, 600],
-    origen: 'escala `body-sm` (1rem) ×2,25',
-    uso: 'Cuerpo secundario: subtítulo de portada, pie de foto, texto de apoyo.',
-  },
-  {
-    id: 'caption',
-    cssVar: '--s-caption',
+    id: 'micro',
+    cssVar: '--s-micro',
     px: 22,
     lineHeight: 1.4,
     letterSpacing: '0.04em',
     family: 'mono',
     weights: [400, 500, 600],
     origen: 'escala `caption` (0,625rem) ×2,25',
-    uso: 'Antetítulo, numeración de lista y notas auxiliares.',
+    uso:
+      'Antetítulo y numeración de lista. Es mono también, pero no es texto corrido: es una ' +
+      'etiqueta, y por eso no entra en la regla del tamaño único.',
   },
 ];
 

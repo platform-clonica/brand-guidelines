@@ -14,7 +14,7 @@ export function Imagen({ slide, boxH }: { slide: Extract<Slide, { kind: 'imagen'
       <Photo image={slide.image} scrim={slide.text ? where : 'none'} exposicion={slide.exposicion} />
       {slide.text && (
         <FitText maxHeight={boxH} className={`box l-imagen on-photo at-${where}`}>
-          <h2 className="headline sm">{inline(typesetHeadline(slide.text))}</h2>
+          <h2 className="headline">{inline(typesetHeadline(slide.text))}</h2>
         </FitText>
       )}
     </>

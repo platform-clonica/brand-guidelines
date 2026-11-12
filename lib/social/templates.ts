@@ -43,8 +43,6 @@ const MIRADAS = `[ly: portada] {dark}
 
 # Titular del artículo, tal como se publica
 
-## Una línea que explique de qué va
-
 > slug: /Miradas/
 
 ![Imagen del universo visual](/universo/universo-01.jpg)
@@ -57,17 +55,17 @@ const MIRADAS = `[ly: portada] {dark}
 
 ---
 
-[ly: texto] {warm-light}
+[ly: texto] {dark}
 
-## El titular de esta tarjeta
+## El titular de esta slide
 
-Primer párrafo del cuerpo. Aquí va lo que se lee seguido, en mono.
+Primer párrafo del cuerpo. Aquí va lo que se lee seguido, en mono, y **lo que de verdad importa va en negrita**.
 
 Segundo párrafo, si el argumento lo pide.
 
 ---
 
-[ly: lista] {warm-dark}
+[ly: lista] {warm-light}
 
 ## Lo que cambia, en tres puntos
 
@@ -83,11 +81,11 @@ Segundo párrafo, si el argumento lo pide.
 
 ---
 
-[ly: texto] {warm-light}
+[ly: texto] {warm-dark}
 
 Un bloque de cuerpo sin titular, para rematar el razonamiento.
 
-La última frase es la que se lleva quien lo lea.
+**La última frase es la que se lleva quien lo lea.**
 
 ---
 
@@ -114,6 +112,14 @@ const EVENTO = `[ly: portada] {dark}
 
 ---
 
+[ly: texto] {warm-light}
+
+## Qué se planteó
+
+El contexto en una o dos frases, para **quien llega sin saber de qué va**.
+
+---
+
 [ly: imagen]
 
 ![Imagen del evento](/universo/universo-03.jpg)
@@ -122,23 +128,15 @@ const EVENTO = `[ly: portada] {dark}
 
 ---
 
-[ly: texto] {warm-light}
+[ly: texto] {dark}
 
-## Qué se planteó
-
-El contexto en una o dos frases, para quien llega sin saber de qué va.
+Cuerpo de texto que recoge **lo que salió de la sesión**, en el tono con el que se contaría a alguien que no estuvo.
 
 ---
 
 [ly: imagen]
 
 ![Otra imagen del evento](/universo/universo-04.jpg)
-
----
-
-[ly: texto] {dark}
-
-Cuerpo de texto que recoge lo que salió de la sesión, en el tono con el que se contaría a alguien que no estuvo.
 
 ---
 
@@ -175,7 +173,7 @@ const INSIGHTS = `[ly: portada] {dark}
 
 ---
 
-[ly: parrafo] {dark}
+[ly: parrafo] {warm-light}
 
 El planteamiento, en serif: qué está pasando y por qué merece mirarse.
 
@@ -183,19 +181,19 @@ Y el giro que lo hace interesante, en un segundo párrafo.
 
 ---
 
-[ly: texto] {warm-light}
+[ly: texto] {dark}
 
 ## El concepto, nombrado
 
-El dato concreto que lo sostiene, en mono. Aquí va lo que se puede comprobar.
+El dato concreto que lo sostiene, en mono. Aquí va **lo que se puede comprobar**.
 
 ---
 
-[ly: texto] {warm-light}
+[ly: texto] {warm-dark}
 
 ## ¿La pregunta que abre el asunto?
 
-El matiz que la pregunta deja ver, con el detalle que haga falta.
+El matiz que la pregunta deja ver, con **el detalle que haga falta**.
 
 ---
 
@@ -205,7 +203,7 @@ El razonamiento largo: dónde se complica, qué se fragmenta, quién acaba asumi
 
 ---
 
-[ly: titular] {warm-dark}
+[ly: titular] {warm-light}
 
 # ¿La pregunta con la que quieres que se queden?
 `;

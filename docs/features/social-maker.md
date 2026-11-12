@@ -66,25 +66,29 @@ constante en los seis. 56/1080 = 5,2 % del ancho.
 
 Vive en `lib/social/typeScale.ts` y se espeja en `components/social/social.css` como `--s-*`.
 
-**La regla: los titulares serif se quedan en la escala tal cual; el resto corre a ×2,25.**
+**Los nombres son el papel, no el tamaño.** Una slide no elige un tamaño: elige qué es.
 
-No es un gusto. Se midió el ancho de tinta de cadenas concretas sobre los PNG publicados y se
-buscó qué tamaño las reproduce con la fuente real en el navegador:
-
-| Cadena del diseño | Rol | px derivado |
+| Peldaño | px | Para qué |
 |---|---|---|
-| «La abundancia de» | titular | 96 |
-| «No definir el problema real» | elemento de lista | 57 |
-| «Por Martina Gentile» | firma del autor | 49 |
-| «/Miradas/» | slug | 38 |
-| «En un entorno saturado de…» | cuerpo mono | 40 |
+| `--s-xl` | 192 | El titular del **cierre**. Es el único texto de su slide |
+| `--s-l` | 96 | El titular de la **portada**, y solo ese |
+| `--s-m` | 64 | **Cualquier** titular interior, la cita y el párrafo serif |
+| `--s-s` | 48 | Los **elementos de lista**, por debajo del titular que los encabeza |
+| `--s-pie` | 56 | Slug y firma. No es contenido, es papelería |
+| `--s-mono` | 40 | **Todo** el texto en mono, sin excepción |
+| `--s-micro` | 22 | Antetítulo y numeración. Es una etiqueta, no texto corrido |
 
-El titular cae exactamente en el peldaño `display` de la escala, así que ahí no hay nada que
-tocar. El resto pide subir, y 2,25 es el factor que lleva el cuerpo mono de 18 a 40,5. Redondeado
-da **40 / 36 / 22**.
+Antes había siete peldaños repartidos por capricho de cada layout, y se notaba al pasar de una
+slide a otra. Unificado el 12/11/2026 por decisión de Martina, junto con dos reglas más:
 
-La primera versión usaba ×2 y se quedaba corta: el imagotipo salía a 26 px cuando mide 41 en los
-diseños, y el pie entero iba descompensado. **El error fue estimar en lugar de medir.**
+- **Ningún fondo se repite en slides seguidas**, ni dos iguales ni tres del mismo tono. Las cuatro
+  plantillas lo cumplen; hay un comprobador rápido en el commit que lo introdujo.
+- **La portada de Miradas no lleva subtítulo.** El titular va limpio.
+
+Los valores salen de medir los carruseles publicados: el titular de portada cae exactamente en el
+peldaño `display` de `lib/typeScale.ts` (96) y el cuerpo mono en 40. El resto corre a **×2,25**
+sobre la escala web, porque una tarjeta social no es un viewport: es un lienzo fijo de 1080 que
+luego se ve a ~400 px en el feed de un móvil.
 
 > **Pendiente de Alberto.** Esto *extiende* la norma, no la contradice: familias, pesos y la
 > prohibición de la cursiva se respetan enteras. Pero un multiplicador de lienzo es una decisión
