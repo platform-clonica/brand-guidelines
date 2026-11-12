@@ -488,8 +488,11 @@ La herramienta vive en `brand.interactius.com/workspace` junto al Deck Maker, el
 demás, y quien salta de una a otra tiene que reconocer dónde está sin pensarlo. Así que la barra
 no es propia: es la misma anatomía que `DeckToolbar`, `FormToolbar` y `DsToolbar`.
 
-**Imagotipo** (vuelve al workspace) · separador · **marca de la herramienta** · separador ·
-**nombre de la pieza** · acciones · **menú de usuario**.
+**Imagotipo** (vuelve al workspace) · separador · **nombre de la pieza** · acciones ·
+**menú de usuario**.
+
+**Sin el wordmark de la herramienta**, y no es un olvido: ninguna barra de editor lo lleva.
+`DeckLogo`, `FormLogo`, `DsLogo` e `ImgLogo` aparecen solo en la galería de su herramienta.
 
 Los valores salen de ahí también: fondo Warm Light, filete Warm Dark, `padding: 10px 16px`. Antes
 iba sobre blanco y con un «SOCIAL MAKER» escrito a mano en mayúsculas, que no era de la familia.
@@ -502,7 +505,7 @@ al lado del Deck Maker. Las pestañas de los paneles y las muestras de la paleta
 ahí en vez de tener estilo propio.
 
 El wordmark **SocialMak_r** se añade a `components/studio/Wordmark.tsx`, donde ya estaban los de
-las otras cuatro herramientas. Ese componente ya contemplaba este caso: su comentario explica que
+las otras cuatro herramientas, y **espera ahí a la galería del Social Maker**, que está por hacer. Ese componente ya contemplaba este caso: su comentario explica que
 el `viewBox` se calcula en vez de fijarse precisamente porque «SocialMak_r» tiene 11 caracteres y
 un ancho fijo lo recortaría por la derecha.
 

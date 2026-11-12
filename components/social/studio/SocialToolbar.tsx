@@ -1,7 +1,6 @@
 'use client';
 
 import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
-import { SocialLogo } from '@/components/studio/Wordmark';
 import { UserMenu } from '@/components/studio/UserMenu';
 import type { SessionUser } from '@/lib/auth/sessionUser';
 import { colors } from '@/components/deck/studio/ui';
@@ -16,8 +15,14 @@ const MONO = 'var(--font-ibm-plex-mono, monospace)';
    reconocer dónde está sin pensarlo.
 
    El orden es el de DeckToolbar, FormToolbar y DsToolbar:
-   imagotipo (vuelve al workspace) · separador · marca de la herramienta ·
-   nombre de la pieza · acciones · menú de usuario.
+   imagotipo (vuelve al workspace) · separador · nombre de la pieza ·
+   acciones · menú de usuario.
+
+   SIN EL WORDMARK DE LA HERRAMIENTA, y no es un olvido: ninguna barra de
+   editor lo lleva. `DeckLogo`, `FormLogo`, `DsLogo` e `ImgLogo` aparecen
+   solo en la galería de su herramienta. `SocialLogo` queda exportado en
+   `components/studio/Wordmark.tsx` esperando a la galería del Social
+   Maker, que todavía no existe.
 
    Los valores salen de ahí también: fondo Warm Light, filete Warm Dark,
    padding 10/16. Antes esta barra iba sobre blanco y con el nombre escrito
@@ -44,8 +49,6 @@ export function SocialToolbar({
       {/* El imagotipo vuelve al workspace. Es un enlace y no un botón
           porque aquí no hay cambios que avisar: todavía no se guarda. */}
       <BrandMark height={20} href="/workspace" label="Volver al workspace" />
-      <MarkDivider />
-      <SocialLogo height={18} title="SocialMakr" />
       <MarkDivider />
 
       <input
