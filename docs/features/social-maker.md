@@ -115,7 +115,7 @@ acaso»: un layout que nadie usa es una papeleta para que alguien lo use mal.
 | `texto` | Titular opcional + cuerpo en mono |
 | `lista` | Titular + elementos numerados con filete |
 | `cita` | Cita entre comillas, firma pequeña debajo. El pensado para el post horizontal |
-| `foto` | Foto a sangre con texto encima, arriba o abajo, o sin texto |
+| `imagen` | Imagen a sangre con texto encima, arriba o abajo, o sin texto |
 | `parrafo` | Cuerpo de texto en serif, sin titular. El de los carruseles de Insights |
 | `cierre` | Llamada a leer, firma y retrato en la esquina |
 
@@ -508,6 +508,19 @@ un ancho fijo lo recortaría por la derecha.
 
 La página pasa a leer la sesión para que la barra lleve el menú de usuario, igual que las demás.
 Eso la convierte en dinámica (`ƒ` en el build), que es lo que ya son `deckmak_r` y el resto.
+
+## El vocabulario de la interfaz
+
+**Slide**, no «tarjeta». **Imagen**, no «foto**». Decisión de Martina del 12/11/2026, y vale para
+todos los rótulos: las pestañas son **Añadir slide**, **Modificar imagen** y **Cambiar fondo**.
+
+El layout `foto` pasó a llamarse `imagen`, marcador incluido. `[ly: foto]` sigue aceptándose como
+alias para que un bloque ya escrito no se quede sin pintar.
+
+**Un botón apagado dice por qué.** El de *Quitar imagen* explica debajo si no hay slide elegida, si
+la slide no tiene imagen de fondo, o si su layout la lleva por diseño. El motivo va en texto
+visible y no en un `title`: un tooltip solo lo encuentra quien ya sospecha que hay algo que
+encontrar.
 
 ## La columna de edición
 

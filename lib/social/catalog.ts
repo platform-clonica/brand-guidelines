@@ -57,9 +57,9 @@ Segundo párrafo, si hace falta.`,
 
 > autor: Nombre Apellido`,
 
-  foto: `${IMG}
+  imagen: `${IMG}
 
-# Texto que va encima de la foto`,
+# Texto que va encima de la imagen`,
 
   parrafo: `Un párrafo en serif que razona en vez de informar. Ocupa la tarjeta entera, sin titular que lo resuma.
 
@@ -82,7 +82,7 @@ export const LAYOUTS: readonly LayoutCatalogEntry[] = [
     kind: 'portada',
     nombre: 'Portada',
     slots:
-      'Foto a sangre · titular serif abajo · subtítulo mono · papelería al pie, o en cabecera ' +
+      'Imagen a sangre · titular serif abajo · subtítulo mono · papelería al pie, o en cabecera ' +
       'con «> marca: arriba»',
     skeleton: SKELETONS.portada,
   },
@@ -117,11 +117,11 @@ export const LAYOUTS: readonly LayoutCatalogEntry[] = [
     skeleton: SKELETONS.cita,
   },
   {
-    marker: 'foto',
-    kind: 'foto',
-    nombre: 'Foto',
-    slots: 'Foto a sangre · texto serif encima, arriba o abajo, o sin texto',
-    skeleton: SKELETONS.foto,
+    marker: 'imagen',
+    kind: 'imagen',
+    nombre: 'Imagen',
+    slots: 'Imagen a sangre · texto serif encima, arriba o abajo, o sin texto',
+    skeleton: SKELETONS.imagen,
   },
   {
     marker: 'parrafo',
@@ -134,7 +134,7 @@ export const LAYOUTS: readonly LayoutCatalogEntry[] = [
     marker: 'cierre',
     kind: 'cierre',
     nombre: 'Cierre',
-    slots: 'Llamada a leer · firma · retrato en la esquina · foto de fondo',
+    slots: 'Llamada a leer · firma · retrato en la esquina · imagen de fondo',
     skeleton: SKELETONS.cierre,
   },
 ];
@@ -154,8 +154,8 @@ export const LAYOUT_ALIASES: Record<string, string> = {
   list: 'lista',
   bullets: 'lista',
   quote: 'cita',
-  photo: 'foto',
-  imagen: 'foto',
+  photo: 'imagen',
+  foto: 'imagen',
   /* `rotulo` fue un layout: cuerpo mono arriba y titular serif grande
      abajo. Se retiró el 12/11/2026 porque un titular nunca va debajo del
      texto pequeño ni pegado al pie, y esa era su única razón de ser. Queda

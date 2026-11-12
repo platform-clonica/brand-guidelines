@@ -28,15 +28,15 @@ import { SocialCard } from './SocialCard';
 
 /* Los layouts que llevan foto a sangre. En ellos manda la imagen, así que
    el relleno de color no pinta nada y la paleta se apaga. */
-const CON_FOTO: readonly string[] = ['portada', 'foto', 'cierre'];
+const CON_IMAGEN: readonly string[] = ['portada', 'imagen', 'cierre'];
 
 /* Los tres paneles de edición, en una fila de pestañas. Cerrados de
    salida: el sitio es del texto, que es donde se trabaja. */
-type PanelId = 'tarjeta' | 'foto' | 'fondo';
+type PanelId = 'slide' | 'imagen' | 'fondo';
 const PESTANAS: { id: PanelId; label: string }[] = [
-  { id: 'tarjeta', label: 'Añadir tarjeta' },
-  { id: 'foto', label: 'Foto' },
-  { id: 'fondo', label: 'Fondo' },
+  { id: 'slide', label: 'Añadir slide' },
+  { id: 'imagen', label: 'Modificar imagen' },
+  { id: 'fondo', label: 'Cambiar fondo' },
 ];
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
@@ -97,7 +97,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
     () =>
       deck.slides.flatMap((s, i) =>
         s.kind === 'cierre' && s.autorEnEquipo === false
-          ? [`Tarjeta ${i + 1}: «${s.author}» no está en el equipo, así que firma el isotipo.`]
+          ? [`Slide ${i + 1}: «${s.author}» no está en el equipo, así que firma el isotipo.`]
           : [],
       ),
     [deck],
@@ -232,37 +232,51 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
   const slideActual = deck.slides[actual];
   /* Donde hay foto no hay relleno: el fondo es la imagen. */
   const paletaApagada = !slideActual
-    ? 'Elige una tarjeta para cambiarle el fondo.'
-    : CON_FOTO.includes(slideActual.kind)
-      ? `Una tarjeta de «${slideActual.kind}» lleva foto a sangre: el fondo es la imagen. Haz clic sobre ella para cambiarla.`
+    ? 'Elige una slide para cambiarle el fondo.'
+    : CON_IMAGEN.includes(slideActual.kind)
+      ? `Una tarjeta de «${slideActual.kind}» lleva imagen a sangre: el fondo es la imagen. Haz clic sobre ella para cambiarla.`
       : slideActual.fondo?.src
-        ? 'Esta tarjeta tiene foto de fondo. Quítala para volver a un color.'
+        ? 'Esta slide tiene imagen de fondo. Quítala para volver a un color.'
         : undefined;
 
   /* La tarjeta tiene foto si el layout la lleva de serie o si alguien le
      ha puesto una de fondo. En los dos casos se puede bajar la exposición. */
-  const conFotoActual = Boolean(
-    slideActual && (CON_FOTO.includes(slideActual.kind) || slideActual.fondo?.src),
+  const conImagenActual = Boolean(
+    slideActual && (CON_IMAGEN.includes(slideActual.kind) || slideActual.fondo?.src),
   );
   const exposicionActual = slideActual?.exposicion ?? 100;
-  const urlFotoActual =
+
+  /* Por qué no se puede quitar la imagen, dicho en voz alta.
+
+     Un botón apagado sin explicación deja a quien edita pensando que algo
+     está roto. El motivo vive debajo del botón y no en un `title`, porque
+     un tooltip solo lo encuentra quien ya sospecha que hay algo que
+     encontrar. */
+  const porQueNoSeQuita = !slideActual
+    ? 'Elige una slide para poder quitarle la imagen.'
+    : CON_IMAGEN.includes(slideActual.kind)
+      ? `Una slide de «${slideActual.kind}» lleva imagen por diseño: se puede cambiar, pero no quitar. Una portada sin imagen no es una portada.`
+      : !slideActual.fondo?.src
+        ? 'Esta slide no tiene imagen de fondo, así que no hay nada que quitar.'
+        : undefined;
+  const urlImagenActual =
     slideActual?.fondo?.src ??
     (slideActual && 'image' in slideActual ? slideActual.image?.src : undefined);
 
   /* «Aplicar estilo Interactius»: busca la foto en el banco y abre el mismo
      modal de IMG_r. La directiva no se duplica aquí; ver lib/social/estiloIA.ts. */
   const aplicarEstilo = useCallback(async () => {
-    if (!urlFotoActual) return;
+    if (!urlImagenActual) return;
     setError(null);
     setBuscando(true);
     try {
-      setEstilo(await buscarFoto(urlFotoActual));
+      setEstilo(await buscarFoto(urlImagenActual));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se ha podido abrir el editor de estilo.');
     } finally {
       setBuscando(false);
     }
-  }, [urlFotoActual]);
+  }, [urlImagenActual]);
 
   const insertar = (skeleton: string) => {
     setMd((prev) => `${prev.trimEnd()}\n\n---\n\n${skeleton}\n`);
@@ -358,7 +372,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
             title={
               deck.logo?.src
                 ? 'Quitar el logo del cliente de toda la pieza'
-                : 'Sube un SVG. Se pinta con la tinta de cada tarjeta, así que da igual el color que traiga.'
+                : 'Sube un SVG. Se pinta con la tinta de cada slide, así que da igual el color que traiga.'
             }
           >
             {subiendoLogo ? 'Subiendo…' : deck.logo?.src ? 'Quitar logo de cliente' : 'Logo de cliente'}
@@ -380,7 +394,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
             value={md}
             onChange={(e) => setMd(e.target.value)}
             spellCheck={false}
-            aria-label="Texto de las tarjetas, en markdown"
+            aria-label="Texto de las slides, en markdown"
             style={{
               flex: 1, resize: 'none', padding: '20px', border: 'none', outline: 'none',
               font: `400 13px/1.7 ${MONO}`, color: colors.dark, background: colors.white,
@@ -415,7 +429,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
               })}
             </div>
 
-            {panel === 'tarjeta' && (
+            {panel === 'slide' && (
               <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.warmLight }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {LAYOUTS.map((l) => (
@@ -433,7 +447,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
               </div>
             )}
 
-            {panel === 'foto' && (
+            {panel === 'imagen' && (
               <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.warmLight }}>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <button
@@ -442,7 +456,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
                     onClick={() => slideActual && setRanura({ bloque: bloqueDe(actual), pos: 0 })}
                     style={{ ...toolbarBtn, padding: '7px 9px', opacity: slideActual ? 1 : 0.45 }}
                   >
-                    {conFotoActual ? 'Cambiar foto' : 'Añadir foto'}
+                    {conImagenActual ? 'Cambiar imagen' : 'Añadir imagen'}
                   </button>
 
                   {/* Quitar solo vale para la foto de fondo. En los layouts
@@ -450,38 +464,39 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
                       sin foto no es una portada. */}
                   <button
                     type="button"
-                    disabled={!slideActual?.fondo?.src}
-                    title={
-                      slideActual && CON_FOTO.includes(slideActual.kind)
-                        ? `Una tarjeta de «${slideActual.kind}» lleva foto por diseño: no se puede quitar, solo cambiar.`
-                        : undefined
-                    }
+                    disabled={Boolean(porQueNoSeQuita)}
                     onClick={() => setMd((prev) => removeBlockImageAt(prev, bloqueDe(actual), 0))}
                     style={{
                       ...toolbarBtn, padding: '7px 9px',
-                      opacity: slideActual?.fondo?.src ? 1 : 0.45,
-                      cursor: slideActual?.fondo?.src ? 'pointer' : 'not-allowed',
+                      opacity: porQueNoSeQuita ? 0.45 : 1,
+                      cursor: porQueNoSeQuita ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    Quitar foto
+                    Quitar imagen
                   </button>
 
                   {/* El estilo de marca con IA. Es el motor de IMG_r y su
                       misma cuota; aquí solo se abre su modal. */}
                   <button
                     type="button"
-                    disabled={!urlFotoActual || buscando}
+                    disabled={!urlImagenActual || buscando}
                     onClick={() => void aplicarEstilo()}
                     title="Aplica la directiva de imagen de Interactius con IA. Gasta cuota de IMG_r."
                     style={{
                       ...toolbarBtn, padding: '7px 9px',
-                      opacity: urlFotoActual ? 1 : 0.45,
-                      cursor: urlFotoActual ? 'pointer' : 'not-allowed',
+                      opacity: urlImagenActual ? 1 : 0.45,
+                      cursor: urlImagenActual ? 'pointer' : 'not-allowed',
                     }}
                   >
                     {buscando ? 'Abriendo…' : 'Estilo Interactius'}
                   </button>
                 </div>
+
+                {porQueNoSeQuita && (
+                  <p style={{ font: `400 10px/1.5 ${MONO}`, color: colors.ash, margin: '10px 0 0' }}>
+                    {porQueNoSeQuita}
+                  </p>
+                )}
 
                 {/* Exposición: solo baja. El velo del layout es lo que
                     garantiza que el texto se lea encima de cualquier foto,
@@ -495,7 +510,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
                 >
                   <span>Exposición</span>
                   <span style={{ fontVariantNumeric: 'tabular-nums' }}>
-                    {conFotoActual ? `${exposicionActual} %` : '—'}
+                    {conImagenActual ? `${exposicionActual} %` : '—'}
                   </span>
                 </p>
                 <input
@@ -504,8 +519,8 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
                   max={100}
                   step={5}
                   value={exposicionActual}
-                  disabled={!conFotoActual}
-                  aria-label="Exposición de la foto"
+                  disabled={!conImagenActual}
+                  aria-label="Exposición de la imagen"
                   onChange={(e) => {
                     const v = Number(e.target.value);
                     setMd((prev) =>
@@ -515,14 +530,14 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
                       setMeta(prev, bloqueDe(actual), 'exposicion', v >= 100 ? null : String(v)),
                     );
                   }}
-                  style={{ width: '100%', accentColor: colors.dark, opacity: conFotoActual ? 1 : 0.4 }}
+                  style={{ width: '100%', accentColor: colors.dark, opacity: conImagenActual ? 1 : 0.4 }}
                 />
               </div>
             )}
 
             {panel === 'fondo' && (
               <Paleta
-                actual={slideActual && !CON_FOTO.includes(slideActual.kind) && !slideActual.fondo?.src
+                actual={slideActual && !CON_IMAGEN.includes(slideActual.kind) && !slideActual.fondo?.src
                   ? (slideActual.theme === 'dark' ? 'dark' : (slideActual.bg ?? 'warm-light'))
                   : undefined}
                 deshabilitado={paletaApagada}
@@ -557,7 +572,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
           >
             <div className="ix-social">
               {deck.slides.map((slide, i) => {
-                const conFoto = CON_FOTO.includes(slide.kind);
+                const conImagen = CON_IMAGEN.includes(slide.kind);
                 return (
                   <div
                     key={i}
@@ -599,7 +614,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
                             }}
                             style={{ ...toolbarBtn, padding: '6px 9px' }}
                           >
-                            {conFoto || slide.fondo?.src ? 'Cambiar foto' : 'Foto de fondo'}
+                            {conImagen || slide.fondo?.src ? 'Cambiar imagen' : 'Imagen de fondo'}
                           </button>
                           {/* Quitar solo se ofrece cuando la foto es de
                               fondo. En los layouts que la llevan de serie
@@ -615,7 +630,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
                               }}
                               style={{ ...toolbarBtn, padding: '6px 9px' }}
                             >
-                              Quitar foto
+                              Quitar imagen
                             </button>
                           )}
                         </span>
@@ -655,7 +670,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
           <footer style={{ borderTop: `1px solid ${colors.warmDark}`, padding: '10px 20px', background: colors.white, font: `400 11px/1 ${MONO}`, color: colors.ash }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ whiteSpace: 'nowrap' }}>
-                {total} tarjeta{total === 1 ? '' : 's'} · lienzo {spec.w}×{spec.h} · se exporta a{' '}
+                {total} slide{total === 1 ? '' : 's'} · lienzo {spec.w}×{spec.h} · se exporta a{' '}
                 {spec.w * EXPORT_SCALE}×{spec.h * EXPORT_SCALE}
               </span>
               {avisos.length > 0 && (

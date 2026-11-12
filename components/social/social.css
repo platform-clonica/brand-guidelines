@@ -393,13 +393,13 @@
 .ix-social .l-portada.con-cabecera .box{justify-content:flex-end; bottom:var(--m);}
 .ix-social .l-portada .sub{margin-top:24px; max-width:78%;}
 
-/* · foto — texto arriba o abajo, o ninguno.
+/* · imagen — texto arriba o abajo, o ninguno.
 
    El selector va sobre la PROPIA caja, no sobre un descendiente: `box`,
-   `l-foto` y `at-bottom` conviven en el mismo elemento (es el que pinta
-   FitText), así que `.l-foto.at-bottom .box` no casaba con nada y
+   `l-imagen` y `at-bottom` conviven en el mismo elemento (es el que pinta
+   FitText), así que `.l-imagen.at-bottom .box` no casaba con nada y
    `> posicion: abajo` no hacía nada desde el primer día. */
-.ix-social .box.l-foto{display:flex; flex-direction:column;}
+.ix-social .box.l-imagen{display:flex; flex-direction:column;}
 .ix-social .box.at-bottom{justify-content:flex-end;}
 
 /* · cierre — la llamada a leer, la firma y el retrato.

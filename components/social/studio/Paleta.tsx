@@ -32,7 +32,7 @@ export function Paleta({
           color: colors.ash, margin: '0 0 10px',
         }}
       >
-        Fondo de la tarjeta
+        Fondo de la slide
       </p>
 
       {/* `nowrap` y las muestras repartiéndose el ancho: los cinco fondos

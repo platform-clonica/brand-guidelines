@@ -9,7 +9,7 @@ import { Photo } from './Photo';
 import {
   Cierre,
   Cita,
-  Foto,
+  Imagen,
   Lista,
   Parrafo,
   Portada,
@@ -25,7 +25,7 @@ import {
    diseño — el problema que ya tiene la imagen de previsualización de los
    decks y que el CLAUDE.md del repo señala como fuente de deriva. */
 
-const LAYOUTS_SOBRE_FOTO: Slide['kind'][] = ['portada', 'foto', 'cierre'];
+const LAYOUTS_SOBRE_FOTO: Slide['kind'][] = ['portada', 'imagen', 'cierre'];
 
 export function SocialCard({
   slide,
@@ -74,7 +74,7 @@ export function SocialCard({
         {slide.kind === 'texto' && <Texto slide={slide} boxH={boxH} />}
         {slide.kind === 'lista' && <Lista slide={slide} boxH={boxH} />}
         {slide.kind === 'cita' && <Cita slide={slide} boxH={boxH} />}
-        {slide.kind === 'foto' && <Foto slide={slide} boxH={boxH} />}
+        {slide.kind === 'imagen' && <Imagen slide={slide} boxH={boxH} />}
         {slide.kind === 'parrafo' && <Parrafo slide={slide} boxH={boxH} />}
         {slide.kind === 'cierre' && <Cierre slide={slide} boxH={boxH} />}
         {/* El cierre no lleva papelería: su esquina derecha la ocupa el

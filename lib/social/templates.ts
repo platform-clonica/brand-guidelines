@@ -23,7 +23,7 @@
                 oscuro puntúa: es una pieza para leer.
      Insights   alterna razonamiento y dato. Oscuro cuando piensa en voz
                 alta, claro cuando asienta algo concreto.
-     Evento     la foto marca el compás. Plano, foto, plano, foto. Lo que
+     Evento     la imagen marca el compás. Plano, imagen, plano, imagen. Lo que
                 se cuenta pasó en un sitio, y el sitio se ve.
 
    El ritmo vive en el markdown de la plantilla, no en código: quien parte
@@ -114,9 +114,9 @@ const EVENTO = `[ly: portada] {dark}
 
 ---
 
-[ly: foto]
+[ly: imagen]
 
-![Foto del evento](/universo/universo-03.jpg)
+![Imagen del evento](/universo/universo-03.jpg)
 
 # La frase que resume lo que se vio allí
 
@@ -130,9 +130,9 @@ El contexto en una o dos frases, para quien llega sin saber de qué va.
 
 ---
 
-[ly: foto]
+[ly: imagen]
 
-![Otra foto del evento](/universo/universo-04.jpg)
+![Otra imagen del evento](/universo/universo-04.jpg)
 
 ---
 
@@ -226,7 +226,7 @@ export const TEMPLATES: readonly SocialTemplate[] = [
   {
     id: 'evento',
     nombre: 'Evento',
-    descripcion: 'Portada, fotos, lo que salió y una cita. El de lo que se hace en directo.',
+    descripcion: 'Portada, imágenes, lo que salió y una cita. El de lo que se hace en directo.',
     md: EVENTO,
   },
   {

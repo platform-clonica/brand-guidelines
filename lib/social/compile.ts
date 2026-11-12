@@ -104,11 +104,11 @@ function appearanceOf(tokens: Token[], title: string): { theme?: Theme; bg?: Bac
 /* Los layouts que nacen oscuros si nadie dice otra cosa. Son los que llevan
    foto a sangre (la foto manda sobre el fondo) y el titular suelto, que es
    el que más se usa en negativo en los carruseles publicados. */
-const DARK_BY_ROLE: SlideKind[] = ['portada', 'foto', 'cierre'];
+const DARK_BY_ROLE: SlideKind[] = ['portada', 'imagen', 'cierre'];
 
 /* Los que YA consumen la imagen del bloque como parte de su diseño. En el
    resto, una imagen suelta se entiende como foto de fondo. */
-const CONSUMEN_IMAGEN: SlideKind[] = ['portada', 'foto', 'cierre'];
+const CONSUMEN_IMAGEN: SlideKind[] = ['portada', 'imagen', 'cierre'];
 
 function themeFor(kind: SlideKind, override: Theme | undefined): Theme {
   if (override) return override;
@@ -126,7 +126,7 @@ function kindOf(m: BlockModel): SlideKind {
   if (m.isFirst && m.image) return 'portada';
   if (m.quotes.some((q) => !esMetadato(q))) return 'cita';
   if (m.items?.length) return 'lista';
-  if (m.image && !m.body.length) return 'foto';
+  if (m.image && !m.body.length) return 'imagen';
   if (m.title && !m.body.length) return 'titular';
   return 'texto';
 }
@@ -229,7 +229,7 @@ function buildSlide(m: BlockModel, autorPieza?: string): Slide {
       return { ...common, kind, text, source: m.meta.autor ?? m.eyebrow ?? autorPieza };
     }
 
-    case 'foto':
+    case 'imagen':
       return {
         ...common,
         kind,

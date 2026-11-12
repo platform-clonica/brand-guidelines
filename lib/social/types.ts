@@ -57,8 +57,8 @@ type SlideVariant =
   | { kind: 'lista'; theme: Theme; title?: string; intro?: string; items: ListItem[] }
   /* Cita a toda tarjeta, en serif a tamaño `title`. */
   | { kind: 'cita'; theme: Theme; text: string; source?: string }
-  /* Foto a sangre, con texto serif opcional encima. */
-  | { kind: 'foto'; theme: Theme; image?: ImageRef; text?: string; position?: 'top' | 'bottom' }
+  /* Imagen a sangre, con texto serif opcional encima. */
+  | { kind: 'imagen'; theme: Theme; image?: ImageRef; text?: string; position?: 'top' | 'bottom' }
   /* Cuerpo de texto en serif, sin titular. El mismo papel que la
      diapositiva `paragraph` del deck: un párrafo que razona en vez de
      informar, así que no lleva titular que lo resuma. */
