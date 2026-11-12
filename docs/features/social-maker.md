@@ -554,6 +554,23 @@ alto en una pantalla de portátil.
 Se abre una y se cierra la anterior, así que el alto del bloque está acotado pase lo que pase.
 Cuál quedó abierta se recuerda en el navegador, como el zoom.
 
+### La tira de miniaturas
+
+A la izquierda de la vista previa, sobre fondo oscuro, como el `SlideNavigator` del Deck Maker.
+
+Son **miniaturas reales**, no capturas ni iconos: el lienzo ya se escala con una transformación,
+así que una miniatura es la misma `SocialCard` con otro factor. No hay una segunda forma de dibujar
+una slide, de modo que no puede derivar.
+
+Fondo oscuro a propósito: las slides claras y las oscuras tienen que distinguirse del soporte, y
+sobre beige una Warm Light desaparecía. Mismo motivo por el que la vista previa grande va sobre
+blanco con filete.
+
+**«Visible» y «seleccionada» son dos cosas distintas.** La visible la manda el scroll y solo pinta
+la opacidad; la seleccionada la manda el clic, lleva el filete claro y es la que editan los
+paneles. Si el scroll cambiara la seleccionada, bajar a mirar la última slide y pulsar un color se
+lo aplicaría a esa y no a la que se estaba editando.
+
 **Clicar una tarjeta lleva el cursor a su bloque** en el texto y lo acerca a la vista, igual que el
 Deck Maker (`jumpToSource` en `DeckStudio`). Clicar una tarjeta es la forma natural de decir
 «quiero editar esta», y sin eso hay que buscarla a mano en un texto de cien líneas.

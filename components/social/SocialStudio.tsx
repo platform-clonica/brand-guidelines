@@ -24,11 +24,17 @@ import {
   setMeta,
 } from '@/lib/social/source';
 import { Paleta } from './studio/Paleta';
+import { SocialNavigator } from './studio/SocialNavigator';
 import { SocialCard } from './SocialCard';
 
 /* Los layouts que llevan foto a sangre. En ellos manda la imagen, así que
    el relleno de color no pinta nada y la paleta se apaga. */
 const CON_IMAGEN: readonly string[] = ['portada', 'imagen', 'cierre'];
+
+/* Ancho de la tira de miniaturas. 120 deja la miniatura en 90, que sobre un
+   lienzo de 1080 da una escala de 0,083: se reconoce la slide sin leerla,
+   que es para lo que sirve. */
+const ANCHO_TIRA = 120;
 
 /* Los tres paneles de edición, en una fila de pestañas. Cerrados de
    salida: el sitio es del texto, que es donde se trabaja. */
@@ -214,6 +220,19 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
       ta.scrollTop = Math.max(0, ratio * ta.scrollHeight - ta.clientHeight / 3);
     },
     [md, bloqueDe],
+  );
+
+  /* Desde la tira de miniaturas: selecciona, lleva el cursor del editor a
+     su bloque y desplaza la vista hasta ella. */
+  const irASlide = useCallback(
+    (i: number) => {
+      setActual(i);
+      irAlTexto(i);
+      vista.current
+        ?.querySelector(`[data-slide="${i}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    [irAlTexto],
   );
 
   const alClicar = useCallback(
@@ -620,19 +639,29 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
               Lo que separa de verdad es el FILETE de cada tarjeta, que la
               hace legible sobre cualquier fondo. Va en el contenedor y no
               en el lienzo, así que no entra en el PNG. */}
-          <div
-            ref={vista}
-            style={{
-              flex: 1, overflow: 'auto', padding: 24,
-              display: 'flex', justifyContent: 'center', background: colors.white,
-            }}
-          >
+          <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+            <SocialNavigator
+              slides={deck.slides}
+              canvas={canvas}
+              width={ANCHO_TIRA}
+              seleccionada={actual}
+              vistaRef={vista}
+              onIr={irASlide}
+            />
+            <div
+              ref={vista}
+              style={{
+                flex: 1, minWidth: 0, overflow: 'auto', padding: 24,
+                display: 'flex', justifyContent: 'center', background: colors.white,
+              }}
+            >
             <div className="ix-social">
               {deck.slides.map((slide, i) => {
                 const conImagen = CON_IMAGEN.includes(slide.kind);
                 return (
                   <div
                     key={i}
+                    data-slide={i}
                     style={{ marginBottom: 20 }}
                     onMouseEnter={() => setEncima(i)}
                     onMouseLeave={() => setEncima((v) => (v === i ? null : v))}
@@ -723,6 +752,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
                 );
               })}
             </div>
+          </div>
           </div>
           <footer style={{ borderTop: `1px solid ${colors.warmDark}`, padding: '10px 20px', background: colors.warmLight, font: `400 11px/1 ${MONO}`, color: colors.ash }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
