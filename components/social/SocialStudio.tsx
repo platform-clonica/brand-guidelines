@@ -11,6 +11,8 @@ import { ImageGallery } from '@/components/deck/studio/ImageGallery';
 import { AiEditModal } from '@/components/images/AiEditModal';
 import { ToastProvider } from '@/components/ui/Toast';
 import { buscarFoto, type FotoDelBanco } from '@/lib/social/estiloIA';
+import { uploadLogo } from '@/lib/storage/logos';
+import { publicLogoUrl } from '@/lib/decks/publicApi';
 import { splitSourceBlocks } from '@/lib/deck/source';
 import {
   countBlockImages,
@@ -52,12 +54,11 @@ export function SocialStudio() {
   /* Qué imagen se está cambiando: el bloque del markdown y, dentro de él,
      cuál de sus imágenes. El cierre tiene dos: el fondo y el retrato. */
   const [ranura, setRanura] = useState<{ bloque: number; pos: number } | null>(null);
-  /* Cuando está activo, lo que se elija en la galería es el logo del
-     cliente y no una foto de tarjeta. */
-  const [eligiendoLogo, setEligiendoLogo] = useState(false);
   /* La foto del banco sobre la que se va a aplicar el estilo con IA. */
   const [estilo, setEstilo] = useState<FotoDelBanco | null>(null);
   const [buscando, setBuscando] = useState(false);
+  const [subiendoLogo, setSubiendoLogo] = useState(false);
+  const inputLogo = useRef<HTMLInputElement>(null);
   /* Qué panel está abierto, o ninguno. Se recuerda en el navegador: es una
      preferencia de pantalla, como el zoom, no algo de la pieza. */
   const [panel, setPanel] = useState<PanelId | null>(null);
@@ -335,18 +336,53 @@ export function SocialStudio() {
             <span style={{ font: `500 11px/1.4 ${MONO}`, color: colors.bordeaux, maxWidth: 320 }}>{error}</span>
           )}
           {/* El logo del cliente se hereda a toda la pieza, así que se pone
-              una vez y no tarjeta a tarjeta. */}
+              una vez y no tarjeta a tarjeta.
+
+              Se sube igual que en el Deck Maker: a su bucket de assets, no
+              al banco de imágenes. Un logo de cliente no es una foto del
+              universo visual y no tiene por qué aparecer en la galería que
+              usa todo el equipo. */}
+          <input
+            ref={inputLogo}
+            type="file"
+            accept="image/svg+xml,image/*"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              e.target.value = '';
+              if (!file) return;
+              setError(null);
+              setSubiendoLogo(true);
+              try {
+                const url = publicLogoUrl(await uploadLogo(file, 'social'));
+                if (url) setMd((prev) => setMeta(prev, 0, 'logo', url));
+              } catch (err) {
+                setError(err instanceof Error ? err.message : 'No se ha podido subir el logo.');
+              } finally {
+                setSubiendoLogo(false);
+              }
+            }}
+          />
           <button
             type="button"
             style={btnGhost}
-            onClick={() => (deck.logo?.src ? setMd((prev) => setMeta(prev, 0, 'logo', null)) : setEligiendoLogo(true))}
+            disabled={subiendoLogo}
+            onClick={() =>
+              deck.logo?.src
+                ? setMd((prev) => setMeta(prev, 0, 'logo', null))
+                : inputLogo.current?.click()
+            }
             title={
               deck.logo?.src
                 ? 'Quitar el logo del cliente de toda la pieza'
-                : 'Añadir el logo de un cliente: va en la portada arriba a la derecha y al pie de las demás'
+                : 'Sube un SVG. Se pinta con la tinta de cada tarjeta, así que da igual el color que traiga.'
             }
           >
-            {deck.logo?.src ? 'Quitar logo de cliente' : 'Logo de cliente'}
+            {subiendoLogo
+              ? 'Subiendo…'
+              : deck.logo?.src
+                ? 'Quitar logo de cliente'
+                : 'Logo de cliente'}
           </button>
           <button type="button" style={btnGhost} onClick={descargarUna} disabled={!!exportando}>
             PNG de esta
@@ -687,16 +723,6 @@ export function SocialStudio() {
           </footer>
         </section>
       </div>
-
-      {eligiendoLogo && (
-        <ImageGallery
-          onClose={() => setEligiendoLogo(false)}
-          onSelect={(url) => {
-            setMd((prev) => setMeta(prev, 0, 'logo', url));
-            setEligiendoLogo(false);
-          }}
-        />
-      )}
 
       {estilo && (
         /* El modal de IMG_r pide su propio contexto de avisos. */

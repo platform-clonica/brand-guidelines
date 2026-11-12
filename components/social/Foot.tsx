@@ -32,11 +32,18 @@ type Props = {
 };
 
 function Logo({ logo }: { logo: { src?: string; alt?: string } }) {
-  /* Caja fija y la imagen contenida dentro. Los logos ajenos vienen con
-     proporciones imprevisibles —el de la Barcelona Design Week lleva dos
-     líneas— y fijar solo el alto dejaría uno apaisado invadiendo el slug. */
-  /* eslint-disable-next-line @next/next/no-img-element */
-  return <img className="mark cliente" src={logo.src} alt={logo.alt ?? ''} />;
+  /* Máscara y no imagen: del archivo se usa la silueta y el color lo pone
+     la tinta de la tarjeta. Ver `.mark.cliente` en social.css para el
+     porqué y para por qué no es inyectar SVG. */
+  const url = `url("${logo.src}")`;
+  return (
+    <span
+      className="mark cliente"
+      role="img"
+      aria-label={logo.alt || 'Logo del cliente'}
+      style={{ WebkitMaskImage: url, maskImage: url }}
+    />
+  );
 }
 
 export function Foot({ slug, logo, mark, negative, onPhoto }: Props) {

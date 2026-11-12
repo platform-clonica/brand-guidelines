@@ -140,11 +140,37 @@
 /* El logo del cliente va en CAJA FIJA y contenido dentro. Los logos ajenos
    vienen con proporciones imprevisibles —el de la Barcelona Design Week
    lleva dos líneas y mide 250×55— y fijar solo el alto dejaría uno
-   apaisado invadiendo el slug. La caja sale de medir ese: 300×56. */
+   apaisado invadiendo el slug. La caja sale de medir ese: 300×56.
+
+   SE PINTA COMO MÁSCARA, NO COMO IMAGEN, y eso es lo que normaliza el
+   color. Del archivo solo se usa su silueta; el color lo pone `--ink`, o
+   sea la tinta de la tarjeta: Warm Light sobre oscuro y sobre foto, Dark
+   sobre claro. Así un logo que llegue en tres colores, en positivo o en
+   negativo sale siempre igual y siempre legible.
+
+   El Deck Maker resuelve lo mismo con `filter:brightness(0) invert(1)`,
+   que lo deja en blanco puro. Allí basta porque su logo de cliente solo
+   aparece en la portada, que siempre es oscura. Aquí aparece también al
+   pie de tarjetas claras, donde el blanco desaparecería, y además el
+   blanco puro no es un token: el claro de marca es Warm Light.
+
+   No es inyectar SVG: el archivo se carga como recurso de imagen desde
+   CSS y solo se lee su canal alfa, así que no ejecuta nada. Misma
+   seguridad que el <img> del deck. Verificado además que la máscara
+   sobrevive a la exportación a PNG. */
 .ix-social .mark.cliente{
-  height:56px; width:auto; max-width:300px;
-  object-fit:contain; object-position:left bottom; display:block;
+  width:300px; height:56px; display:block;
+  background:var(--ink);
+  -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+  -webkit-mask-size:contain; mask-size:contain;
+  -webkit-mask-position:left bottom; mask-position:left bottom;
 }
+.ix-social .head .mark.cliente{
+  -webkit-mask-position:right top; mask-position:right top;
+}
+/* Sobre foto la tinta es clara aunque el tema diga otra cosa. */
+.ix-social .on-photo .mark.cliente,
+.ix-social .l-portada .mark.cliente{background:var(--warm-light);}
 
 /* El pie sobre foto siempre va en claro: la foto lleva su velo debajo. */
 .ix-social .on-photo .foot .slug{color:var(--warm-light);}
@@ -190,7 +216,7 @@
 }
 /* La portada siempre va sobre foto, así que su cabecera va en claro. */
 .ix-social .l-portada .head .slug{color:var(--warm-light);}
-.ix-social .head .mark.cliente{object-position:right top;}
+
 
 /* ───────────────────────────── Tipografía ───────────────────────────── */
 

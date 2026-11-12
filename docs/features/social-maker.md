@@ -219,8 +219,27 @@ Va en **caja fija de 300×56 y contenido dentro**. Los logos ajenos vienen con p
 imprevisibles (el de la Barcelona Design Week lleva dos líneas y mide 250×55) y fijar solo el alto
 dejaría uno apaisado invadiendo el slug.
 
-Desde el editor se pone con el botón **Logo de cliente**, que abre la galería y escribe el
-metadato en el primer bloque.
+### Se sube como en el Deck Maker, y no va a la galería
+
+Botón **Logo de cliente** → selector de archivo → `uploadLogo(file, 'social')`, que lo deja en el
+bucket de assets (`deck-assets`), igual que hace DeckMak_r con su propio prefijo. **No entra en el
+banco de imágenes**: un logo de cliente no es una foto del universo visual y no tiene por qué
+aparecer en la galería que usa todo el equipo.
+
+### El color lo pone la tarjeta, no el archivo
+
+Se pinta como **máscara CSS**, no como imagen: del archivo solo se usa su silueta y el color sale
+de `--ink`, la tinta de la tarjeta. Warm Light sobre oscuro y sobre foto, Dark sobre claro. Un logo
+que llegue en tres colores, en positivo o en negativo, sale siempre igual y siempre legible.
+
+El Deck Maker resuelve lo mismo con `filter: brightness(0) invert(1)`, que lo deja en blanco puro.
+Allí basta porque su logo de cliente solo aparece en la portada, que siempre es oscura. **Aquí
+aparece también al pie de tarjetas claras**, donde el blanco desaparecería, y además el blanco puro
+no es un token: el claro de marca es Warm Light.
+
+Dos cosas verificadas antes de elegir esta vía: que **no es inyectar SVG** (el archivo se carga como
+recurso de imagen desde CSS y solo se lee su canal alfa, así que no ejecuta nada, misma seguridad
+que el `<img>` del deck) y que **la máscara sobrevive a la exportación a PNG**.
 
 ### El slug es texto libre
 
