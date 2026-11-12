@@ -670,8 +670,14 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
           <footer style={{ borderTop: `1px solid ${colors.warmDark}`, padding: '10px 20px', background: colors.white, font: `400 11px/1 ${MONO}`, color: colors.ash }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ whiteSpace: 'nowrap' }}>
-                {total} slide{total === 1 ? '' : 's'} · lienzo {spec.w}×{spec.h} · se exporta a{' '}
-                {spec.w * EXPORT_SCALE}×{spec.h * EXPORT_SCALE}
+                {total} slide{total === 1 ? '' : 's'} · lienzo {spec.w}×{spec.h}
+                {/* El tamaño de exportación solo se dice cuando NO coincide con
+                    el del lienzo. Hoy coinciden, así que repetirlo era ruido.
+                    Condicional y no borrado: si algún día el factor vuelve a
+                    ser otro, el dato reaparece solo. */}
+                {EXPORT_SCALE !== 1 && (
+                  <> · se exporta a {spec.w * EXPORT_SCALE}×{spec.h * EXPORT_SCALE}</>
+                )}
               </span>
               {avisos.length > 0 && (
                 <span
