@@ -37,7 +37,11 @@ ven con el mismo ancho en el feed, así que el texto tiene que medir lo mismo en
 | Lienzo | Exportado | Ratio |
 |---|---|---|
 | Carrusel | 1080×1350 | 4:5 |
-| Post horizontal | 1080×608 | 16:9 |
+| Portada | 1080×608 | 16:9 |
+
+El lienzo de 16:9 se llama **«Portada»** en la interfaz, que es como lo nombra el equipo: es la
+imagen que encabeza un post. **No confundir con el layout `portada`**, que es la primera slide de
+un carrusel: uno es el lienzo y el otro es una slide.
 
 **Se exporta al tamaño exacto del lienzo.** Es la medida nativa de LinkedIn e Instagram y la de
 cinco de los seis carruseles de referencia.
@@ -529,6 +533,10 @@ visible y no en un `title`: un tooltip solo lo encuentra quien ya sospecha que h
 encontrar.
 
 ## La columna de edición
+
+**El editor va enmarcado**, como el del Deck Maker: una caja blanca con su filete, flotando sobre
+el beige con 20 px de aire alrededor. Antes el texto llegaba a sangre hasta los bordes y se leía
+como el fondo de la ventana en vez de como un documento.
 
 Los tres paneles (**Añadir tarjeta**, **Foto**, **Fondo**) van en una fila de pestañas y
 **cerrados de salida**. Antes iban apilados y abiertos: unos 300 px que le comían el sitio al

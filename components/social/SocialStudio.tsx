@@ -304,6 +304,18 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
           ))}
         </div>
 
+        {/* El rótulo dice qué se elige. Sin él, el desplegable era un
+            nombre suelto («Miradas») que no decía de qué. */}
+        <label
+          htmlFor="tipologia"
+          style={{
+            font: `500 10px/1 ${MONO}`, letterSpacing: '.08em', textTransform: 'uppercase',
+            color: colors.ash, marginLeft: 12, whiteSpace: 'nowrap',
+          }}
+        >
+          Tipología post
+        </label>
+
         {/* El desplegable de plantillas, con el campo de la casa: el mismo
             `input` que usa el selector de DSMak_r, con la flecha dibujada
             como fondo para que no se pueda seleccionar junto al texto.
@@ -319,11 +331,21 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
             setActual(0);
           }}
           value={plantilla}
-          aria-label="Plantilla"
+          id="tipologia"
           style={{
             ...input,
-            width: 'auto', marginLeft: 8, cursor: 'pointer',
-            appearance: 'none', padding: '8px 26px 8px 10px',
+            width: 'auto', marginLeft: 6, cursor: 'pointer',
+            /* Las tres variantes de `appearance`: sin ellas, algunos
+               navegadores pintan su propio control gris encima del campo y
+               el estilo de la casa no se ve. */
+            appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
+            /* Explícitos y no heredados del atajo `background` de `input`:
+               al añadir la flecha como imagen de fondo, el atajo y la
+               propiedad larga se pisan según el orden y el campo se queda
+               sin color. */
+            backgroundColor: colors.white, color: colors.dark,
+            border: `1px solid ${colors.warmDark}`, borderRadius: 0,
+            padding: '8px 26px 8px 10px',
             font: `500 12px/1 ${MONO}`, letterSpacing: '.02em',
             backgroundImage:
               `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='6'><path d='M0 0h9L4.5 6z' fill='%231C1A17'/></svg>")`,
@@ -380,7 +402,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
                 : 'Sube un SVG. Se pinta con la tinta de cada slide, así que da igual el color que traiga.'
             }
           >
-            {subiendoLogo ? 'Subiendo…' : deck.logo?.src ? 'Quitar logo de cliente' : 'Logo de cliente'}
+            {subiendoLogo ? 'Subiendo…' : deck.logo?.src ? 'Quitar logo' : 'Añadir logo'}
           </button>
           <button type="button" style={toolbarBtn} onClick={descargarUna} disabled={!!exportando}>
             PNG de esta
@@ -393,7 +415,17 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
 
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* ── Columna del texto ── */}
-        <section style={{ width: '38%', minWidth: 340, display: 'flex', flexDirection: 'column', borderRight: `1px solid ${colors.warmDark}` }}>
+        {/* El editor va ENMARCADO, como el del Deck Maker: una caja blanca
+            con su filete, flotando sobre el beige con aire alrededor. Antes
+            el texto llegaba a sangre hasta los bordes y se leía como el
+            fondo de la ventana en vez de como un documento. */}
+        <section
+          style={{
+            width: '38%', minWidth: 340, display: 'flex', flexDirection: 'column',
+            gap: 12, padding: 20, minHeight: 0,
+            background: colors.warmLight, borderRight: `1px solid ${colors.warmDark}`,
+          }}
+        >
           <textarea
             ref={textarea}
             value={md}
@@ -401,7 +433,8 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
             spellCheck={false}
             aria-label="Texto de las slides, en markdown"
             style={{
-              flex: 1, resize: 'none', padding: '20px', border: 'none', outline: 'none',
+              flex: 1, minHeight: 0, resize: 'none', padding: 12,
+              border: `1px solid ${colors.warmDark}`, outline: 'none',
               font: `400 13px/1.7 ${MONO}`, color: colors.dark, background: colors.white,
               tabSize: 2,
             }}
@@ -416,7 +449,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
 
               Cuál quedó abierta se recuerda en el navegador: es una
               preferencia de pantalla, como el zoom, no algo de la pieza. */}
-          <div style={{ borderTop: `1px solid ${colors.warmDark}`, background: colors.warmLight }}>
+          <div style={{ flexShrink: 0, background: colors.warmLight }}>
             <div style={{ display: 'flex' }}>
               {PESTANAS.map((t) => {
                 const activa = panel === t.id;
@@ -435,7 +468,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
             </div>
 
             {panel === 'slide' && (
-              <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.warmLight }}>
+              <div style={{ padding: 12, border: `1px solid ${colors.warmDark}`, borderTop: 'none', background: colors.warmLight }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {LAYOUTS.map((l) => (
                     <button
@@ -453,7 +486,7 @@ export function SocialStudio({ user }: { user?: SessionUser } = {}) {
             )}
 
             {panel === 'imagen' && (
-              <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.warmLight }}>
+              <div style={{ padding: 12, border: `1px solid ${colors.warmDark}`, borderTop: 'none', background: colors.warmLight }}>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <button
                     type="button"

@@ -133,14 +133,18 @@ export const CANVASES: Record<CanvasId, CanvasSpec> = {
   },
   post: {
     id: 'post',
-    nombre: 'Post horizontal',
+    nombre: 'Portada',
     w: 1080,
     h: 608,
     ratio: '16:9',
     /* 1080×608 es 1,776, y el 16:9 exacto sería 1,778. La desviación es del
        0,08 %, invisible, y a cambio el alto es par: exportado a ×2 da
        2160×1216 sin medio píxel suelto. */
-    uso: 'Post suelto, cabecera de artículo, miniatura de vídeo.',
+    /* Se llama «Portada» en la interfaz, que es como lo nombra el equipo:
+       es la imagen que encabeza un post. Ojo, no confundir con el layout
+       `portada`, que es la primera slide de un carrusel: uno es el lienzo
+       y el otro es una slide. */
+    uso: 'La imagen que encabeza un post. También vale de miniatura de vídeo.',
   },
 };
 

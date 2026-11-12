@@ -25,7 +25,7 @@ export function Paleta({
   deshabilitado?: string;
 }) {
   return (
-    <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.warmLight }}>
+    <div style={{ padding: 12, border: `1px solid ${colors.warmDark}`, borderTop: 'none', background: colors.warmLight }}>
       <p
         style={{
           font: `500 10px/1 ${MONO}`, letterSpacing: '.08em', textTransform: 'uppercase',
