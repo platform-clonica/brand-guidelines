@@ -146,8 +146,7 @@ más cuerpo mono sobre claro para asentar lo concreto.
 
 > **Una desviación observada en los diseños de Insights.** Las tarjetas oscuras de referencia usan
 > **negro puro `#000000`**, no el oscuro de marca `#1C1A17`. Es plano y exacto, no un artefacto de
-> compresión. La plantilla usa el token de marca; queda anotado para que lo decidan Alberto y
-> Martina.
+> compresión. La plantilla usa el token de marca.
 
 ### Cada plantilla trae su ritmo de fondos
 
@@ -417,6 +416,28 @@ node scripts/sync-equipo.mjs
 
 Copia las fotos y regenera `lib/social/equipo.ts`, que está marcado como generado. Cuando alguien
 entre o salga del equipo, se vuelve a correr.
+
+## Manda el manual, no el PNG
+
+Los layouts salen de medir carruseles ya publicados, pero **esos diseños pueden traer errores**.
+Instrucción de Martina del 12/11/2026: cuando un diseño y las guidelines no coinciden, **gana
+`lib/tokens.ts`**. El PNG es evidencia sobre la estructura, no autoridad sobre los valores.
+
+Ya ha pasado dos veces:
+
+- Las tarjetas oscuras de Insights usan negro puro; la plantilla usa el token Dark.
+- Los velos de foto usaban un negro inventado (`#0A0908`) que puse yo. Ahora usan `rgba(28,26,23)`,
+  que es el Dark de marca y lo que ya hacía el deck.
+
+Y eso tuvo consecuencia medible: el velo uniforme estaba en **0,60** calculado contra el negro
+inventado. Con el oscuro de marca, que es más claro, el mismo alfa se quedaba en 4,06 de
+contraste. **Subió a 0,64**, que es el mínimo que garantiza 4,5:1. Buen ejemplo de por qué el
+color no se elige a ojo: cambiarlo movió la garantía sin que se notara en pantalla.
+
+**Esto no depende de que nadie se acuerde.** `lib/__tests__/socialBrand.test.ts` lee `social.css`
+y lo contrasta con `lib/tokens.ts`: todo color de la paleta, la serif solo en 300/400, la mono solo
+en 400/500/600 y cero cursiva. Verificado que falla cuando se incumple, no solo que pasa cuando
+todo está bien.
 
 ## Los metadatos son una lista cerrada
 

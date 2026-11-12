@@ -331,13 +331,13 @@
    entero y no se descubre hasta que la pieza está publicada. */
 .ix-social .scrim.bottom{
   background:
-    linear-gradient(to top, rgba(10,9,8,.86) 0%, rgba(10,9,8,.42) 34%, rgba(10,9,8,0) 62%),
-    linear-gradient(to bottom, rgba(10,9,8,.58) 0%, rgba(10,9,8,.22) 14%, rgba(10,9,8,0) 34%);
+    linear-gradient(to top, rgba(28,26,23,.86) 0%, rgba(28,26,23,.42) 34%, rgba(28,26,23,0) 62%),
+    linear-gradient(to bottom, rgba(28,26,23,.58) 0%, rgba(28,26,23,.22) 14%, rgba(28,26,23,0) 34%);
 }
 .ix-social .scrim.top{
   background:
-    linear-gradient(to bottom, rgba(10,9,8,.86) 0%, rgba(10,9,8,.42) 34%, rgba(10,9,8,0) 62%),
-    linear-gradient(to top, rgba(10,9,8,.68) 0%, rgba(10,9,8,.26) 13%, rgba(10,9,8,0) 28%);
+    linear-gradient(to bottom, rgba(28,26,23,.86) 0%, rgba(28,26,23,.42) 34%, rgba(28,26,23,0) 62%),
+    linear-gradient(to top, rgba(28,26,23,.68) 0%, rgba(28,26,23,.26) 13%, rgba(28,26,23,0) 28%);
 }
 /* Velo uniforme: el de las tarjetas que llevan foto de fondo en un layout
    que no la lleva de serie.
@@ -347,21 +347,25 @@
    abajo. Un degradado protegería una zona y dejaría las otras al azar de
    la foto.
 
-   0,60 no es un número elegido a ojo. Es el velo mínimo que garantiza
-   4,5:1 de contraste para la tinta clara (#F5F2ED) sobre el PEOR fondo
-   posible, que es una foto blanca: con 0,60 el blanco queda en 102 y da
-   5,14; con 0,55 se queda en 4,25 y no llega. Si aguanta contra una foto
-   blanca, aguanta con cualquiera.
+   0,64 no es un número elegido a ojo. Es el velo mínimo que garantiza
+   4,5:1 de contraste para la tinta clara (Warm Light) sobre el PEOR fondo
+   posible, que es una foto blanca: con 0,64 da 4,68 y con 0,62 se queda en
+   4,37. Si aguanta contra una foto blanca, aguanta con cualquiera.
+
+   Estuvo en 0,60 mientras el velo era un negro inventado (#0A0908). Al
+   pasar al oscuro de MARCA, que es más claro, el mismo alfa se quedaba en
+   4,06 y había que subirlo. Es un buen ejemplo de por qué el color no se
+   elige a ojo: cambiarlo movió la garantía sin que se notara en pantalla.
 
    Es oscuro a propósito: una tarjeta de texto sobre foto usa la foto como
    textura, no como tema. Para que la foto sea la protagonista está el
    layout `foto`. */
-.ix-social .scrim.full{background:rgba(10,9,8,.60);}
+.ix-social .scrim.full{background:rgba(28,26,23,.64);}
 
 /* Oscurecido extra, el control de exposición. Va sobre el velo y no en
    lugar de él: el velo es lo que garantiza el contraste y este control
    solo puede añadir, nunca quitar. */
-.ix-social .photo .expo{position:absolute; inset:0; background:#0A0908;}
+.ix-social .photo .expo{position:absolute; inset:0; background:var(--dark);}
 
 .ix-social .on-photo{color:var(--warm-light); --ink:var(--warm-light); --ink-soft:rgba(245,242,237,.72); --rule:rgba(245,242,237,.28);}
 .ix-social .on-photo .box{z-index:2;}
