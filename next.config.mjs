@@ -50,6 +50,11 @@ const SECURITY_HEADERS = [
 const nextConfig = {
   pageExtensions: ['ts', 'tsx', 'mdx'],
   reactStrictMode: true,
+  /* El indicador de desarrollo de Next, a la derecha. Solo existe en local
+     —en producción no se pinta—, pero por defecto se sienta abajo a la
+     izquierda y ahí tapa la esquina del editor del Social Maker, que es
+     justo donde está la columna del texto. */
+  devIndicators: { position: 'bottom-right' },
   /* Anunciaba el framework en cada respuesta. No es una vulnerabilidad, es información gratis para
      quien escanea en masa eligiendo objetivos por framework y versión. */
   poweredByHeader: false,

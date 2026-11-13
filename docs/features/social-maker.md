@@ -3,6 +3,7 @@
 Editor de imágenes para redes. Markdown a la izquierda, tarjetas a la derecha, descarga en PNG.
 
 - **Ruta:** `/workspace/socialmak_r` (detrás de login, como el resto del workspace).
+- **Cromo:** el del workspace, no uno propio. Ver «La barra es la de la casa» más abajo.
 - **Catálogo:** la herramienta ya estaba declarada en `lib/workspace/catalog.ts` como
   «Próximamente»; ahora apunta a su ruta.
 
@@ -36,7 +37,11 @@ ven con el mismo ancho en el feed, así que el texto tiene que medir lo mismo en
 | Lienzo | Exportado | Ratio |
 |---|---|---|
 | Carrusel | 1080×1350 | 4:5 |
-| Post horizontal | 1080×608 | 16:9 |
+| Portada | 1080×608 | 16:9 |
+
+El lienzo de 16:9 se llama **«Portada»** en la interfaz, que es como lo nombra el equipo: es la
+imagen que encabeza un post. **No confundir con el layout `portada`**, que es la primera slide de
+un carrusel: uno es el lienzo y el otro es una slide.
 
 **Se exporta al tamaño exacto del lienzo.** Es la medida nativa de LinkedIn e Instagram y la de
 cinco de los seis carruseles de referencia.
@@ -61,25 +66,42 @@ constante en los seis. 56/1080 = 5,2 % del ancho.
 
 Vive en `lib/social/typeScale.ts` y se espeja en `components/social/social.css` como `--s-*`.
 
-**La regla: los titulares serif se quedan en la escala tal cual; el resto corre a ×2,25.**
+**Los nombres son el papel, no el tamaño.** Una slide no elige un tamaño: elige qué es.
 
-No es un gusto. Se midió el ancho de tinta de cadenas concretas sobre los PNG publicados y se
-buscó qué tamaño las reproduce con la fuente real en el navegador:
-
-| Cadena del diseño | Rol | px derivado |
+| Peldaño | px | Para qué |
 |---|---|---|
-| «La abundancia de» | titular | 96 |
-| «No definir el problema real» | elemento de lista | 57 |
-| «Por Martina Gentile» | firma del autor | 49 |
-| «/Miradas/» | slug | 38 |
-| «En un entorno saturado de…» | cuerpo mono | 40 |
+| `--s-xl` | 192 | El titular del **cierre**. Es el único texto de su slide |
+| `--s-l` | 120 | El titular de la **portada**, y solo ese |
+| `--s-m` | 80 | **Cualquier** titular interior, la cita y el párrafo serif |
+| `--s-s` | 60 | Los **elementos de lista**, por debajo del titular que los encabeza |
+| `--s-pie` | 56 | Slug y firma. No es contenido, es papelería |
+| `--s-mono` | 46 | **Todo** el texto en mono, sin excepción |
+| `--s-micro` | 24 | Antetítulo y numeración. Es una etiqueta, no texto corrido |
 
-El titular cae exactamente en el peldaño `display` de la escala, así que ahí no hay nada que
-tocar. El resto pide subir, y 2,25 es el factor que lleva el cuerpo mono de 18 a 40,5. Redondeado
-da **40 / 36 / 22**.
+Los valores salieron de medir los carruseles publicados (96 / 64 / 48 / 40) y el equipo los subió
+el 12/11/2026: en un lienzo de 1080 hay sitio de sobra y las piezas no van densas. La escala sube
+un escalón sin tocar las proporciones. El medido de cada peldaño queda anotado en su `origen`.
 
-La primera versión usaba ×2 y se quedaba corta: el imagotipo salía a 26 px cuando mide 41 en los
-diseños, y el pie entero iba descompensado. **El error fue estimar en lugar de medir.**
+**La mono no llega al margen derecho**: se queda un margen de página antes. Una monoespaciada
+rinde líneas muy parejas, y sin ese aire el bloque parece una caja maciza pegada al borde.
+
+**El número de una lista va levantado de la línea base.** Las dos bases ya coincidían exactamente
+—medido, diferencia cero— y aun así el número se veía caído: mide la mitad que el texto y,
+apoyado en la misma base, queda colgando por debajo de su altura de mayúsculas. El diseño de
+referencia hace lo mismo: el número apoya 5 px por encima de la base del texto. Se expresa como
+fracción del peldaño para que no haya que recalcularlo.
+
+Antes había siete peldaños repartidos por capricho de cada layout, y se notaba al pasar de una
+slide a otra. Unificado el 12/11/2026 por decisión de Martina, junto con dos reglas más:
+
+- **Ningún fondo se repite en slides seguidas**, ni dos iguales ni tres del mismo tono. Las cuatro
+  plantillas lo cumplen; hay un comprobador rápido en el commit que lo introdujo.
+- **La portada de Miradas no lleva subtítulo.** El titular va limpio.
+
+Los valores salen de medir los carruseles publicados: el titular de portada cae exactamente en el
+peldaño `display` de `lib/typeScale.ts` (96) y el cuerpo mono en 40. El resto corre a **×2,25**
+sobre la escala web, porque una tarjeta social no es un viewport: es un lienzo fijo de 1080 que
+luego se ve a ~400 px en el feed de un móvil.
 
 > **Pendiente de Alberto.** Esto *extiende* la norma, no la contradice: familias, pesos y la
 > prohibición de la cursiva se respetan enteras. Pero un multiplicador de lienzo es una decisión
@@ -114,9 +136,8 @@ acaso»: un layout que nadie usa es una papeleta para que alguien lo use mal.
 | `texto` | Titular opcional + cuerpo en mono |
 | `lista` | Titular + elementos numerados con filete |
 | `cita` | Cita entre comillas, firma pequeña debajo. El pensado para el post horizontal |
-| `foto` | Foto a sangre con texto encima, arriba o abajo, o sin texto |
-| `rotulo` | Cuerpo mono arriba, rótulo serif grande abajo |
-| `agenda` | Filas de «qué \| cuándo» con filete |
+| `imagen` | Imagen a sangre con texto encima, arriba o abajo, o sin texto |
+| `parrafo` | Cuerpo de texto en serif, sin titular. El de los carruseles de Insights |
 | `cierre` | Llamada a leer, firma y retrato en la esquina |
 
 El titular del cierre va al peldaño **`super` (192)** y no al `display` del resto: es el único
@@ -126,8 +147,33 @@ viuda**: a ese tamaño, atar la última palabra corta a la anterior crea una tir
 la caja y deja una palabra suelta en la línea de antes, que es justo el defecto que la regla
 quería evitar.
 
-Las plantillas de arranque son cuatro: **Miradas** (papelería al pie), **evento** y **workshop**
-(papelería en cabecera) y una en blanco.
+Las plantillas de arranque son cuatro: **Miradas**, **Insights**, **Evento** y **Libre**. Las dos
+primeras llevan la papelería al pie; evento, en cabecera.
+
+Hubo una quinta, **workshop**, que se retiró el 12/11/2026: era la de evento con otro slug, y dos
+plantillas que solo se diferencian en una palabra no son dos plantillas. El slug es texto libre,
+así que un carrusel de workshop se escribe poniendo `/Knowledge/`.
+
+También se retiró el layout **`agenda`** (filas de «qué | cuándo»), porque no se usa. `[ly: agenda]`
+sigue aceptándose como alias de `lista` para que un bloque ya escrito no se quede sin pintar.
+
+### Miradas e Insights no son lo mismo
+
+| | Miradas | Insights |
+|---|---|---|
+| Qué es | Presenta un artículo del blog | Un concepto que merece contarse, **sin artículo detrás** |
+| Slug | `/Miradas/` | `/Insights/` |
+| Cómo cierra | Tarjeta de **cierre**: «Artículo completo en nuestro blog», con firma y retrato | **Sin cierre.** Remata con la pregunta que deja abierta |
+
+Que un Insight no lleve cierre no es un descuido: **no tiene adónde mandar.** Poner la llamada a
+leer sería prometer un artículo que no existe.
+
+Su ritmo alterna razonamiento y dato: párrafo serif sobre oscuro para pensar en voz alta, titular
+más cuerpo mono sobre claro para asentar lo concreto.
+
+> **Una desviación observada en los diseños de Insights.** Las tarjetas oscuras de referencia usan
+> **negro puro `#000000`**, no el oscuro de marca `#1C1A17`. Es plano y exacto, no un artefacto de
+> compresión. La plantilla usa el token de marca.
 
 ### Cada plantilla trae su ritmo de fondos
 
@@ -140,7 +186,6 @@ carácter de la pieza entera.
 |---|---|---|
 | Miradas | Oscuro · claros encadenados · un oscuro que corta · cierre | El claro domina y el oscuro puntúa: es una pieza para leer |
 | Evento | Plano · foto · plano · foto | Lo que se cuenta pasó en un sitio, y el sitio se ve |
-| Workshop | Bloques oscuros que enmarcan el dato claro | El oscuro domina y el claro es lo que hay que retener |
 
 El ritmo vive en el markdown de la plantilla, **no en código**: quien parte de ella lo hereda y
 puede romperlo a mano en cualquier tarjeta. Un ritmo que no se pudiera romper sería una cárcel, no
@@ -156,6 +201,25 @@ retrato no se pinta nada; se probó a poner el isotipo y a este tamaño era un b
 dominando la tarjeta.
 
 Añadir uno es una entrada en `lib/social/catalog.ts` más su componente y su regla CSS.
+
+### Un bloque vacío no es una tarjeta
+
+Pasa al borrar una del medio y dejarse el separador. Lo que salía era una tarjeta en blanco que se
+exportaba igual que las demás: **un PNG vacío dentro del carrusel**. Ahora el compilador la salta,
+y `provenance` apunta al bloque real para que clicar una tarjeta siga llevando el cursor a su
+sitio.
+
+### Un titular nunca va debajo del texto pequeño ni pegado al pie
+
+Regla de Martina del 12/11/2026, y tiene consecuencias de sistema, no de plantilla.
+
+**Se retiró el layout `rotulo`** (cuerpo mono arriba, titular serif grande abajo). Esa colocación
+era su única razón de ser, así que sin ella no quedaba layout. Venía del carrusel de workshop de
+referencia, y es uno de esos casos en que el diseño trae un error: manda el manual. `[ly: rotulo]`
+sigue aceptándose como alias de `texto` para que un bloque ya escrito no se quede sin pintar.
+
+**Y el aire sobre el pie pasó de 24 px al margen de página (56).** Nada debe acercarse al pie más
+de lo que se acerca al borde. Vive en `--foot-aire`.
 
 ### La papelería va en dos sitios, y eso es lo que da variedad
 
@@ -189,19 +253,42 @@ veces y convertiría una marca en un sello de agua.
 ### El logo del cliente ocupa el hueco contrario
 
 `> logo: ruta`, y se hereda a toda la pieza igual que el slug: una pieza hecha con alguien lo es de
-principio a fin, y obligar a repetirlo tarjeta a tarjeta sería pedir que alguien se deje una.
+principio a fin, y obligar a repetirlo slide a slide sería pedir que alguien se deje una.
 
-- En la **portada** va arriba a la derecha, donde iría el slug.
-- En las **interiores** va abajo a la izquierda, donde iría el imagotipo.
+**Va siempre abajo a la izquierda, en todas las slides y también en la portada.** Un logo que
+cambia de sitio entre slides deja de leerse como una firma constante y pasa a leerse como un
+elemento más de la maqueta.
 
-Así nunca compiten por el mismo sitio.
+Eso obliga a que una portada con la papelería en cabecera lleve además un pie, aunque solo sea
+para el logo: arriba quedan el imagotipo girado y el slug, y abajo el logo. **Es opcional**: sin
+logo no hay pie y el titular llega hasta el margen inferior.
 
-Va en **caja fija de 300×56 y contenido dentro**. Los logos ajenos vienen con proporciones
+Va en **caja fija de 340×68 y contenido dentro**. Es más alto que el pie (56) a propósito: se sale
+hacia arriba, que es sitio libre, y por abajo sigue apoyado en el margen como todo lo demás. Los logos ajenos vienen con proporciones
 imprevisibles (el de la Barcelona Design Week lleva dos líneas y mide 250×55) y fijar solo el alto
 dejaría uno apaisado invadiendo el slug.
 
-Desde el editor se pone con el botón **Logo de cliente**, que abre la galería y escribe el
-metadato en el primer bloque.
+### Se sube como en el Deck Maker, y no va a la galería
+
+Botón **Logo de cliente** → selector de archivo → `uploadLogo(file, 'social')`, que lo deja en el
+bucket de assets (`deck-assets`), igual que hace DeckMak_r con su propio prefijo. **No entra en el
+banco de imágenes**: un logo de cliente no es una foto del universo visual y no tiene por qué
+aparecer en la galería que usa todo el equipo.
+
+### El color lo pone la tarjeta, no el archivo
+
+Se pinta como **máscara CSS**, no como imagen: del archivo solo se usa su silueta y el color sale
+de `--ink`, la tinta de la tarjeta. Warm Light sobre oscuro y sobre foto, Dark sobre claro. Un logo
+que llegue en tres colores, en positivo o en negativo, sale siempre igual y siempre legible.
+
+El Deck Maker resuelve lo mismo con `filter: brightness(0) invert(1)`, que lo deja en blanco puro.
+Allí basta porque su logo de cliente solo aparece en la portada, que siempre es oscura. **Aquí
+aparece también al pie de tarjetas claras**, donde el blanco desaparecería, y además el blanco puro
+no es un token: el claro de marca es Warm Light.
+
+Dos cosas verificadas antes de elegir esta vía: que **no es inyectar SVG** (el archivo se carga como
+recurso de imagen desde CSS y solo se lee su canal alfa, así que no ejecuta nada, misma seguridad
+que el `<img>` del deck) y que **la máscara sobrevive a la exportación a PNG**.
 
 ### El slug es texto libre
 
@@ -235,7 +322,7 @@ Las comillas **las pone el sistema**, no quien escribe: salen siempre las mismas
 las angulares («»), que son las del castellano y las que aparecen en los carruseles publicados. Si
 alguien las teclea igualmente, se le quitan antes para no doblarlas.
 
-La firma va debajo, pequeña, y sale de `> autor: Nombre Apellido`. **Esa línea va escrita en el
+La firma va debajo, pequeña, y sale de `> autor: Yolanda Delgado`. **Esa línea va escrita en el
 bloque**, no oculta: se edita como cualquier otro texto. Mantiene el slug como cualquier otra
 tarjeta, y admite fondo de color o foto.
 
@@ -305,11 +392,11 @@ Para que la foto sea la protagonista está el layout `foto`.
 
 Desde el editor hay **dos sitios**, y los dos hacen falta:
 
-- El panel **Foto de la tarjeta** en la columna izquierda, con *Añadir foto* / *Cambiar foto* /
-  *Quitar foto* y el control de exposición. Actúa sobre la tarjeta seleccionada.
+- La pestaña **Foto** bajo el editor, con *Añadir* / *Cambiar* / *Quitar*, el estilo con IA y la
+  exposición. Actúa sobre la tarjeta seleccionada.
 - Un rótulo al **pasar por encima** de la propia tarjeta.
 
-El panel existe porque el rótulo por hover no se encontraba: quien edita mira a la columna
+La pestaña existe porque el rótulo por hover no se encontraba: quien edita mira a la columna
 izquierda, que es donde están las demás acciones. Una función que no se ve es una función que no
 existe.
 
@@ -380,6 +467,9 @@ llama el archivo.
 - **El nombre de pila basta si no se repite.** «Diana» funciona; «Elena» no, porque hay dos, y una
   foto equivocada es peor que ninguna foto.
 - **Una segunda imagen en el bloque gana a la automática**, para firmar con alguien de fuera.
+- **El esqueleto trae un nombre REAL del equipo**, no «Nombre Apellido». Es la única manera de que
+  se vea que el retrato aparece solo: con un nombre inventado la esquina sale vacía y parece que la
+  función no existe. Se sustituye al escribir, como el resto del esqueleto.
 - **Quien no está en el equipo firma con el isotipo**, no con una inicial. Es lo que ya hace la web.
   Y el editor lo avisa, para que una errata no llegue a publicarse disfrazada de decisión.
 
@@ -397,6 +487,123 @@ node scripts/sync-equipo.mjs
 
 Copia las fotos y regenera `lib/social/equipo.ts`, que está marcado como generado. Cuando alguien
 entre o salga del equipo, se vuelve a correr.
+
+## Manda el manual, no el PNG
+
+Los layouts salen de medir carruseles ya publicados, pero **esos diseños pueden traer errores**.
+Instrucción de Martina del 12/11/2026: cuando un diseño y las guidelines no coinciden, **gana
+`lib/tokens.ts`**. El PNG es evidencia sobre la estructura, no autoridad sobre los valores.
+
+Ya ha pasado dos veces:
+
+- Las tarjetas oscuras de Insights usan negro puro; la plantilla usa el token Dark.
+- Los velos de foto usaban un negro inventado (`#0A0908`) que puse yo. Ahora usan `rgba(28,26,23)`,
+  que es el Dark de marca y lo que ya hacía el deck.
+
+Y eso tuvo consecuencia medible: el velo uniforme estaba en **0,60** calculado contra el negro
+inventado. Con el oscuro de marca, que es más claro, el mismo alfa se quedaba en 4,06 de
+contraste. **Subió a 0,64**, que es el mínimo que garantiza 4,5:1. Buen ejemplo de por qué el
+color no se elige a ojo: cambiarlo movió la garantía sin que se notara en pantalla.
+
+**Esto no depende de que nadie se acuerde.** `lib/__tests__/socialBrand.test.ts` lee `social.css`
+y lo contrasta con `lib/tokens.ts`: todo color de la paleta, la serif solo en 300/400, la mono solo
+en 400/500/600 y cero cursiva. Verificado que falla cuando se incumple, no solo que pasa cuando
+todo está bien.
+
+## La barra es la de la casa
+
+La herramienta vive en `brand.interactius.com/workspace` junto al Deck Maker, el Form Maker y los
+demás, y quien salta de una a otra tiene que reconocer dónde está sin pensarlo. Así que la barra
+no es propia: es la misma anatomía que `DeckToolbar`, `FormToolbar` y `DsToolbar`.
+
+**Imagotipo** (vuelve al workspace) · separador · **nombre de la pieza** · acciones ·
+**menú de usuario**.
+
+**Sin el wordmark de la herramienta**, y no es un olvido: ninguna barra de editor lo lleva.
+`DeckLogo`, `FormLogo`, `DsLogo` e `ImgLogo` aparecen solo en la galería de su herramienta.
+
+Los valores salen de ahí también: fondo Warm Light, filete Warm Dark, `padding: 10px 16px`. Antes
+iba sobre blanco y con un «SOCIAL MAKER» escrito a mano en mayúsculas, que no era de la familia.
+
+**Toda la barra comparte alto y tamaño de texto**, declarados en `ALTO_BARRA` y `TEXTO_BARRA`
+(`SocialToolbar.tsx`): 31 px y 11/500, que son los de `toolbarBtn`. Antes había cinco alturas
+distintas porque cada control traía las suyas. El alto va fijo y no por relleno: un `<input>` no
+encoge su caja de contenido por debajo del alto normal de línea de su fuente.
+
+La única excepción es el avatar del menú de usuario (34), que es el `UserMenu` compartido y mide
+lo mismo en el Deck Maker y en FormMak_r.
+
+**Los botones son los de `components/deck/studio/ui.ts`, y hay que usar el correcto.** Las acciones
+secundarias van con `toolbarBtn` (fondo blanco, filete Warm Dark), la principal con `btn` (relleno
+oscuro) y los grupos de opción con `seg` / `segOn`. Estuvieron un tiempo con `btnGhost`, que lleva
+filete OSCURO y fondo transparente: ese es el botón de los modales, no el de una barra, y cantaba
+al lado del Deck Maker. Las pestañas de los paneles y las muestras de la paleta también parten de
+ahí en vez de tener estilo propio.
+
+El wordmark **SocialMak_r** se añade a `components/studio/Wordmark.tsx`, donde ya estaban los de
+las otras cuatro herramientas, y **espera ahí a la galería del Social Maker**, que está por hacer. Ese componente ya contemplaba este caso: su comentario explica que
+el `viewBox` se calcula en vez de fijarse precisamente porque «SocialMak_r» tiene 11 caracteres y
+un ancho fijo lo recortaría por la derecha.
+
+La página pasa a leer la sesión para que la barra lleve el menú de usuario, igual que las demás.
+Eso la convierte en dinámica (`ƒ` en el build), que es lo que ya son `deckmak_r` y el resto.
+
+## El vocabulario de la interfaz
+
+**Slide**, no «tarjeta». **Imagen**, no «foto**». Decisión de Martina del 12/11/2026, y vale para
+todos los rótulos: las pestañas son **Añadir slide**, **Modificar imagen** y **Cambiar fondo**.
+
+El layout `foto` pasó a llamarse `imagen`, marcador incluido. `[ly: foto]` sigue aceptándose como
+alias para que un bloque ya escrito no se quede sin pintar.
+
+**Un botón apagado dice por qué.** El de *Quitar imagen* explica debajo si no hay slide elegida, si
+la slide no tiene imagen de fondo, o si su layout la lleva por diseño. El motivo va en texto
+visible y no en un `title`: un tooltip solo lo encuentra quien ya sospecha que hay algo que
+encontrar.
+
+## La columna de edición
+
+**El editor va enmarcado**, como el del Deck Maker: una caja blanca con su filete, flotando sobre
+el beige con 20 px de aire alrededor. Antes el texto llegaba a sangre hasta los bordes y se leía
+como el fondo de la ventana en vez de como un documento.
+
+Los tres paneles (**Añadir tarjeta**, **Foto**, **Fondo**) van en una fila de pestañas y
+**cerrados de salida**. Antes iban apilados y abiertos: unos 300 px que le comían el sitio al
+texto, que es donde de verdad se trabaja. Con la fila cerrada el editor pasa de ~510 a ~808 px de
+alto en una pantalla de portátil.
+
+Se abre una y se cierra la anterior, así que el alto del bloque está acotado pase lo que pase.
+Cuál quedó abierta se recuerda en el navegador, como el zoom.
+
+### La tira de miniaturas
+
+A la izquierda de la vista previa, sobre fondo oscuro, como el `SlideNavigator` del Deck Maker.
+
+Son **miniaturas reales**, no capturas ni iconos: el lienzo ya se escala con una transformación,
+así que una miniatura es la misma `SocialCard` con otro factor. No hay una segunda forma de dibujar
+una slide, de modo que no puede derivar.
+
+Fondo oscuro a propósito: las slides claras y las oscuras tienen que distinguirse del soporte, y
+sobre beige una Warm Light desaparecía. Mismo motivo por el que la vista previa grande va sobre
+blanco con filete.
+
+**«Visible» y «seleccionada» son dos cosas distintas.** La visible la manda el scroll y solo pinta
+la opacidad; la seleccionada la manda el clic, lleva el filete claro y es la que editan los
+paneles. Si el scroll cambiara la seleccionada, bajar a mirar la última slide y pulsar un color se
+lo aplicaría a esa y no a la que se estaba editando.
+
+**Clicar una tarjeta lleva el cursor a su bloque** en el texto y lo acerca a la vista, igual que el
+Deck Maker (`jumpToSource` en `DeckStudio`). Clicar una tarjeta es la forma natural de decir
+«quiero editar esta», y sin eso hay que buscarla a mano en un texto de cien líneas.
+
+## Los metadatos son una lista cerrada
+
+`slug`, `autor`, `logo`, `marca`, `exposicion`, `posicion`, `cliente`. Y la lista tiene que estar
+cerrada: antes se reconocía un metadato con el patrón «unas palabras, dos puntos, el resto», y eso
+**se tragaba la prosa**. «El razonamiento largo: dónde se complica» desaparecía de la tarjeta sin
+avisar, y los dos puntos son una construcción habitual en la voz de la casa.
+
+Añadir una clave nueva es añadirla a `CLAVES_META` en `lib/social/compile.ts`.
 
 ## Cómo funciona pulsar Enter
 

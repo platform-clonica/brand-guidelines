@@ -1,14 +1,15 @@
 import type { Metadata } from 'next';
-import { SocialStudio } from '@/components/social/SocialStudio';
+import { getSessionUser } from '@/lib/auth/sessionUser';
+import { SocialGallery } from '@/components/social/gallery/SocialGallery';
 
 export const metadata: Metadata = {
   title: 'Social Maker · Interactius',
   robots: { index: false, follow: false },
 };
 
-/* El editor de imágenes para redes. Vive junto al resto de herramientas del
-   workspace y comparte con el Deck Maker el motor de markdown y el cromo,
-   pero no los layouts: ver la cabecera de lib/social/types.ts. */
-export default function SocialPage() {
-  return <SocialStudio />;
+/* La lanzadera: la rejilla de piezas guardadas. El editor vive en
+   /workspace/socialmak_r/[id], igual que el Deck Maker. */
+export default async function SocialPage() {
+  const user = await getSessionUser();
+  return <SocialGallery user={user} />;
 }

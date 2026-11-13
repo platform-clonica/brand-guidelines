@@ -23,8 +23,8 @@ export function Portada({
       <Photo image={slide.image} scrim={enCabecera ? 'bottom' : 'top'} exposicion={slide.exposicion} />
       <FitText maxHeight={boxH} className="box l-portada on-photo">
         <div>
-          <h1 className="headline">{inline(typesetHeadline(slide.title))}</h1>
-          {slide.subtitle && <p className="copy sm sub">{inline(slide.subtitle)}</p>}
+          <h1 className="headline l">{inline(typesetHeadline(slide.title))}</h1>
+          {slide.subtitle && <p className="copy sub">{inline(slide.subtitle)}</p>}
         </div>
       </FitText>
     </>

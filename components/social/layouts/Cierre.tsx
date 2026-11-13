@@ -33,7 +33,7 @@ export function Cierre({
             lo convierte en una tirada que no cabe en la caja, obliga a
             FitText a encoger y deja «en» sola, que es justo el defecto que
             la regla quería evitar. Suelto parte donde parte el diseño. */}
-        <h2 className="headline">{inline(keepCompounds(slide.title))}</h2>
+        <h2 className="headline xl">{inline(keepCompounds(slide.title))}</h2>
       </FitText>
       {slide.author && <span className="by">Por {slide.author}</span>}
       {slide.avatar?.src ? (

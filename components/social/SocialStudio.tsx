@@ -6,11 +6,18 @@ import { CANVASES, EXPORT_SCALE, type CanvasId } from '@/lib/social/types';
 import { LAYOUTS } from '@/lib/social/catalog';
 import { TEMPLATES, templateById, type TemplateId } from '@/lib/social/templates';
 import { exportAll, exportCard, fileName } from '@/lib/social/exportPng';
-import { colors, btn, btnGhost, toolbarBtn, seg, segOn } from '@/components/deck/studio/ui';
+import { colors, btn, input, toolbarBtn, seg, segOn } from '@/components/deck/studio/ui';
+import type { SessionUser } from '@/lib/auth/sessionUser';
+import { ALTO_BARRA, SocialToolbar, TEXTO_BARRA } from './studio/SocialToolbar';
+import { useAutosave } from '@/lib/hooks/useAutosave';
+import { guardarPieza } from '@/lib/social/api';
 import { ImageGallery } from '@/components/deck/studio/ImageGallery';
 import { AiEditModal } from '@/components/images/AiEditModal';
 import { ToastProvider } from '@/components/ui/Toast';
 import { buscarFoto, type FotoDelBanco } from '@/lib/social/estiloIA';
+import { uploadLogo } from '@/lib/storage/logos';
+import { publicLogoUrl } from '@/lib/decks/publicApi';
+import { splitSourceBlocks } from '@/lib/deck/source';
 import {
   countBlockImages,
   removeBlockImageAt,
@@ -19,35 +26,86 @@ import {
   setMeta,
 } from '@/lib/social/source';
 import { Paleta } from './studio/Paleta';
+import { SocialNavigator } from './studio/SocialNavigator';
 import { SocialCard } from './SocialCard';
 
 /* Los layouts que llevan foto a sangre. En ellos manda la imagen, así que
    el relleno de color no pinta nada y la paleta se apaga. */
-const CON_FOTO: readonly string[] = ['portada', 'foto', 'cierre'];
+const CON_IMAGEN: readonly string[] = ['portada', 'imagen', 'cierre'];
+
+/* Ancho de la tira de miniaturas. 120 deja la miniatura en 90, que sobre un
+   lienzo de 1080 da una escala de 0,083: se reconoce la slide sin leerla,
+   que es para lo que sirve. */
+const ANCHO_TIRA = 120;
+
+/* Los tres paneles de edición, en una fila de pestañas. Cerrados de
+   salida: el sitio es del texto, que es donde se trabaja. */
+type PanelId = 'slide' | 'imagen' | 'fondo';
+const PESTANAS: { id: PanelId; label: string }[] = [
+  { id: 'slide', label: 'Añadir slide' },
+  { id: 'imagen', label: 'Modificar imagen' },
+  { id: 'fondo', label: 'Cambiar fondo' },
+];
 
 const MONO = 'var(--font-ibm-plex-mono, monospace)';
 
 /* El editor: markdown a la izquierda, tarjetas a la derecha.
-   Misma mecánica que el Deck Maker a propósito — quien sepa usar uno sabe
+   Misma mecánica que el Deck Maker a propósito, y quien sepa usar uno sabe
    usar el otro. El cromo reutiliza `components/deck/studio/ui.ts`, así que
    los dos editores no pueden separarse visualmente por descuido. */
 
-export function SocialStudio() {
-  const [md, setMd] = useState(() => templateById('miradas').md);
-  const [canvas, setCanvas] = useState<CanvasId>('carrusel');
-  const [titulo, setTitulo] = useState('Carrusel sin título');
+export function SocialStudio({
+  user,
+  postId,
+  initialName,
+  initialMd,
+  initialCanvas,
+}: {
+  user?: SessionUser;
+  /** Sin id no se guarda nada: es el editor abierto fuera de una pieza. */
+  postId?: string;
+  initialName?: string;
+  initialMd?: string;
+  initialCanvas?: CanvasId;
+} = {}) {
+  /* Al abrir, siempre el carrusel de Miradas. La plantilla va en estado y
+     no en `defaultValue`: así el desplegable no puede quedarse enseñando
+     una cosa mientras el texto es otra. */
+  const [plantilla, setPlantilla] = useState<TemplateId>('miradas');
+  const [md, setMd] = useState(() => initialMd ?? templateById('miradas').md);
+  const [canvas, setCanvas] = useState<CanvasId>(initialCanvas ?? 'carrusel');
+  const [titulo, setTitulo] = useState(initialName ?? 'Carrusel sin título');
   const [actual, setActual] = useState(0);
   const [exportando, setExportando] = useState<null | string>(null);
   const [error, setError] = useState<string | null>(null);
   /* Qué imagen se está cambiando: el bloque del markdown y, dentro de él,
      cuál de sus imágenes. El cierre tiene dos: el fondo y el retrato. */
   const [ranura, setRanura] = useState<{ bloque: number; pos: number } | null>(null);
-  /* Cuando está activo, lo que se elija en la galería es el logo del
-     cliente y no una foto de tarjeta. */
-  const [eligiendoLogo, setEligiendoLogo] = useState(false);
   /* La foto del banco sobre la que se va a aplicar el estilo con IA. */
   const [estilo, setEstilo] = useState<FotoDelBanco | null>(null);
   const [buscando, setBuscando] = useState(false);
+  const [subiendoLogo, setSubiendoLogo] = useState(false);
+  const inputLogo = useRef<HTMLInputElement>(null);
+  /* Qué panel está abierto, o ninguno. Se recuerda en el navegador: es una
+     preferencia de pantalla, como el zoom, no algo de la pieza. */
+  const [panel, setPanel] = useState<PanelId | null>(null);
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem('socialmakr:panel');
+      if (v && PESTANAS.some((t) => t.id === v)) setPanel(v as PanelId);
+    } catch {
+      /* Modo privado o almacenamiento bloqueado: se queda cerrado. */
+    }
+  }, []);
+  const cambiarPanel = useCallback((id: PanelId | null) => {
+    setPanel(id);
+    try {
+      if (id) localStorage.setItem('socialmakr:panel', id);
+      else localStorage.removeItem('socialmakr:panel');
+    } catch {
+      /* Ídem: se pierde al cerrar, la sesión funciona igual. */
+    }
+  }, []);
   const [encima, setEncima] = useState<number | null>(null);
 
   const deck = useMemo(() => compileSocial(md, canvas), [md, canvas]);
@@ -60,7 +118,7 @@ export function SocialStudio() {
     () =>
       deck.slides.flatMap((s, i) =>
         s.kind === 'cierre' && s.autorEnEquipo === false
-          ? [`Tarjeta ${i + 1}: «${s.author}» no está en el equipo, así que firma el isotipo.`]
+          ? [`Slide ${i + 1}: «${s.author}» no está en el equipo, así que firma el isotipo.`]
           : [],
       ),
     [deck],
@@ -69,12 +127,36 @@ export function SocialStudio() {
   /* Los nodos reales de cada tarjeta, para exportarlos. Se guardan por
      índice: la exportación tiene que salir del DOM que ya está pintado y no
      de una segunda versión del diseño. */
+  const textarea = useRef<HTMLTextAreaElement>(null);
   const nodos = useRef<(HTMLDivElement | null)[]>([]);
   nodos.current.length = total;
 
   useEffect(() => {
     if (actual >= total) setActual(Math.max(0, total - 1));
   }, [total, actual]);
+
+  /* Guardado automático. El markdown es la fuente de verdad, así que basta
+     con él, el nombre y el lienzo: las slides se compilan al abrir.
+
+     `enabled` cuelga de que haya id: el editor también se puede montar sin
+     pieza (la página de pruebas del repo lo hace) y ahí no hay dónde
+     guardar. */
+  const porGuardar = useMemo(() => ({ name: titulo, md, canvas }), [titulo, md, canvas]);
+  const { saveState, dirty } = useAutosave({
+    enabled: Boolean(postId),
+    value: porGuardar,
+    save: (v) => guardarPieza(postId!, v),
+  });
+
+  /* Aviso del navegador al cerrar con cambios sin guardar. El editor no
+     tiene «guardar» a mano: si se cierra la pestaña a los dos segundos de
+     escribir, lo tecleado no ha llegado todavía. */
+  useEffect(() => {
+    if (!dirty) return;
+    const avisar = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', avisar);
+    return () => window.removeEventListener('beforeunload', avisar);
+  }, [dirty]);
 
   const spec = CANVASES[canvas];
 
@@ -160,52 +242,98 @@ export function SocialStudio() {
      modal saltaría siempre. Seleccionar y luego actuar es el patrón de
      toda la vida y conserva el gesto de «clico en la imagen y la cambio»,
      que es lo que se pidió. */
+  /* Lleva el cursor del editor al bloque de esa tarjeta y lo acerca a la
+     vista. Igual que el Deck Maker (`jumpToSource` en DeckStudio): clicar
+     una tarjeta es la forma natural de decir «quiero editar esta», y sin
+     esto hay que buscarla a mano en un texto de cien líneas. */
+  const irAlTexto = useCallback(
+    (i: number) => {
+      const ta = textarea.current;
+      if (!ta) return;
+      const b = splitSourceBlocks(md)[bloqueDe(i)];
+      if (!b) return;
+      ta.focus();
+      ta.setSelectionRange(b.start, b.start);
+      const ratio = md.length ? b.start / md.length : 0;
+      ta.scrollTop = Math.max(0, ratio * ta.scrollHeight - ta.clientHeight / 3);
+    },
+    [md, bloqueDe],
+  );
+
+  /* Desde la tira de miniaturas: selecciona, lleva el cursor del editor a
+     su bloque y desplaza la vista hasta ella. */
+  const irASlide = useCallback(
+    (i: number) => {
+      setActual(i);
+      irAlTexto(i);
+      vista.current
+        ?.querySelector(`[data-slide="${i}"]`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    [irAlTexto],
+  );
+
   const alClicar = useCallback(
     (e: React.MouseEvent, i: number) => {
       const yaEstaba = actual === i;
       setActual(i);
+      irAlTexto(i);
       if (!yaEstaba) return;
       const t = e.target as HTMLElement;
       if (t.closest('.avatar')) setRanura({ bloque: bloqueDe(i), pos: 1 });
       else if (t.closest('.photo')) setRanura({ bloque: bloqueDe(i), pos: 0 });
     },
-    [actual, bloqueDe],
+    [actual, bloqueDe, irAlTexto],
   );
 
   const slideActual = deck.slides[actual];
   /* Donde hay foto no hay relleno: el fondo es la imagen. */
   const paletaApagada = !slideActual
-    ? 'Elige una tarjeta para cambiarle el fondo.'
-    : CON_FOTO.includes(slideActual.kind)
-      ? `Una tarjeta de «${slideActual.kind}» lleva foto a sangre: el fondo es la imagen. Haz clic sobre ella para cambiarla.`
+    ? 'Elige una slide para cambiarle el fondo.'
+    : CON_IMAGEN.includes(slideActual.kind)
+      ? `Una tarjeta de «${slideActual.kind}» lleva imagen a sangre: el fondo es la imagen. Haz clic sobre ella para cambiarla.`
       : slideActual.fondo?.src
-        ? 'Esta tarjeta tiene foto de fondo. Quítala para volver a un color.'
+        ? 'Esta slide tiene imagen de fondo. Quítala para volver a un color.'
         : undefined;
 
   /* La tarjeta tiene foto si el layout la lleva de serie o si alguien le
      ha puesto una de fondo. En los dos casos se puede bajar la exposición. */
-  const conFotoActual = Boolean(
-    slideActual && (CON_FOTO.includes(slideActual.kind) || slideActual.fondo?.src),
+  const conImagenActual = Boolean(
+    slideActual && (CON_IMAGEN.includes(slideActual.kind) || slideActual.fondo?.src),
   );
   const exposicionActual = slideActual?.exposicion ?? 100;
-  const urlFotoActual =
+
+  /* Por qué no se puede quitar la imagen, dicho en voz alta.
+
+     Un botón apagado sin explicación deja a quien edita pensando que algo
+     está roto. El motivo vive debajo del botón y no en un `title`, porque
+     un tooltip solo lo encuentra quien ya sospecha que hay algo que
+     encontrar. */
+  const porQueNoSeQuita = !slideActual
+    ? 'Elige una slide para poder quitarle la imagen.'
+    : CON_IMAGEN.includes(slideActual.kind)
+      ? `Una slide de «${slideActual.kind}» lleva imagen por diseño: se puede cambiar, pero no quitar. Una portada sin imagen no es una portada.`
+      : !slideActual.fondo?.src
+        ? 'Esta slide no tiene imagen de fondo, así que no hay nada que quitar.'
+        : undefined;
+  const urlImagenActual =
     slideActual?.fondo?.src ??
     (slideActual && 'image' in slideActual ? slideActual.image?.src : undefined);
 
   /* «Aplicar estilo Interactius»: busca la foto en el banco y abre el mismo
      modal de IMG_r. La directiva no se duplica aquí; ver lib/social/estiloIA.ts. */
   const aplicarEstilo = useCallback(async () => {
-    if (!urlFotoActual) return;
+    if (!urlImagenActual) return;
     setError(null);
     setBuscando(true);
     try {
-      setEstilo(await buscarFoto(urlFotoActual));
+      setEstilo(await buscarFoto(urlImagenActual));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se ha podido abrir el editor de estilo.');
     } finally {
       setBuscando(false);
     }
-  }, [urlFotoActual]);
+  }, [urlImagenActual]);
 
   const insertar = (skeleton: string) => {
     setMd((prev) => `${prev.trimEnd()}\n\n---\n\n${skeleton}\n`);
@@ -214,35 +342,23 @@ export function SocialStudio() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: colors.warmLight }}>
-      {/* ── Barra superior ── */}
-      <header
-        style={{
-          display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px',
-          borderBottom: `1px solid ${colors.warmDark}`, background: colors.white, flexWrap: 'wrap',
-        }}
-      >
-        <strong style={{ font: `600 12px/1 ${MONO}`, letterSpacing: '.08em', textTransform: 'uppercase' }}>
-          Social Maker
-        </strong>
-
-        <input
-          value={titulo}
-          onChange={(e) => setTitulo(e.target.value)}
-          aria-label="Nombre de la pieza"
-          style={{
-            font: `400 12px/1 ${MONO}`, padding: '9px 10px', minWidth: 220,
-            border: `1px solid ${colors.warmDark}`, background: colors.warmLight, color: colors.dark,
-          }}
-        />
-
+      {/* La barra es la del workspace, no una propia: ver SocialToolbar. */}
+      <SocialToolbar titulo={titulo} onTitulo={setTitulo} user={user}>
         {/* Lienzo */}
         <div style={{ display: 'flex', gap: 0 }}>
-          {(Object.keys(CANVASES) as CanvasId[]).map((id) => (
+          {/* El post va primero para que «Carrusel» quede pegado al
+              desplegable de plantillas, que es lo que más se usa junto. */}
+          {(['post', 'carrusel'] as CanvasId[]).map((id) => (
             <button
               key={id}
               type="button"
               onClick={() => setCanvas(id)}
-              style={canvas === id ? { ...seg, ...segOn } : seg}
+              style={{
+                ...(canvas === id ? { ...seg, ...segOn } : seg),
+                height: ALTO_BARRA, boxSizing: 'border-box',
+                padding: '0 12px', font: TEXTO_BARRA, letterSpacing: '.04em',
+                textTransform: 'none',
+              }}
               title={`${CANVASES[id].nombre} · ${CANVASES[id].w}×${CANVASES[id].h} (${CANVASES[id].ratio})`}
             >
               {CANVASES[id].nombre}
@@ -250,25 +366,55 @@ export function SocialStudio() {
           ))}
         </div>
 
-        {/* Desplegable a secas: sin caja ni relleno, para que no compita con
-            los botones que sí son acciones. La flecha es un fondo dibujado
-            y no un carácter, así que no se puede seleccionar con el texto. */}
+        {/* El rótulo dice qué se elige. Sin él, el desplegable era un
+            nombre suelto («Miradas») que no decía de qué. */}
+        <label
+          htmlFor="tipologia"
+          style={{
+            font: TEXTO_BARRA, letterSpacing: '.04em',
+            color: colors.ash, marginLeft: 12, whiteSpace: 'nowrap',
+            display: 'inline-flex', alignItems: 'center', height: ALTO_BARRA,
+          }}
+        >
+          Tipología post
+        </label>
+
+        {/* El desplegable de plantillas, con el campo de la casa: el mismo
+            `input` que usa el selector de DSMak_r, con la flecha dibujada
+            como fondo para que no se pueda seleccionar junto al texto.
+
+            `marginLeft` aparte del `gap` de la barra: pegado al control de
+            lienzo los dos se leían como un solo grupo, y son cosas
+            distintas. */}
         <select
           onChange={(e) => {
             const t = templateById(e.target.value as TemplateId);
+            setPlantilla(t.id);
             setMd(t.md);
             setActual(0);
           }}
-          defaultValue="miradas"
-          aria-label="Plantilla"
+          value={plantilla}
+          id="tipologia"
           style={{
-            appearance: 'none', border: 'none', background: 'transparent',
-            font: `500 11px/1 ${MONO}`, letterSpacing: '.04em', color: colors.dark,
-            margin: 0, padding: '0 18px 0 0', cursor: 'pointer',
+            ...input,
+            width: 'auto', marginLeft: 6, cursor: 'pointer',
+            /* Las tres variantes de `appearance`: sin ellas, algunos
+               navegadores pintan su propio control gris encima del campo y
+               el estilo de la casa no se ve. */
+            appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
+            /* Explícitos y no heredados del atajo `background` de `input`:
+               al añadir la flecha como imagen de fondo, el atajo y la
+               propiedad larga se pisan según el orden y el campo se queda
+               sin color. */
+            backgroundColor: colors.white, color: colors.dark,
+            border: `1px solid ${colors.warmDark}`, borderRadius: 0,
+            height: ALTO_BARRA, boxSizing: 'border-box',
+            padding: '0 26px 0 10px',
+            font: TEXTO_BARRA, letterSpacing: '.04em',
             backgroundImage:
               `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='9' height='6'><path d='M0 0h9L4.5 6z' fill='%231C1A17'/></svg>")`,
             backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right center',
+            backgroundPosition: 'right 9px center',
           }}
         >
           {TEMPLATES.map((t) => (
@@ -277,6 +423,20 @@ export function SocialStudio() {
         </select>
 
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          {/* Sin pieza detrás no hay nada que guardar, y callarse sería peor
+              que decirlo: quien escribe tiene que saber que al cerrar la
+              pestaña se lo lleva el viento. */}
+          <span style={{ font: `400 11px/1 ${MONO}`, color: !postId || saveState === 'error' ? colors.bordeaux : colors.ash }}>
+            {!postId
+              ? 'Borrador: esto no se guarda'
+              : saveState === 'saving'
+                ? 'Guardando…'
+                : saveState === 'error'
+                  ? 'No se ha podido guardar'
+                  : dirty
+                    ? 'Sin guardar'
+                    : 'Guardado'}
+          </span>
           {exportando && (
             <span style={{ font: `400 11px/1 ${MONO}`, color: colors.ash }}>{exportando}</span>
           )}
@@ -284,175 +444,239 @@ export function SocialStudio() {
             /* Burdeos es el color de alerta del sistema, declarado en lib/tokens.ts. */
             <span style={{ font: `500 11px/1.4 ${MONO}`, color: colors.bordeaux, maxWidth: 320 }}>{error}</span>
           )}
-          {/* El logo del cliente se hereda a toda la pieza, así que se pone
-              una vez y no tarjeta a tarjeta. */}
+          <input
+            ref={inputLogo}
+            type="file"
+            accept="image/svg+xml,image/*"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              e.target.value = '';
+              if (!file) return;
+              setError(null);
+              setSubiendoLogo(true);
+              try {
+                const url = publicLogoUrl(await uploadLogo(file, 'social'));
+                if (url) setMd((prev) => setMeta(prev, 0, 'logo', url));
+              } catch (err) {
+                setError(err instanceof Error ? err.message : 'No se ha podido subir el logo.');
+              } finally {
+                setSubiendoLogo(false);
+              }
+            }}
+          />
           <button
             type="button"
-            style={btnGhost}
-            onClick={() => (deck.logo?.src ? setMd((prev) => setMeta(prev, 0, 'logo', null)) : setEligiendoLogo(true))}
+            style={{ ...toolbarBtn, height: ALTO_BARRA, boxSizing: 'border-box', padding: '0 12px' }}
+            disabled={subiendoLogo}
+            onClick={() =>
+              deck.logo?.src
+                ? setMd((prev) => setMeta(prev, 0, 'logo', null))
+                : inputLogo.current?.click()
+            }
             title={
               deck.logo?.src
                 ? 'Quitar el logo del cliente de toda la pieza'
-                : 'Añadir el logo de un cliente: va en la portada arriba a la derecha y al pie de las demás'
+                : 'Sube un SVG. Se pinta con la tinta de cada slide, así que da igual el color que traiga.'
             }
           >
-            {deck.logo?.src ? 'Quitar logo de cliente' : 'Logo de cliente'}
+            {subiendoLogo ? 'Subiendo…' : deck.logo?.src ? 'Quitar logo' : 'Añadir logo'}
           </button>
-          <button type="button" style={btnGhost} onClick={descargarUna} disabled={!!exportando}>
+          <button
+            type="button"
+            style={{ ...toolbarBtn, height: ALTO_BARRA, boxSizing: 'border-box', padding: '0 12px' }}
+            onClick={descargarUna}
+            disabled={!!exportando}
+          >
             PNG de esta
           </button>
-          <button type="button" style={btn} onClick={descargarTodas} disabled={!!exportando}>
+          {/* El principal mide 33 en `ui.ts` y aquí se iguala a 31: en esta
+              barra manda que todos los controles tengan el mismo alto. */}
+          <button
+            type="button"
+            style={{ ...btn, height: ALTO_BARRA, boxSizing: 'border-box', padding: '0 12px' }}
+            onClick={descargarTodas}
+            disabled={!!exportando}
+          >
             Descargar {total} en .zip
           </button>
         </span>
-      </header>
+      </SocialToolbar>
 
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* ── Columna del texto ── */}
-        <section style={{ width: '38%', minWidth: 340, display: 'flex', flexDirection: 'column', borderRight: `1px solid ${colors.warmDark}` }}>
+        {/* El editor va ENMARCADO, como el del Deck Maker: una caja blanca
+            con su filete, flotando sobre el beige con aire alrededor. Antes
+            el texto llegaba a sangre hasta los bordes y se leía como el
+            fondo de la ventana en vez de como un documento. */}
+        <section
+          style={{
+            width: '38%', minWidth: 340, display: 'flex', flexDirection: 'column',
+            gap: 12, padding: 20, minHeight: 0,
+            background: colors.warmLight, borderRight: `1px solid ${colors.warmDark}`,
+          }}
+        >
           <textarea
+            ref={textarea}
             value={md}
             onChange={(e) => setMd(e.target.value)}
             spellCheck={false}
-            aria-label="Texto de las tarjetas, en markdown"
+            aria-label="Texto de las slides, en markdown"
             style={{
-              flex: 1, resize: 'none', padding: '20px', border: 'none', outline: 'none',
+              flex: 1, minHeight: 0, resize: 'none', padding: 12,
+              border: `1px solid ${colors.warmDark}`, outline: 'none',
               font: `400 13px/1.7 ${MONO}`, color: colors.dark, background: colors.white,
               tabSize: 2,
             }}
           />
-          {/* Galería de layouts: añade un bloque al final y salta a él. */}
-          <div style={{ borderTop: `1px solid ${colors.warmDark}`, padding: 12, background: colors.warmLight }}>
-            <p style={{ font: `500 10px/1 ${MONO}`, letterSpacing: '.08em', textTransform: 'uppercase', color: colors.ash, margin: '0 0 10px' }}>
-              Añadir tarjeta
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {LAYOUTS.map((l) => (
-                <button
-                  key={l.marker}
-                  type="button"
-                  onClick={() => insertar(`[ly: ${l.marker}]\n\n${l.skeleton}`)}
-                  title={l.slots}
-                  style={{ ...toolbarBtn, padding: '7px 9px' }}
-                >
-                  {l.nombre}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Los tres paneles de edición, en PESTAÑAS y cerrados de salida.
 
-          {/* Panel de la foto de la tarjeta seleccionada.
+              Antes iban apilados y abiertos: unos 300 px que le comían el
+              sitio al texto, que es donde de verdad se trabaja. Ahora la
+              fila de pestañas ocupa unos 38 px, se abre la que haga falta y
+              se cierra sola la anterior, así que el alto del bloque está
+              acotado pase lo que pase.
 
-              Existe porque el control por hover sobre la propia tarjeta,
-              que también sigue ahí, no se encuentra: quien edita mira a la
-              columna de la izquierda, que es donde están las demás
-              acciones. Una función que no se ve es una función que no
-              existe. */}
-          <div style={{ padding: 12, borderTop: `1px solid ${colors.warmDark}`, background: colors.warmLight }}>
-            <p
-              style={{
-                font: `500 10px/1 ${MONO}`, letterSpacing: '.08em', textTransform: 'uppercase',
-                color: colors.ash, margin: '0 0 10px',
-              }}
-            >
-              Foto de la tarjeta
-            </p>
-
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                disabled={!slideActual}
-                onClick={() => slideActual && setRanura({ bloque: bloqueDe(actual), pos: 0 })}
-                style={{ ...toolbarBtn, padding: '7px 9px', opacity: slideActual ? 1 : 0.45 }}
-              >
-                {conFotoActual ? 'Cambiar foto' : 'Añadir foto'}
-              </button>
-
-              {/* Quitar solo vale para la foto de fondo. En los layouts que
-                  la llevan de serie no tiene sentido: una portada sin foto
-                  no es una portada. */}
-              <button
-                type="button"
-                disabled={!slideActual?.fondo?.src}
-                title={
-                  slideActual && CON_FOTO.includes(slideActual.kind)
-                    ? `Una tarjeta de «${slideActual.kind}» lleva foto por diseño: no se puede quitar, solo cambiar.`
-                    : undefined
-                }
-                onClick={() => setMd((prev) => removeBlockImageAt(prev, bloqueDe(actual), 0))}
-                style={{
-                  ...toolbarBtn, padding: '7px 9px',
-                  opacity: slideActual?.fondo?.src ? 1 : 0.45,
-                  cursor: slideActual?.fondo?.src ? 'pointer' : 'not-allowed',
-                }}
-              >
-                Quitar foto
-              </button>
-
-              {/* Aplica la directiva de imagen de la marca con IA. Es el
-                  mismo motor de IMG_r, con la misma cuota: aquí solo se
-                  abre su modal sin tener que salir del editor. */}
-              <button
-                type="button"
-                disabled={!urlFotoActual || buscando}
-                onClick={() => void aplicarEstilo()}
-                title="Aplica la directiva de imagen de Interactius con IA. Gasta cuota de IMG_r."
-                style={{
-                  ...toolbarBtn, padding: '7px 9px',
-                  opacity: urlFotoActual ? 1 : 0.45,
-                  cursor: urlFotoActual ? 'pointer' : 'not-allowed',
-                }}
-              >
-                {buscando ? 'Abriendo…' : 'Estilo Interactius'}
-              </button>
-            </div>
-
-            {/* Exposición: solo baja. El velo del layout es lo que
-                garantiza que el texto se lea encima de cualquier foto, así
-                que subirlo por encima de ahí sería poder publicar algo
-                ilegible. */}
-            <p
-              style={{
-                font: `400 10px/1 ${MONO}`, color: colors.ash,
-                margin: '14px 0 8px', display: 'flex', justifyContent: 'space-between',
-              }}
-            >
-              <span>Exposición</span>
-              <span style={{ fontVariantNumeric: 'tabular-nums' }}>
-                {conFotoActual ? `${exposicionActual} %` : '—'}
-              </span>
-            </p>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              step={5}
-              value={exposicionActual}
-              disabled={!conFotoActual}
-              aria-label="Exposición de la foto"
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                setMd((prev) =>
-                  /* 100 es el valor normal: en vez de escribirlo, se quita
-                     la línea. Un markdown lleno de metadatos que no hacen
-                     nada es más difícil de leer. */
-                  setMeta(prev, bloqueDe(actual), 'exposicion', v >= 100 ? null : String(v)),
+              Cuál quedó abierta se recuerda en el navegador: es una
+              preferencia de pantalla, como el zoom, no algo de la pieza. */}
+          <div style={{ flexShrink: 0, background: colors.warmLight }}>
+            <div style={{ display: 'flex' }}>
+              {PESTANAS.map((t) => {
+                const activa = panel === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => cambiarPanel(activa ? null : t.id)}
+                    aria-expanded={activa}
+                    style={activa ? { ...seg, ...segOn } : seg}
+                  >
+                    {t.label}
+                  </button>
                 );
-              }}
-              style={{ width: '100%', accentColor: colors.dark, opacity: conFotoActual ? 1 : 0.4 }}
-            />
+              })}
+            </div>
+
+            {panel === 'slide' && (
+              <div style={{ padding: 12, border: `1px solid ${colors.warmDark}`, borderTop: 'none', background: colors.warmLight }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {LAYOUTS.map((l) => (
+                    <button
+                      key={l.marker}
+                      type="button"
+                      onClick={() => insertar(`[ly: ${l.marker}]\n\n${l.skeleton}`)}
+                      title={l.slots}
+                      style={{ ...toolbarBtn, padding: '7px 9px' }}
+                    >
+                      {l.nombre}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {panel === 'imagen' && (
+              <div style={{ padding: 12, border: `1px solid ${colors.warmDark}`, borderTop: 'none', background: colors.warmLight }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    disabled={!slideActual}
+                    onClick={() => slideActual && setRanura({ bloque: bloqueDe(actual), pos: 0 })}
+                    style={{ ...toolbarBtn, padding: '7px 9px', opacity: slideActual ? 1 : 0.45 }}
+                  >
+                    {conImagenActual ? 'Cambiar imagen' : 'Añadir imagen'}
+                  </button>
+
+                  {/* Quitar solo vale para la foto de fondo. En los layouts
+                      que la llevan de serie no tiene sentido: una portada
+                      sin foto no es una portada. */}
+                  <button
+                    type="button"
+                    disabled={Boolean(porQueNoSeQuita)}
+                    onClick={() => setMd((prev) => removeBlockImageAt(prev, bloqueDe(actual), 0))}
+                    style={{
+                      ...toolbarBtn, padding: '7px 9px',
+                      opacity: porQueNoSeQuita ? 0.45 : 1,
+                      cursor: porQueNoSeQuita ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    Quitar imagen
+                  </button>
+
+                  {/* El estilo de marca con IA. Es el motor de IMG_r y su
+                      misma cuota; aquí solo se abre su modal. */}
+                  <button
+                    type="button"
+                    disabled={!urlImagenActual || buscando}
+                    onClick={() => void aplicarEstilo()}
+                    title="Aplica la directiva de imagen de Interactius con IA. Gasta cuota de IMG_r."
+                    style={{
+                      ...toolbarBtn, padding: '7px 9px',
+                      opacity: urlImagenActual ? 1 : 0.45,
+                      cursor: urlImagenActual ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    {buscando ? 'Abriendo…' : 'Estilo Interactius'}
+                  </button>
+                </div>
+
+                {porQueNoSeQuita && (
+                  <p style={{ font: `400 10px/1.5 ${MONO}`, color: colors.ash, margin: '10px 0 0' }}>
+                    {porQueNoSeQuita}
+                  </p>
+                )}
+
+                {/* Exposición: solo baja. El velo del layout es lo que
+                    garantiza que el texto se lea encima de cualquier foto,
+                    así que subirlo por encima de ahí sería poder publicar
+                    algo ilegible. */}
+                <p
+                  style={{
+                    font: `400 10px/1 ${MONO}`, color: colors.ash,
+                    margin: '14px 0 8px', display: 'flex', justifyContent: 'space-between',
+                  }}
+                >
+                  <span>Exposición</span>
+                  <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    {conImagenActual ? `${exposicionActual} %` : 'sin imagen'}
+                  </span>
+                </p>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={exposicionActual}
+                  disabled={!conImagenActual}
+                  aria-label="Exposición de la imagen"
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setMd((prev) =>
+                      /* 100 es el valor normal: en vez de escribirlo, se
+                         quita la línea. Un markdown lleno de metadatos que
+                         no hacen nada es más difícil de leer. */
+                      setMeta(prev, bloqueDe(actual), 'exposicion', v >= 100 ? null : String(v)),
+                    );
+                  }}
+                  style={{ width: '100%', accentColor: colors.dark, opacity: conImagenActual ? 1 : 0.4 }}
+                />
+              </div>
+            )}
+
+            {panel === 'fondo' && (
+              <Paleta
+                actual={slideActual && !CON_IMAGEN.includes(slideActual.kind) && !slideActual.fondo?.src
+                  ? (slideActual.theme === 'dark' ? 'dark' : (slideActual.bg ?? 'warm-light'))
+                  : undefined}
+                deshabilitado={paletaApagada}
+                onElegir={(f) => {
+                  if (!slideActual) return;
+                  setMd((prev) => setBlockBackground(prev, bloqueDe(actual), slideActual.kind, f.token));
+                }}
+              />
+            )}
           </div>
 
-          <Paleta
-            actual={slideActual && !CON_FOTO.includes(slideActual.kind) && !slideActual.fondo?.src
-              ? (slideActual.theme === 'dark' ? 'dark' : (slideActual.bg ?? 'warm-light'))
-              : undefined}
-            deshabilitado={paletaApagada}
-            onElegir={(f) => {
-              if (!slideActual) return;
-              setMd((prev) => setBlockBackground(prev, bloqueDe(actual), slideActual.kind, f.token));
-            }}
-          />
         </section>
 
         {/* ── Columna de las tarjetas ── */}
@@ -467,19 +691,29 @@ export function SocialStudio() {
               Lo que separa de verdad es el FILETE de cada tarjeta, que la
               hace legible sobre cualquier fondo. Va en el contenedor y no
               en el lienzo, así que no entra en el PNG. */}
-          <div
-            ref={vista}
-            style={{
-              flex: 1, overflow: 'auto', padding: 24,
-              display: 'flex', justifyContent: 'center', background: colors.white,
-            }}
-          >
+          <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+            <SocialNavigator
+              slides={deck.slides}
+              canvas={canvas}
+              width={ANCHO_TIRA}
+              seleccionada={actual}
+              vistaRef={vista}
+              onIr={irASlide}
+            />
+            <div
+              ref={vista}
+              style={{
+                flex: 1, minWidth: 0, overflow: 'auto', padding: 24,
+                display: 'flex', justifyContent: 'center', background: colors.white,
+              }}
+            >
             <div className="ix-social">
               {deck.slides.map((slide, i) => {
-                const conFoto = CON_FOTO.includes(slide.kind);
+                const conImagen = CON_IMAGEN.includes(slide.kind);
                 return (
                   <div
                     key={i}
+                    data-slide={i}
                     style={{ marginBottom: 20 }}
                     onMouseEnter={() => setEncima(i)}
                     onMouseLeave={() => setEncima((v) => (v === i ? null : v))}
@@ -518,7 +752,7 @@ export function SocialStudio() {
                             }}
                             style={{ ...toolbarBtn, padding: '6px 9px' }}
                           >
-                            {conFoto || slide.fondo?.src ? 'Cambiar foto' : 'Foto de fondo'}
+                            {conImagen || slide.fondo?.src ? 'Cambiar imagen' : 'Imagen de fondo'}
                           </button>
                           {/* Quitar solo se ofrece cuando la foto es de
                               fondo. En los layouts que la llevan de serie
@@ -534,7 +768,7 @@ export function SocialStudio() {
                               }}
                               style={{ ...toolbarBtn, padding: '6px 9px' }}
                             >
-                              Quitar foto
+                              Quitar imagen
                             </button>
                           )}
                         </span>
@@ -571,11 +805,18 @@ export function SocialStudio() {
               })}
             </div>
           </div>
-          <footer style={{ borderTop: `1px solid ${colors.warmDark}`, padding: '10px 20px', background: colors.white, font: `400 11px/1 ${MONO}`, color: colors.ash }}>
+          </div>
+          <footer style={{ borderTop: `1px solid ${colors.warmDark}`, padding: '10px 20px', background: colors.warmLight, font: `400 11px/1 ${MONO}`, color: colors.ash }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ whiteSpace: 'nowrap' }}>
-                {total} tarjeta{total === 1 ? '' : 's'} · lienzo {spec.w}×{spec.h} · se exporta a{' '}
-                {spec.w * EXPORT_SCALE}×{spec.h * EXPORT_SCALE}
+                {total} slide{total === 1 ? '' : 's'} · lienzo {spec.w}×{spec.h}
+                {/* El tamaño de exportación solo se dice cuando NO coincide con
+                    el del lienzo. Hoy coinciden, así que repetirlo era ruido.
+                    Condicional y no borrado: si algún día el factor vuelve a
+                    ser otro, el dato reaparece solo. */}
+                {EXPORT_SCALE !== 1 && (
+                  <> · se exporta a {spec.w * EXPORT_SCALE}×{spec.h * EXPORT_SCALE}</>
+                )}
               </span>
               {avisos.length > 0 && (
                 <span
@@ -616,16 +857,6 @@ export function SocialStudio() {
           </footer>
         </section>
       </div>
-
-      {eligiendoLogo && (
-        <ImageGallery
-          onClose={() => setEligiendoLogo(false)}
-          onSelect={(url) => {
-            setMd((prev) => setMeta(prev, 0, 'logo', url));
-            setEligiendoLogo(false);
-          }}
-        />
-      )}
 
       {estilo && (
         /* El modal de IMG_r pide su propio contexto de avisos. */

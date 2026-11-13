@@ -55,31 +55,26 @@ Segundo párrafo, si hace falta.`,
      no una etiqueta. */
   cita: `> La frase citada, tal cual se dijo.
 
-> autor: Nombre Apellido`,
+> autor: Yolanda Delgado`,
 
-  foto: `${IMG}
+  imagen: `${IMG}
 
-# Texto que va encima de la foto`,
+# Texto que va encima de la imagen`,
 
-  rotulo: `Cuerpo de texto que ocupa la parte de arriba de la tarjeta y
-explica el contexto de lo que se muestra.
+  parrafo: `Un párrafo en serif que razona en vez de informar. Ocupa la tarjeta entera, sin titular que lo resuma.
 
-## Rótulo`,
+Un segundo párrafo, si el argumento lo pide.`,
 
-  agenda: `## Programa
+  /* El autor va con un nombre REAL del equipo, no con «Nombre Apellido».
+     Es la única manera de que se vea que el retrato aparece solo: con un
+     nombre inventado la esquina sale vacía y parece que la función no
+     existe. Se sustituye al escribir, como el resto del esqueleto.
 
-- Apertura | 09:00
-- Primera sesión | 09:30
-- Pausa | 11:00
-- Cierre | 15:00`,
-
-  /* Sin retrato: en este repo no hay fotos de equipo, y un esqueleto que
-     apunta a un archivo inexistente enseña un icono roto la primera vez que
-     alguien lo usa. El retrato es la SEGUNDA imagen del bloque y se añade
-     desde la galería. */
+     El retrato es la SEGUNDA imagen del bloque si se quiere poner uno a
+     mano; si no, sale del nombre. */
   cierre: `# Artículo completo en nuestro blog.
 
-> autor: Nombre Apellido
+> autor: Yolanda Delgado
 
 ${IMG}`,
 };
@@ -90,7 +85,7 @@ export const LAYOUTS: readonly LayoutCatalogEntry[] = [
     kind: 'portada',
     nombre: 'Portada',
     slots:
-      'Foto a sangre · titular serif abajo · subtítulo mono · papelería al pie, o en cabecera ' +
+      'Imagen a sangre · titular serif abajo · subtítulo mono · papelería al pie, o en cabecera ' +
       'con «> marca: arriba»',
     skeleton: SKELETONS.portada,
   },
@@ -125,31 +120,24 @@ export const LAYOUTS: readonly LayoutCatalogEntry[] = [
     skeleton: SKELETONS.cita,
   },
   {
-    marker: 'foto',
-    kind: 'foto',
-    nombre: 'Foto',
-    slots: 'Foto a sangre · texto serif encima, arriba o abajo, o sin texto',
-    skeleton: SKELETONS.foto,
+    marker: 'imagen',
+    kind: 'imagen',
+    nombre: 'Imagen',
+    slots: 'Imagen a sangre · texto serif encima, arriba o abajo, o sin texto',
+    skeleton: SKELETONS.imagen,
   },
   {
-    marker: 'rotulo',
-    kind: 'rotulo',
-    nombre: 'Rótulo',
-    slots: 'Cuerpo mono arriba · rótulo serif grande abajo',
-    skeleton: SKELETONS.rotulo,
-  },
-  {
-    marker: 'agenda',
-    kind: 'agenda',
-    nombre: 'Agenda',
-    slots: 'Título · filas de «qué | cuándo» con filete',
-    skeleton: SKELETONS.agenda,
+    marker: 'parrafo',
+    kind: 'parrafo',
+    nombre: 'Párrafo serif',
+    slots: 'Cuerpo de texto en serif, sin titular. El de los carruseles de Insights',
+    skeleton: SKELETONS.parrafo,
   },
   {
     marker: 'cierre',
     kind: 'cierre',
     nombre: 'Cierre',
-    slots: 'Llamada a leer · firma · retrato en la esquina · foto de fondo',
+    slots: 'Llamada a leer · firma · retrato en la esquina · imagen de fondo',
     skeleton: SKELETONS.cierre,
   },
 ];
@@ -169,10 +157,22 @@ export const LAYOUT_ALIASES: Record<string, string> = {
   list: 'lista',
   bullets: 'lista',
   quote: 'cita',
-  photo: 'foto',
-  imagen: 'foto',
-  label: 'rotulo',
-  programa: 'agenda',
+  photo: 'imagen',
+  foto: 'imagen',
+  /* `rotulo` fue un layout: cuerpo mono arriba y titular serif grande
+     abajo. Se retiró el 12/11/2026 porque un titular nunca va debajo del
+     texto pequeño ni pegado al pie, y esa era su única razón de ser. Queda
+     como alias para que un bloque ya escrito no se quede sin pintar. */
+  rotulo: 'texto',
+  label: 'texto',
+  parágrafo: 'parrafo',
+  prosa: 'parrafo',
+  paragraph: 'parrafo',
+  /* `agenda` fue un layout: filas de «qué | cuándo» con filete. Se retiró
+     el 12/11/2026 porque no se usa. Queda como alias de `lista` para que un
+     bloque ya escrito no se quede sin pintar. */
+  agenda: 'lista',
+  programa: 'lista',
   closing: 'cierre',
   final: 'cierre',
 };

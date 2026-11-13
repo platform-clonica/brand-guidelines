@@ -7,13 +7,12 @@ import { boxHeight } from '@/lib/social/geometry';
 import { Foot, Head, type Mark } from './Foot';
 import { Photo } from './Photo';
 import {
-  Agenda,
   Cierre,
   Cita,
-  Foto,
+  Imagen,
   Lista,
+  Parrafo,
   Portada,
-  Rotulo,
   Texto,
   Titular,
 } from './layouts';
@@ -26,7 +25,7 @@ import {
    diseño — el problema que ya tiene la imagen de previsualización de los
    decks y que el CLAUDE.md del repo señala como fuente de deriva. */
 
-const LAYOUTS_SOBRE_FOTO: Slide['kind'][] = ['portada', 'foto', 'cierre'];
+const LAYOUTS_SOBRE_FOTO: Slide['kind'][] = ['portada', 'imagen', 'cierre'];
 
 export function SocialCard({
   slide,
@@ -49,6 +48,9 @@ export function SocialCard({
      lo que distingue la serie de Miradas de las de evento y workshop, y lo
      que da variedad en el feed sin inventar un diseño nuevo. */
   const enCabecera = slide.kind === 'portada' && slide.papeleria === 'cabecera';
+  /* Una portada de cabecera con logo necesita además un pie para él: el
+     logo va abajo a la izquierda en todas las slides, sin excepción. */
+  const conPieDeLogo = enCabecera && Boolean(slide.logo?.src);
   /* Un logo de cliente manda sobre todo; si no, el imagotipo solo en portada. */
   const mark: Mark = slide.logo?.src ? 'logo' : slide.kind === 'portada' ? 'imagotipo' : 'ninguna';
   /* El relleno solo manda cuando no hay foto debajo. */
@@ -66,7 +68,7 @@ export function SocialCard({
       }
     >
       <div
-        className={`frame theme-${slide.theme}${bgClass} l-${slide.kind}${enCabecera ? ' con-cabecera' : ''}${conFondo ? ' on-photo' : ''}`}
+        className={`frame theme-${slide.theme}${bgClass} l-${slide.kind}${enCabecera ? ' con-cabecera' : ''}${conPieDeLogo ? ' con-pie-logo' : ''}${conFondo ? ' on-photo' : ''}`}
       >
         {/* La foto de fondo va la PRIMERA, debajo de todo lo demás. */}
         {conFondo && <Photo image={slide.fondo} scrim="full" exposicion={slide.exposicion} />}
@@ -75,15 +77,17 @@ export function SocialCard({
         {slide.kind === 'texto' && <Texto slide={slide} boxH={boxH} />}
         {slide.kind === 'lista' && <Lista slide={slide} boxH={boxH} />}
         {slide.kind === 'cita' && <Cita slide={slide} boxH={boxH} />}
-        {slide.kind === 'foto' && <Foto slide={slide} boxH={boxH} />}
-        {slide.kind === 'rotulo' && <Rotulo slide={slide} boxH={boxH} />}
-        {slide.kind === 'agenda' && <Agenda slide={slide} boxH={boxH} />}
+        {slide.kind === 'imagen' && <Imagen slide={slide} boxH={boxH} />}
+        {slide.kind === 'parrafo' && <Parrafo slide={slide} boxH={boxH} />}
         {slide.kind === 'cierre' && <Cierre slide={slide} boxH={boxH} />}
         {/* El cierre no lleva papelería: su esquina derecha la ocupa el
             retrato y su izquierda, la firma. Pintar además el slug los
             solaparía. */}
         {slide.kind === 'cierre' ? null : enCabecera ? (
-          <Head slug={slide.slug} logo={slide.logo} negative />
+          <>
+            <Head slug={slide.slug} negative />
+            {conPieDeLogo && <Foot logo={slide.logo} mark="logo" negative onPhoto />}
+          </>
         ) : (
           <Foot
             slug={slide.slug}

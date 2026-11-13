@@ -74,6 +74,17 @@ export function DsLogo({ height = 30, title = 'DSMakr' }: { height?: number; tit
   return <Wordmark before="DSMak" after="r" height={height} title={title} />;
 }
 
+/* SocialMak_r, las imágenes para redes. Es la marca más larga de la familia
+   (11 caracteres) y por eso el viewBox se calcula en vez de fijarse: ver el
+   comentario de GLYPH arriba.
+
+   Todavía no la pinta nadie: como las otras cuatro, va en la galería de su
+   herramienta, y la del Social Maker está por hacer. En la barra del editor
+   no va ninguna. */
+export function SocialLogo({ height = 30, title = 'SocialMakr' }: { height?: number; title?: string }) {
+  return <Wordmark before="SocialMak" after="r" height={height} title={title} />;
+}
+
 /* IMG_r, el banco de imágenes. Gestiona, no fabrica: por eso no lleva `Mak`. */
 export function ImgLogo({ height = 30, title = 'IMGr' }: { height?: number; title?: string }) {
   return <Wordmark before="IMG" after="r" height={height} title={title} />;

@@ -27,9 +27,6 @@ export type ImageRef = { src?: string; alt?: string; alignY?: number };
    en la misma línea. `- **Sin confianza no hay conversión.** Permisos…` */
 export type ListItem = { lead?: string; text: string };
 
-/* Fila de agenda: lo que pasa y cuándo. `- Obertura i icebreaker | 09:00` */
-export type AgendaRow = { label: string; time?: string };
-
 export type RichNode =
   | { t: 'p'; text: string }
   | { t: 'ul'; items: ListItem[] }
@@ -60,12 +57,12 @@ type SlideVariant =
   | { kind: 'lista'; theme: Theme; title?: string; intro?: string; items: ListItem[] }
   /* Cita a toda tarjeta, en serif a tamaño `title`. */
   | { kind: 'cita'; theme: Theme; text: string; source?: string }
-  /* Foto a sangre, con texto serif opcional encima. */
-  | { kind: 'foto'; theme: Theme; image?: ImageRef; text?: string; position?: 'top' | 'bottom' }
-  /* Cuerpo mono arriba, rótulo serif grande abajo. */
-  | { kind: 'rotulo'; theme: Theme; label: string; body: RichNode[] }
-  /* Programa de una sesión: qué y a qué hora, con filetes. */
-  | { kind: 'agenda'; theme: Theme; title?: string; rows: AgendaRow[] }
+  /* Imagen a sangre, con texto serif opcional encima. */
+  | { kind: 'imagen'; theme: Theme; image?: ImageRef; text?: string; position?: 'top' | 'bottom' }
+  /* Cuerpo de texto en serif, sin titular. El mismo papel que la
+     diapositiva `paragraph` del deck: un párrafo que razona en vez de
+     informar, así que no lleva titular que lo resuma. */
+  | { kind: 'parrafo'; theme: Theme; body: RichNode[] }
   /* Cierre: la llamada a leer el artículo, con la firma y el retrato. */
   | {
       kind: 'cierre';
@@ -136,14 +133,18 @@ export const CANVASES: Record<CanvasId, CanvasSpec> = {
   },
   post: {
     id: 'post',
-    nombre: 'Post horizontal',
+    nombre: 'Portada',
     w: 1080,
     h: 608,
     ratio: '16:9',
     /* 1080×608 es 1,776, y el 16:9 exacto sería 1,778. La desviación es del
        0,08 %, invisible, y a cambio el alto es par: exportado a ×2 da
        2160×1216 sin medio píxel suelto. */
-    uso: 'Post suelto, cabecera de artículo, miniatura de vídeo.',
+    /* Se llama «Portada» en la interfaz, que es como lo nombra el equipo:
+       es la imagen que encabeza un post. Ojo, no confundir con el layout
+       `portada`, que es la primera slide de un carrusel: uno es el lienzo
+       y el otro es una slide. */
+    uso: 'La imagen que encabeza un post. También vale de miniatura de vídeo.',
   },
 };
 

@@ -27,24 +27,35 @@
   --serif:var(--font-ibm-plex-serif), 'IBM Plex Serif', ui-serif, serif;
   --mono:var(--font-ibm-plex-mono), 'IBM Plex Mono', ui-monospace, monospace;
 
-  /* Escala — espeja lib/social/typeScale.ts.
-     Los valores salen de medir los carruseles publicados, no de estimar.
-     Ver la cabecera de lib/social/typeScale.ts. */
-  --s-super:192px;     /* escala `super`, sin tocar */
-  --s-display:96px;    /* escala `display`, sin tocar — medido 96 */
-  --s-title:64px;      /* escala `title`, sin tocar */
-  /* Lista, agenda, firma del autor Y el slug de la esquina. Los cuatro
-     medidos entre 48 y 58 sobre los PNG publicados: un solo peldaño los
-     sostiene y es mejor que inventar un número por rol.
+  /* Escala del lienzo — espeja lib/social/typeScale.ts.
 
-     A 56 va POR ENCIMA de los diseños de referencia (un 17 %). No es una
-     desviación por descuido: Martina los veía pequeños en el feed, que es
-     donde se juzgan, y es su decisión. Se sube el peldaño entero y no solo
-     el slug, para no dejar la esquina gritando más que el contenido. */
-  --s-title-sm:56px;   /* escala `title-sm` ×1,75 */
-  --s-body:40px;       /* escala `body` ×2,25 — medido 40 */
-  --s-body-sm:36px;    /* escala `body-sm` ×2,25 */
-  --s-caption:22px;    /* escala `caption` ×2,25 */
+     CUATRO PELDAÑOS DE TITULAR Y UNO SOLO DE CUERPO. Los nombres son el
+     papel, no el tamaño: así una slide no puede «elegir» un tamaño, elige
+     qué es.
+
+       --s-xl   portada del cierre. El único texto de su slide, puede ocupar
+       --s-l    portada del carrusel
+       --s-m    cualquier titular interior, la cita y el párrafo serif
+       --s-s    elementos de lista
+       --s-pie  slug y firma: no es contenido, es papelería
+       --s-mono TODO el texto en mono, sin excepción
+       --s-micro antetítulo y numeración. Mono también, pero no es texto
+                 corrido: es una etiqueta
+
+     Antes había siete tamaños repartidos por capricho de cada layout y se
+     notaba al pasar de una slide a otra. Decisión de Martina del
+     12/11/2026. */
+  /* Los valores salieron de medir los carruseles publicados, y el equipo
+     los subió después: en un lienzo de 1080 hay sitio de sobra y las
+     piezas no van densas. La escala sube un escalón entero, sin tocar las
+     proporciones entre peldaños. */
+  --s-xl:192px;
+  --s-l:120px;     /* medido 96 */
+  --s-m:80px;      /* medido 64 */
+  --s-s:60px;      /* medido 48 */
+  --s-pie:56px;
+  --s-mono:46px;   /* medido 40 */
+  --s-micro:24px;
 
   --track-caps:.08em;  /* antetítulo en MAYÚSCULAS */
   --track-label:.04em; /* caption que no va en mayúsculas */
@@ -63,6 +74,11 @@
      publicados. Si algún día se escribe una escala de espaciado, este es
      uno de los números que tiene que entrar en ella. */
   --gap:64px;
+  /* Aire entre el final del contenido y el pie. Es el MARGEN DE PÁGINA, no
+     un número suelto: nada debe acercarse al pie más de lo que se acerca
+     al borde. Estuvo en 24 y un titular anclado abajo quedaba pegado a la
+     fila del imagotipo. */
+  --foot-aire:56px;
   /* Alto del pie: lo fija el elemento más alto de la fila, que es el slug.
      El imagotipo se alinea abajo y asoma algo menos, que es la relación
      que tienen en los carruseles publicados. */
@@ -114,7 +130,7 @@
   pointer-events:none;
   position:absolute;
   left:var(--m); right:var(--m); top:var(--m);
-  bottom:calc(var(--m) + var(--foot-h) + 24px);
+  bottom:calc(var(--m) + var(--foot-h) + var(--foot-aire));
 }
 
 /* ───────────────────────────── Pie ─────────────────────────────
@@ -127,7 +143,7 @@
   z-index:3;
 }
 .ix-social .foot .slug{
-  font-family:var(--serif); font-weight:400; font-size:var(--s-title-sm);
+  font-family:var(--serif); font-weight:400; font-size:var(--s-pie);
   line-height:1; color:var(--ink); white-space:nowrap;
 }
 /* El imagotipo tiene UNA medida y es siempre la misma: 41 px de alto, que
@@ -140,11 +156,41 @@
 /* El logo del cliente va en CAJA FIJA y contenido dentro. Los logos ajenos
    vienen con proporciones imprevisibles —el de la Barcelona Design Week
    lleva dos líneas y mide 250×55— y fijar solo el alto dejaría uno
-   apaisado invadiendo el slug. La caja sale de medir ese: 300×56. */
+   apaisado invadiendo el slug. La caja sale de medir ese: 300×56.
+
+   SE PINTA COMO MÁSCARA, NO COMO IMAGEN, y eso es lo que normaliza el
+   color. Del archivo solo se usa su silueta; el color lo pone `--ink`, o
+   sea la tinta de la tarjeta: Warm Light sobre oscuro y sobre foto, Dark
+   sobre claro. Así un logo que llegue en tres colores, en positivo o en
+   negativo sale siempre igual y siempre legible.
+
+   El Deck Maker resuelve lo mismo con `filter:brightness(0) invert(1)`,
+   que lo deja en blanco puro. Allí basta porque su logo de cliente solo
+   aparece en la portada, que siempre es oscura. Aquí aparece también al
+   pie de tarjetas claras, donde el blanco desaparecería, y además el
+   blanco puro no es un token: el claro de marca es Warm Light.
+
+   No es inyectar SVG: el archivo se carga como recurso de imagen desde
+   CSS y solo se lee su canal alfa, así que no ejecuta nada. Misma
+   seguridad que el <img> del deck. Verificado además que la máscara
+   sobrevive a la exportación a PNG. */
 .ix-social .mark.cliente{
-  height:56px; width:auto; max-width:300px;
-  object-fit:contain; object-position:left bottom; display:block;
+  /* Más grande que el imagotipo de la casa, y más que los 56 del pie: es
+     la firma de con quién se hace la pieza y tiene que leerse. Se sale del
+     alto del pie hacia ARRIBA, que es sitio libre; por abajo sigue apoyado
+     en el margen como todo lo demás. */
+  width:340px; height:68px; display:block;
+  background:var(--ink);
+  -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+  -webkit-mask-size:contain; mask-size:contain;
+  -webkit-mask-position:left bottom; mask-position:left bottom;
 }
+.ix-social .head .mark.cliente{
+  -webkit-mask-position:right top; mask-position:right top;
+}
+/* Sobre foto la tinta es clara aunque el tema diga otra cosa. */
+.ix-social .on-photo .mark.cliente,
+.ix-social .l-portada .mark.cliente{background:var(--warm-light);}
 
 /* El pie sobre foto siempre va en claro: la foto lleva su velo debajo. */
 .ix-social .on-photo .foot .slug{color:var(--warm-light);}
@@ -185,12 +231,12 @@
   transform-origin:0 0;
 }
 .ix-social .head .slug{
-  font-family:var(--serif); font-weight:400; font-size:var(--s-title-sm);
+  font-family:var(--serif); font-weight:400; font-size:var(--s-pie);
   line-height:1; color:var(--ink); white-space:nowrap;
 }
 /* La portada siempre va sobre foto, así que su cabecera va en claro. */
 .ix-social .l-portada .head .slug{color:var(--warm-light);}
-.ix-social .head .mark.cliente{object-position:right top;}
+
 
 /* ───────────────────────────── Tipografía ───────────────────────────── */
 
@@ -199,20 +245,27 @@
 
 /* Titular serif. 300 es el peso que manda `lib/tokens.ts` para la de contraste. */
 .ix-social .headline{
-  font-family:var(--serif); font-weight:300; font-size:var(--s-display);
-  line-height:1.1; letter-spacing:-.01em; color:var(--ink);
+  font-family:var(--serif); font-weight:300; font-size:var(--s-m);
+  line-height:1.15; letter-spacing:-.01em; color:var(--ink);
 }
-.ix-social .headline.sm{font-size:var(--s-title); line-height:1.15; letter-spacing:0;}
-.ix-social .headline.xl{font-size:var(--s-super); line-height:1;}
+.ix-social .headline.l{font-size:var(--s-l); line-height:1.1; letter-spacing:-.01em;}
+.ix-social .headline.xl{font-size:var(--s-xl); line-height:1;}
 
 /* Cuerpo en mono. */
-.ix-social .copy{font-family:var(--mono); font-weight:400; font-size:var(--s-body); line-height:1.55; color:var(--ink);}
-.ix-social .copy.sm{font-size:var(--s-body-sm);}
+.ix-social .copy{
+  font-family:var(--mono); font-weight:400; font-size:var(--s-mono);
+  line-height:1.55; color:var(--ink);
+  /* La mono no llega al margen derecho: se queda un margen de página
+     antes. Una monoespaciada rinde líneas muy parejas, así que sin este
+     aire el bloque parece una caja maciza pegada al borde. */
+  max-width:calc(100% - var(--m));
+}
+
 .ix-social .copy p + p{margin-top:1.55em;}
 
 /* Antetítulo. */
 .ix-social .eyebrow{
-  font-family:var(--mono); font-weight:500; font-size:var(--s-caption);
+  font-family:var(--mono); font-weight:500; font-size:var(--s-micro);
   letter-spacing:var(--track-caps); text-transform:uppercase; color:var(--ink-soft);
   margin-bottom:28px; display:block;
 }
@@ -248,11 +301,24 @@
 }
 .ix-social .items li:first-child{padding-top:0;}
 .ix-social .items .n{
-  font-family:var(--mono); font-weight:400; font-size:var(--s-caption);
-  color:var(--ink-soft); flex:0 0 auto; min-width:22px;
+  font-family:var(--mono); font-weight:400; font-size:var(--s-micro);
+  color:var(--ink-soft); flex:0 0 auto; min-width:26px;
+  /* El número se levanta un poco de la línea base.
+
+     Las dos líneas base ya coincidían exactamente —medido, diferencia
+     cero— y aun así el número se veía caído: es la mitad de alto que el
+     texto, y apoyado en la misma base queda colgando por debajo de su
+     altura de mayúsculas.
+
+     El diseño de referencia hace justamente esto: medido en el carrusel
+     publicado, el número apoya 5 px por encima de la base del texto, con
+     lo que su centro óptico cae dentro de la banda de mayúsculas. Se
+     expresa como fracción del peldaño para que no haya que recalcularlo
+     si cambia. */
+  position:relative; top:calc(var(--s-s) * -0.09);
 }
 .ix-social .items .t{
-  font-family:var(--serif); font-weight:300; font-size:var(--s-title-sm);
+  font-family:var(--serif); font-weight:300; font-size:var(--s-s);
   line-height:1.3; color:var(--ink);
 }
 .ix-social .items .t .lead{font-weight:400;}
@@ -266,37 +332,30 @@
 .ix-social .l-cita{bottom:auto;}
 
 .ix-social .quote{
-  font-family:var(--serif); font-weight:300; font-size:var(--s-title);
+  font-family:var(--serif); font-weight:300; font-size:var(--s-m);
   line-height:1.2; color:var(--ink);
 }
 .ix-social .quote .src{
   display:block; margin-top:36px;
-  font-family:var(--mono); font-weight:400; font-size:var(--s-caption);
+  font-family:var(--mono); font-weight:400; font-size:var(--s-micro);
   letter-spacing:var(--track-label); color:var(--ink-soft);
 }
 
-/* · rotulo — cuerpo mono arriba, rótulo serif grande abajo. */
-.ix-social .l-rotulo .box{display:flex; flex-direction:column; justify-content:space-between;}
-.ix-social .l-rotulo .label{
-  font-family:var(--serif); font-weight:300; font-size:var(--s-display);
-  line-height:1; color:var(--ink);
-}
+/* · parrafo — cuerpo de texto en serif, sin titular.
 
-/* · agenda — qué y a qué hora. */
-.ix-social .agenda li{
-  display:flex; align-items:baseline; justify-content:space-between; gap:32px;
-  padding:20px 0; border-bottom:1px solid var(--rule);
+   Medido en el carrusel de Insights: 59 px con interlineado 60, o sea una
+   interlínea de 1,02. Se usa el peldaño `title` (64) de la escala, un 8 %
+   por encima, con 1,05: a 1,02 las líneas se tocan y un texto largo se
+   lee peor de lo que se ve en una maqueta corta.
+
+   El mismo papel que `.paragraph p` del deck, que pone el cuerpo largo en
+   la tipografía de contraste. */
+.ix-social .prosa{
+  font-family:var(--serif); font-weight:300; font-size:var(--s-m);
+  line-height:1.05; color:var(--ink);
 }
-.ix-social .agenda li:first-child{padding-top:0;}
-.ix-social .agenda .what{
-  font-family:var(--serif); font-weight:300; font-size:var(--s-title-sm);
-  line-height:1.25; color:var(--ink);
-}
-.ix-social .agenda .when{
-  font-family:var(--serif); font-weight:300; font-size:var(--s-title-sm);
-  line-height:1.25; color:var(--ink); font-variant-numeric:tabular-nums; flex:0 0 auto;
-}
-.ix-social .l-agenda .headline{margin-bottom:var(--gap);}
+.ix-social .prosa p + p{margin-top:1.05em;}
+.ix-social .prosa strong{font-weight:400;}
 
 /* ───────────────────────────── Foto ─────────────────────────────
    La foto va a sangre y el texto encima, así que necesita un velo. Dos
@@ -315,13 +374,13 @@
    entero y no se descubre hasta que la pieza está publicada. */
 .ix-social .scrim.bottom{
   background:
-    linear-gradient(to top, rgba(10,9,8,.86) 0%, rgba(10,9,8,.42) 34%, rgba(10,9,8,0) 62%),
-    linear-gradient(to bottom, rgba(10,9,8,.58) 0%, rgba(10,9,8,.22) 14%, rgba(10,9,8,0) 34%);
+    linear-gradient(to top, rgba(28,26,23,.86) 0%, rgba(28,26,23,.42) 34%, rgba(28,26,23,0) 62%),
+    linear-gradient(to bottom, rgba(28,26,23,.58) 0%, rgba(28,26,23,.22) 14%, rgba(28,26,23,0) 34%);
 }
 .ix-social .scrim.top{
   background:
-    linear-gradient(to bottom, rgba(10,9,8,.86) 0%, rgba(10,9,8,.42) 34%, rgba(10,9,8,0) 62%),
-    linear-gradient(to top, rgba(10,9,8,.68) 0%, rgba(10,9,8,.26) 13%, rgba(10,9,8,0) 28%);
+    linear-gradient(to bottom, rgba(28,26,23,.86) 0%, rgba(28,26,23,.42) 34%, rgba(28,26,23,0) 62%),
+    linear-gradient(to top, rgba(28,26,23,.68) 0%, rgba(28,26,23,.26) 13%, rgba(28,26,23,0) 28%);
 }
 /* Velo uniforme: el de las tarjetas que llevan foto de fondo en un layout
    que no la lleva de serie.
@@ -331,21 +390,25 @@
    abajo. Un degradado protegería una zona y dejaría las otras al azar de
    la foto.
 
-   0,60 no es un número elegido a ojo. Es el velo mínimo que garantiza
-   4,5:1 de contraste para la tinta clara (#F5F2ED) sobre el PEOR fondo
-   posible, que es una foto blanca: con 0,60 el blanco queda en 102 y da
-   5,14; con 0,55 se queda en 4,25 y no llega. Si aguanta contra una foto
-   blanca, aguanta con cualquiera.
+   0,64 no es un número elegido a ojo. Es el velo mínimo que garantiza
+   4,5:1 de contraste para la tinta clara (Warm Light) sobre el PEOR fondo
+   posible, que es una foto blanca: con 0,64 da 4,68 y con 0,62 se queda en
+   4,37. Si aguanta contra una foto blanca, aguanta con cualquiera.
+
+   Estuvo en 0,60 mientras el velo era un negro inventado (#0A0908). Al
+   pasar al oscuro de MARCA, que es más claro, el mismo alfa se quedaba en
+   4,06 y había que subirlo. Es un buen ejemplo de por qué el color no se
+   elige a ojo: cambiarlo movió la garantía sin que se notara en pantalla.
 
    Es oscuro a propósito: una tarjeta de texto sobre foto usa la foto como
    textura, no como tema. Para que la foto sea la protagonista está el
    layout `foto`. */
-.ix-social .scrim.full{background:rgba(10,9,8,.60);}
+.ix-social .scrim.full{background:rgba(28,26,23,.64);}
 
 /* Oscurecido extra, el control de exposición. Va sobre el velo y no en
    lugar de él: el velo es lo que garantiza el contraste y este control
    solo puede añadir, nunca quitar. */
-.ix-social .photo .expo{position:absolute; inset:0; background:#0A0908;}
+.ix-social .photo .expo{position:absolute; inset:0; background:var(--dark);}
 
 .ix-social .on-photo{color:var(--warm-light); --ink:var(--warm-light); --ink-soft:rgba(245,242,237,.72); --rule:rgba(245,242,237,.28);}
 .ix-social .on-photo .box{z-index:2;}
@@ -363,11 +426,19 @@
    pegado al margen superior. */
 .ix-social .l-portada .box{display:flex; flex-direction:column; justify-content:flex-start;}
 .ix-social .l-portada.con-cabecera .box{justify-content:flex-end; bottom:var(--m);}
+/* Con logo de cliente, la portada de cabecera SÍ tiene pie, así que el
+   titular deja de llegar al margen inferior. */
+.ix-social .l-portada.con-pie-logo .box{bottom:calc(var(--m) + var(--foot-h) + var(--foot-aire));}
 .ix-social .l-portada .sub{margin-top:24px; max-width:78%;}
 
-/* · foto — texto arriba o abajo, o ninguno. */
-.ix-social .l-foto .box{display:flex; flex-direction:column;}
-.ix-social .l-foto.at-bottom .box{justify-content:flex-end;}
+/* · imagen — texto arriba o abajo, o ninguno.
+
+   El selector va sobre la PROPIA caja, no sobre un descendiente: `box`,
+   `l-imagen` y `at-bottom` conviven en el mismo elemento (es el que pinta
+   FitText), así que `.l-imagen.at-bottom .box` no casaba con nada y
+   `> posicion: abajo` no hacía nada desde el primer día. */
+.ix-social .box.l-imagen{display:flex; flex-direction:column;}
+.ix-social .box.at-bottom{justify-content:flex-end;}
 
 /* · cierre — la llamada a leer, la firma y el retrato.
 
@@ -378,19 +449,13 @@
    La firma va en SERIF, no en mono. Es lo que hacen los dos carruseles
    publicados, y tiene sentido: es una firma, que es exactamente el papel
    que el sistema le da a la tipografía de contraste. */
-/* El titular del cierre va al peldaño `super` de la escala, no al
-   `display` del resto. Es el único texto de la tarjeta, así que puede y
-   debe ocupar: medido 182 px en la pieza publicada, y 192 es el peldaño
-   que la escala ya tiene declarado para «una palabra o un titular muy
-   corto». No hace falta inventar nada.
-
-   FitText lo encoge si alguien escribe un cierre largo, así que subirlo no
-   arriesga nada. */
+/* El titular del cierre va a XL: es el único texto de su slide, así que
+   puede y debe ocupar. Medido 182 px en la pieza publicada. FitText lo
+   encoge si alguien escribe un cierre largo, así que no arriesga nada. */
 .ix-social .l-cierre .box{display:flex; flex-direction:column; justify-content:flex-start;}
-.ix-social .l-cierre .headline{font-size:var(--s-super); line-height:1;}
 .ix-social .l-cierre .by{
   position:absolute; left:var(--m); bottom:var(--m);
-  font-family:var(--serif); font-weight:300; font-size:var(--s-title-sm);
+  font-family:var(--serif); font-weight:300; font-size:var(--s-pie);
   line-height:1; color:var(--warm-light); z-index:3;
 }
 /* El retrato es un cuadrado de 330 al margen de página, no pegado al

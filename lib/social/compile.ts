@@ -4,7 +4,6 @@ import type { Token } from '@/lib/deck/types';
 import { LAYOUT_ALIASES, LAYOUT_MAP } from './catalog.ts';
 import { resolverAutor } from './autor.ts';
 import type {
-  AgendaRow,
   Background,
   CanvasId,
   ImageRef,
@@ -35,6 +34,35 @@ import type {
      > clave: valor       metadatos: slug, autor, logo
      ![alt](ruta)         imagen
      LÍNEA EN MAYÚSCULAS  antetítulo */
+
+/* Las claves de metadato que existen de verdad.
+   ─────────────────────────────────────────────────────────────────────────
+   Hace falta la lista cerrada. Antes se reconocía un metadato con el patrón
+   «unas palabras, dos puntos, el resto», y eso **se tragaba la prosa**:
+   «El razonamiento largo: dónde se complica» desaparecía de la tarjeta sin
+   avisar, y los dos puntos son una construcción habitual en la voz de la
+   casa.
+
+   Con la lista cerrada, una frase solo se descarta si empieza por una
+   clave que el sistema sabe leer. Añadir una clave nueva es añadirla aquí
+   y en el lugar donde se usa, que es justo el recordatorio que conviene
+   tener delante. */
+const CLAVES_META = new Set([
+  'slug',
+  'autor',
+  'logo',
+  'marca',
+  'exposicion',
+  'posicion',
+  'cliente',
+]);
+
+const CLAVE_VALOR = /^([\p{L} ]+):\s*.+$/u;
+
+export function esMetadato(texto: string): boolean {
+  const m = texto.match(CLAVE_VALOR);
+  return m ? CLAVES_META.has(m[1].trim().toLowerCase()) : false;
+}
 
 /* Rellenos admitidos. `dark` es el único que cambia la tinta; los claros la
    conservan, que es lo que les da el contraste. Los alias existen para no
@@ -76,11 +104,11 @@ function appearanceOf(tokens: Token[], title: string): { theme?: Theme; bg?: Bac
 /* Los layouts que nacen oscuros si nadie dice otra cosa. Son los que llevan
    foto a sangre (la foto manda sobre el fondo) y el titular suelto, que es
    el que más se usa en negativo en los carruseles publicados. */
-const DARK_BY_ROLE: SlideKind[] = ['portada', 'foto', 'cierre'];
+const DARK_BY_ROLE: SlideKind[] = ['portada', 'imagen', 'cierre'];
 
 /* Los que YA consumen la imagen del bloque como parte de su diseño. En el
    resto, una imagen suelta se entiende como foto de fondo. */
-const CONSUMEN_IMAGEN: SlideKind[] = ['portada', 'foto', 'cierre'];
+const CONSUMEN_IMAGEN: SlideKind[] = ['portada', 'imagen', 'cierre'];
 
 function themeFor(kind: SlideKind, override: Theme | undefined): Theme {
   if (override) return override;
@@ -96,10 +124,9 @@ function kindOf(m: BlockModel): SlideKind {
     if (mapped) return mapped;
   }
   if (m.isFirst && m.image) return 'portada';
-  if (m.quotes.some((q) => !/^[\p{L} ]+:\s*.+$/u.test(q))) return 'cita';
-  if (m.items?.some((i) => i.includes('|'))) return 'agenda';
+  if (m.quotes.some((q) => !esMetadato(q))) return 'cita';
   if (m.items?.length) return 'lista';
-  if (m.image && !m.body.length) return 'foto';
+  if (m.image && !m.body.length) return 'imagen';
   if (m.title && !m.body.length) return 'titular';
   return 'texto';
 }
@@ -116,24 +143,17 @@ function toListItem(raw: string): ListItem {
   return { text: raw.trim() };
 }
 
-/* `- Apertura | 09:00` → qué y cuándo. Sin barra, la fila va sin hora. */
-function toAgendaRow(raw: string): AgendaRow {
-  const at = raw.lastIndexOf('|');
-  if (at < 0) return { label: raw.trim() };
-  return { label: raw.slice(0, at).trim(), time: raw.slice(at + 1).trim() };
-}
-
 /* Los párrafos y las listas del bloque, en el orden en que se escribieron.
    Las líneas `clave: valor` se quedan fuera: son metadatos, no texto. */
 function richBody(tokens: Token[]): RichNode[] {
   const out: RichNode[] = [];
   for (const t of tokens) {
     if (t.t === 'p') {
-      if (/^[\p{L} ]+:\s*.+$/u.test(t.text)) continue;
+      if (esMetadato(t.text)) continue;
       out.push({ t: 'p', text: t.text });
     }
     if (t.t === 'ul') out.push({ t: 'ul', items: t.items.map(toListItem) });
-    if (t.t === 'quote' && !/^[\p{L} ]+:\s*.+$/u.test(t.text)) out.push({ t: 'quote', text: t.text });
+    if (t.t === 'quote' && !esMetadato(t.text)) out.push({ t: 'quote', text: t.text });
   }
   return out;
 }
@@ -198,7 +218,7 @@ function buildSlide(m: BlockModel, autorPieza?: string): Slide {
       };
 
     case 'cita': {
-      const text = m.quotes.find((q) => !/^[\p{L} ]+:\s*.+$/u.test(q)) ?? m.title;
+      const text = m.quotes.find((q) => !esMetadato(q)) ?? m.title;
       /* Quién firma la cita, de lo más explícito a lo más implícito:
          un `> autor:` en esta tarjeta, una línea en mayúsculas en esta
          tarjeta, o el autor de la pieza.
@@ -209,7 +229,7 @@ function buildSlide(m: BlockModel, autorPieza?: string): Slide {
       return { ...common, kind, text, source: m.meta.autor ?? m.eyebrow ?? autorPieza };
     }
 
-    case 'foto':
+    case 'imagen':
       return {
         ...common,
         kind,
@@ -218,11 +238,8 @@ function buildSlide(m: BlockModel, autorPieza?: string): Slide {
         position: m.meta.posicion === 'abajo' ? 'bottom' : 'top',
       };
 
-    case 'rotulo':
-      return { ...common, kind, label: m.title, body: richBody(m.tokens) };
-
-    case 'agenda':
-      return { ...common, kind, title: m.title || undefined, rows: (m.items ?? []).map(toAgendaRow) };
+    case 'parrafo':
+      return { ...common, kind, body: richBody(m.tokens) };
 
     case 'cierre': {
       /* El retrato sale del nombre. Quien escribe pone `> autor: Diana
@@ -271,7 +288,14 @@ export function compileSocial(md: string, canvas: CanvasId = 'carrusel'): Social
      la pieza; en la segunda se construyen las tarjetas, que ya pueden
      heredarlo. El autor suele declararse en la tarjeta de cierre, es
      decir la última, así que no vale con llevar el dato hacia delante. */
-  const modelos = sources.map((src, i) => parseBlock(src.tokens, i, sources.length));
+  /* Un bloque vacío no es una tarjeta. Pasa al borrar una del medio y
+     dejarse el separador, y lo que salía era una tarjeta en blanco que se
+     exportaba igual que las demás: un PNG vacío en el carrusel. Un bloque
+     que solo trae su marcador tampoco pinta nada, así que tampoco cuenta. */
+  const conContenido = sources.filter(
+    (src) => src.tokens.some((t) => t.t !== 'layout'),
+  );
+  const modelos = conContenido.map((src, i) => parseBlock(src.tokens, i, conContenido.length));
   const autorPieza = modelos.find((m) => m.meta.autor)?.meta.autor;
 
   const slides = modelos.map((m) => buildSlide(m, autorPieza));
@@ -289,5 +313,14 @@ export function compileSocial(md: string, canvas: CanvasId = 'carrusel'): Social
   const deckLogo = slides.find((s) => s.logo?.src)?.logo;
   for (const s of slides) if (!s.logo?.src) s.logo = deckLogo;
 
-  return { slides, canvas, slug: deckSlug, logo: deckLogo, provenance: sources.map((_, i) => i) };
+  /* `provenance` apunta al bloque REAL del markdown, no a la posición en
+     la lista ya filtrada: es lo que usa el editor para llevar el cursor al
+     sitio correcto cuando se clica una tarjeta. */
+  return {
+    slides,
+    canvas,
+    slug: deckSlug,
+    logo: deckLogo,
+    provenance: conContenido.map((src) => src.index),
+  };
 }
