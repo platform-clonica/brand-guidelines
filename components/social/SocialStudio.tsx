@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { compileSocial } from '@/lib/social/compile';
 import { CANVASES, EXPORT_SCALE, type CanvasId } from '@/lib/social/types';
 import { LAYOUTS } from '@/lib/social/catalog';
@@ -142,7 +143,7 @@ export function SocialStudio({
      pieza (la página de pruebas del repo lo hace) y ahí no hay dónde
      guardar. */
   const porGuardar = useMemo(() => ({ name: titulo, md, canvas }), [titulo, md, canvas]);
-  const { saveState, dirty } = useAutosave({
+  const { saveState, dirty, saveNow } = useAutosave({
     enabled: Boolean(postId),
     value: porGuardar,
     save: (v) => guardarPieza(postId!, v),
@@ -157,6 +158,25 @@ export function SocialStudio({
     window.addEventListener('beforeunload', avisar);
     return () => window.removeEventListener('beforeunload', avisar);
   }, [dirty]);
+
+  const router = useRouter();
+
+  /* Volver a la lanzadera sin perder nada.
+
+     El autoguardado va con retardo, así que al pulsar puede haber texto
+     escrito que todavía no ha salido: se fuerza el envío antes de
+     navegar. Y cuando no hay pieza detrás (el borrador) no hay nada que
+     mandar, así que se navega con una carga completa a propósito: el
+     `beforeunload` de arriba solo salta así, y es lo único que evita
+     perder el borrador en silencio. */
+  const irALaLanzadera = async () => {
+    if (!postId) {
+      window.location.assign('/workspace/socialmak_r');
+      return;
+    }
+    if (dirty) await saveNow();
+    router.push('/workspace/socialmak_r');
+  };
 
   const spec = CANVASES[canvas];
 
@@ -343,7 +363,7 @@ export function SocialStudio({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: colors.warmLight }}>
       {/* La barra es la del workspace, no una propia: ver SocialToolbar. */}
-      <SocialToolbar titulo={titulo} onTitulo={setTitulo} user={user}>
+      <SocialToolbar titulo={titulo} onTitulo={setTitulo} user={user} onInicio={irALaLanzadera}>
         {/* Lienzo */}
         <div style={{ display: 'flex', gap: 0 }}>
           {/* El post va primero para que «Carrusel» quede pegado al
