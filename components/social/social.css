@@ -102,6 +102,13 @@
   width:var(--cw); height:var(--ch);
   overflow:hidden;
   transform:scale(var(--s)); transform-origin:top left;
+  /* El lienzo se alinea a la izquierda ENTERO y no depende de quién lo
+     embeba. `text-align` se hereda, y un `<button>` trae `center` del
+     navegador: la tarjeta de la galería va dentro de uno y salía todo
+     el texto centrado. El lienzo es un diseño fijo que tiene que verse
+     igual en el editor, en la miniatura y en el PNG exportado, así que
+     no puede quedar a merced del contenedor. */
+  text-align:left;
 }
 
 /* Temas. Solo `dark` cambia la tinta; los tres rellenos claros la conservan. */

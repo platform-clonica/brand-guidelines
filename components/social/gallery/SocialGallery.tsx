@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BrandMark, MarkDivider } from '@/components/studio/BrandMark';
 import { SocialLogo } from '@/components/studio/Wordmark';
@@ -210,7 +210,23 @@ function Tarjeta({
 }) {
   /* La primera slide, pintada con los mismos componentes que el editor. */
   const portada = useMemo(() => compileSocial(item.md, item.canvas).slides[0], [item.md, item.canvas]);
-  const escala = ANCHO_MINI / CANVASES[item.canvas].w;
+  const spec = CANVASES[item.canvas];
+
+  /* La miniatura se escala al ancho REAL de la celda, no a uno supuesto.
+     La rejilla reparte el sobrante con `1fr`, así que la celda casi nunca
+     mide los 200 px nominales: fijar la escala ahí dejaba la tarjeta más
+     estrecha que su caja y se veía el fondo alrededor. Mismo recurso que
+     la galería del Deck Maker. */
+  const ref = useRef<HTMLDivElement>(null);
+  const [ancho, setAncho] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver((e) => setAncho(Math.round(e[0].contentRect.width)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -219,15 +235,25 @@ function Tarjeta({
         onClick={onAbrir}
         title={`Abrir «${item.name}»`}
         style={{
-          appearance: 'none', border: `1px solid ${colors.warmDark}`, background: colors.white,
+          appearance: 'none', border: `1px solid ${colors.warmDark}`, background: colors.warmLight,
+          /* `textAlign` explícito: el valor por defecto de un botón es
+             `center` y se hereda hacia dentro. El lienzo ya se defiende
+             solo, pero el nombre y la ficha de abajo también cuelgan de
+             aquí. */
           padding: 0, cursor: 'pointer', lineHeight: 0, display: 'block', width: '100%',
+          textAlign: 'left',
         }}
       >
-        <div className="ix-social" style={{ width: '100%', overflow: 'hidden' }}>
-          {portada ? (
-            <SocialCard slide={portada} canvas={item.canvas} scale={escala} />
-          ) : (
-            <div style={{ aspectRatio: '4 / 5' }} />
+        {/* La caja manda la proporción y sale del lienzo de la pieza: 4:5
+            en carrusel y 16:9 en portada. Antes estaba fija en 4:5 y una
+            portada se veía con la proporción de la otra. */}
+        <div
+          ref={ref}
+          className="ix-social"
+          style={{ width: '100%', aspectRatio: `${spec.w} / ${spec.h}`, overflow: 'hidden' }}
+        >
+          {ancho > 0 && portada && (
+            <SocialCard slide={portada} canvas={item.canvas} scale={ancho / spec.w} />
           )}
         </div>
       </button>
