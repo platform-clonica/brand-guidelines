@@ -28,7 +28,7 @@ export const TEXTO_BARRA = `500 11px/1 ${MONO}`;
    reconocer dónde está sin pensarlo.
 
    El orden es el de DeckToolbar, FormToolbar y DsToolbar:
-   imagotipo (vuelve al workspace) · separador · nombre de la pieza ·
+   imagotipo (vuelve a la lanzadera) · separador · nombre de la pieza ·
    acciones · menú de usuario.
 
    SIN EL WORDMARK DE LA HERRAMIENTA, y no es un olvido: ninguna barra de
@@ -44,11 +44,15 @@ export function SocialToolbar({
   titulo,
   onTitulo,
   user,
+  onInicio,
   children,
 }: {
   titulo: string;
   onTitulo: (v: string) => void;
   user?: SessionUser;
+  /** Volver a la lanzadera. Lo resuelve el editor, que es quien sabe si
+      queda algo por guardar. */
+  onInicio: () => void;
   /** Los controles propios de la herramienta, a la derecha de la marca. */
   children: React.ReactNode;
 }) {
@@ -59,9 +63,27 @@ export function SocialToolbar({
         borderBottom: `1px solid ${colors.warmDark}`, background: colors.warmLight, flexWrap: 'wrap',
       }}
     >
-      {/* El imagotipo vuelve al workspace. Es un enlace y no un botón
-          porque aquí no hay cambios que avisar: todavía no se guarda. */}
-      <BrandMark height={20} href="/workspace" label="Volver al workspace" />
+      {/* El imagotipo vuelve a la LANZADERA de la herramienta, no al
+          workspace: desde dentro de un editor, un nivel arriba son las
+          piezas, no el catálogo de aplicaciones. Es lo que ya dice la
+          documentación de BrandMark.
+
+          Y es un botón, no un enlace, por lo mismo que en DeckToolbar:
+          un <a> navega de inmediato y se llevaría por delante lo que el
+          autoguardado todavía no ha mandado. Antes era un enlace porque
+          esta herramienta no guardaba nada; ahora sí. */}
+      <button
+        type="button"
+        onClick={onInicio}
+        title="Volver a las publicaciones"
+        aria-label="Volver a las publicaciones"
+        style={{
+          appearance: 'none', border: 'none', background: 'transparent', cursor: 'pointer',
+          padding: 0, display: 'inline-flex', alignItems: 'center', flexShrink: 0,
+        }}
+      >
+        <BrandMark height={20} />
+      </button>
       <MarkDivider />
 
       <input
