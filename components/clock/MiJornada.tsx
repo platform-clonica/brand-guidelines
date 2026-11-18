@@ -39,7 +39,7 @@ import type { EntryRow } from '@/lib/clock/schema';
 import { CorregirModal, type CorreccionInput } from './CorregirModal';
 import { DiaFila } from './DiaFila';
 import { etiquetaDia, formatMinutes } from './formato';
-import { compileRange, type CompileResult } from '@/lib/clock/compile';
+import { compileRange } from '@/lib/clock/compile';
 import type { ScheduleTramo } from '@/lib/clock/calendar';
 import { monthRange, todayIn, weekRange } from '@/lib/clock/dates';
 import type { ClockMode, ClockPersonRow } from '@/lib/clock/types';
@@ -85,24 +85,37 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
   const mes = useMemo(() => monthRange(hoy), [hoy]);
   const semana = useMemo(() => weekRange(hoy), [hoy]);
 
+  /* Se pide la UNIÓN del mes y la semana, no solo el mes.
+
+     La semana de fin de mes cae a caballo de dos meses. Pidiendo solo el mes, sus últimos días
+     llegarían sin asientos y se compilarían como «0 h trabajadas». Eso no es un hueco vacío: es una
+     hora inventada, y aquí no se inventa ninguna. */
+  const desde = mes.from < semana.from ? mes.from : semana.from;
+  const hasta = mes.to > semana.to ? mes.to : semana.to;
+
   const cargar = useCallback(async () => {
     setError(null);
     try {
+      /* Los festivos se piden por año, y la unión puede cruzar el fin de año — la semana del 29 de
+         diciembre. Cuando eso pasa se piden los dos, o el 1 de enero saldría como laborable y su
+         jornada teórica sería falsa. */
+      const anios = [...new Set([desde.slice(0, 4), hasta.slice(0, 4)])];
+
       /* Sin alcance: los de la sesión. El panel de equipo es quien pide `scope: 'team'`. */
-      const [e, a, c] = await Promise.all([
-        listEntries(mes.from, mes.to),
-        listAbsences(mes.from, mes.to),
-        listCalendar(Number(hoy.slice(0, 4))),
+      const [e, a, cs] = await Promise.all([
+        listEntries(desde, hasta),
+        listAbsences(desde, hasta),
+        Promise.all(anios.map((y) => listCalendar(Number(y)))),
       ]);
       setEntries(e);
       setAbsences(a.map((x) => ({ fromDate: x.from_date, toDate: x.to_date })));
-      setHolidays(c.map((x) => x.day));
+      setHolidays(cs.flat().map((x) => x.day));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo cargar el registro.');
     } finally {
       setCargando(false);
     }
-  }, [mes.from, mes.to, hoy]);
+  }, [desde, hasta]);
 
   useEffect(() => {
     void cargar();
@@ -130,48 +143,42 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
     [persona],
   );
 
+  /* DOS COMPILACIONES, y no una sola sobre el rango ancho.
+
+     Los agregados de `compileRange` son los de SU rango. Compilando mes y semana juntos, el
+     «Trabajado» y el «Saldo» de la tarjeta del mes pasarían a incluir días del mes vecino sin que
+     nadie lo notara. Y volver a sumarlos aquí a mano duplicaría una agregación que ya vive probada
+     en compile.ts, que es justo como dos cifras del mismo dato empiezan a discrepar. */
   const rango = useMemo(
     () => compileRange(entries, { from: mes.from, to: mes.to, schedules, absences, holidays }),
     [entries, mes.from, mes.to, schedules, absences, holidays],
   );
 
-  const porFecha = useMemo(() => {
-    const mapa = new Map<string, CompileResult>();
-    for (const d of rango.days) mapa.set(d.day.workDate, d);
-    return mapa;
-  }, [rango]);
-
-  const dia = porFecha.get(hoy) ?? null;
-  const acciones: ClockAction[] = dia ? availableActions(dia.day) : ['in'];
-
-  const diasSemana = useMemo(
-    () => rango.days.filter((d) => d.day.workDate >= semana.from && d.day.workDate <= semana.to),
-    [rango, semana.from, semana.to],
+  /* La semana entera, siempre siete días: `compileRange` emite un día por cada fecha de su rango,
+     tenga asientos o no. Por eso ya no hay que filtrar los del mes ni recorrer fechas a mano. */
+  const rangoSemana = useMemo(
+    () => compileRange(entries, { from: semana.from, to: semana.to, schedules, absences, holidays }),
+    [entries, semana.from, semana.to, schedules, absences, holidays],
   );
+
+  const dia = rangoSemana.days.find((d) => d.day.workDate === hoy) ?? null;
+  const acciones: ClockAction[] = dia ? availableActions(dia.day) : ['in'];
 
   /* El vistazo de la semana: siete barras, de lunes a domingo.
 
-     SE CONSTRUYE DESDE `weekRange` Y NO DESDE `diasSemana`. `compileRange` solo cubre el mes, así
-     que una semana a caballo de dos meses —la de fin de mes, todos los meses— dejaría fuera los días
-     del otro y el gráfico saldría con cinco columnas sin decir por qué. Los días que faltan salen
-     vacíos, que es la verdad: no hay dato, no que se trabajara cero.
+     Se construye de los siete días YA COMPILADOS de `rangoSemana`, que llegan en orden de lunes a
+     domingo. Antes había aquí un recorrido de fechas en UTC a mano para rellenar los días que el
+     rango del mes no traía; con la semana compilada aparte ese rodeo sobra.
 
      Las barras se miden contra el día más largo de la semana y no contra la teórica de cada uno: un
      sábado trabajado tiene teórica cero, y dividir entre ella lo pintaría al 100% o lo escondería
      del todo. Contra un máximo común, cada barra se lee en minutos comparables. */
   const vistaSemana = useMemo(() => {
-    const inicio = new Date(`${semana.from}T00:00:00Z`);
-    const dias = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(inicio);
-      d.setUTCDate(d.getUTCDate() + i);
-      const fecha = d.toISOString().slice(0, 10);
-      const r = porFecha.get(fecha);
-      return {
-        fecha,
-        trabajados: r?.day.workedMinutes ?? 0,
-        teoricos: r?.day.theoreticalMinutes ?? 0,
-      };
-    });
+    const dias = rangoSemana.days.map((d) => ({
+      fecha: d.day.workDate,
+      trabajados: d.day.workedMinutes,
+      teoricos: d.day.theoreticalMinutes,
+    }));
     /* El 1 no es una jornada inventada: es el suelo que evita dividir entre cero en una semana sin
        un solo minuto, donde todas las barras valen cero de todas formas. */
     const referencia = Math.max(1, ...dias.map((d) => Math.max(d.trabajados, d.teoricos)));
@@ -181,7 +188,7 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
       esHoy: d.fecha === hoy,
       laborable: d.teoricos > 0,
     }));
-  }, [semana.from, porFecha, hoy]);
+  }, [rangoSemana, hoy]);
 
   /* Los asientos crudos de cada día, para el modo corrección. Se corrige cualquier día de la
      semana y no solo hoy: el caso típico es «ayer olvidé fichar la salida», y restringirlo a hoy
@@ -202,12 +209,15 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
   const corregiblesPorDia = useMemo(() => {
     const mapa = new Map<string, EntryRow[]>();
     /* Todo el mes y no solo la semana: el mes desplegado también ofrece corregir, y el caso que lo
-       justifica es cuadrar a fin de mes encontrando un día mal fichado de hace tres semanas. */
-    for (const d of rango.days) {
+       justifica es cuadrar a fin de mes encontrando un día mal fichado de hace tres semanas.
+
+       Y la semana además del mes, porque la de fin de mes trae días que el mes no tiene: sin ellos
+       esas filas no ofrecerían corregir nada, que es donde más falta hace. */
+    for (const d of [...rango.days, ...rangoSemana.days]) {
       mapa.set(d.day.workDate, correctableEntries(asientosPorDia.get(d.day.workDate) ?? [], d.day));
     }
     return mapa;
-  }, [rango, asientosPorDia]);
+  }, [rango, rangoSemana, asientosPorDia]);
 
   /* El salto de verdad, no a medias: si el día cae fuera de la semana hay que desplegar el mes
      primero, y la fila solo existe en el DOM DESPUÉS de ese repintado — de ahí el
@@ -248,7 +258,9 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
     await cargar();
   };
 
-  const saldoSemana = diasSemana.reduce((t, d) => t + d.day.balanceMinutes, 0);
+  /* Del propio `compileRange` y no de un reduce a mano: el saldo de un rango ya lo calcula él, con
+     sus tests, y tenerlo sumado en dos sitios es tener dos cifras que un día no coincidirán. */
+  const saldoSemana = rangoSemana.balanceMinutes;
 
   const fichar = async (kind: ClockAction) => {
     if (busy) return;
@@ -457,7 +469,7 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
               <div className="ixc-semana">
                 {cargando && <p className="ixc-vacio">Cargando</p>}
                 {!cargando &&
-                  diasSemana.map((d) => (
+                  rangoSemana.days.map((d) => (
                     <DiaFila
                       key={d.day.workDate}
                       resultado={d}
