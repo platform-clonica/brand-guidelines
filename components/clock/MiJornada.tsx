@@ -466,7 +466,7 @@ export function MiJornada({ persona }: { persona: ClockPersonRow | null }) {
                 </p>
               )}
 
-              <div className="ixc-semana">
+              <div className="ixc-semana ixc-semana--columnas">
                 {cargando && <p className="ixc-vacio">Cargando</p>}
                 {!cargando &&
                   rangoSemana.days.map((d) => (

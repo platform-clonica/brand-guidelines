@@ -285,6 +285,52 @@
   padding: 18px;
 }
 
+/* ── La semana en columnas ──
+   Los siete días uno al lado del otro, de lunes a domingo. SOLO la semana: el mes desplegado sigue
+   apilado, porque treinta días en columnas no son una tabla, son un calendario, y eso es otra pieza.
+
+   ENTRA A PARTIR DE 1000px Y NO DE 721. A 721px el contenedor deja unos 94px por columna y
+   «09:02–14:00» no cabe: se partiría por la mitad. Entre 721 y 999 la semana se queda apilada, que
+   es la maqueta que ya funciona. No es un criterio nuevo de móvil —ese sigue en 720— sino el ancho
+   a partir del cual caben siete columnas. */
+@media (min-width: 1000px) {
+  .ixc-semana--columnas {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  /* Cada día deja de ser una fila de cuatro columnas y pasa a ser una columna con sus cuatro datos
+     apilados. Acotado al modificador: `.ixc-dia` la comparten PanelEquipo y DetallePersona, que
+     siguen siendo filas. El `align-items: baseline` de la fila se resetea porque en una columna
+     alinea en horizontal, que no es lo que quiere decir. */
+  .ixc-semana--columnas .ixc-dia {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 14px 12px;
+  }
+
+  /* La separación entre días pasa de horizontal a vertical. */
+  .ixc-semana--columnas .ixc-dia + .ixc-dia {
+    border-top: none;
+    border-left: 1px solid var(--c-warm-dark);
+  }
+
+  /* A la izquierda: en una columna estrecha, un número pegado al borde derecho se separa de su
+     etiqueta y deja de leerse como suyo. */
+  .ixc-semana--columnas .ixc-dia__horas,
+  .ixc-semana--columnas .ixc-dia__saldo { text-align: left; }
+
+  /* `justify-self` no hace nada dentro de un flex, así que el botón se estiraría a lo ancho de la
+     columna. */
+  .ixc-semana--columnas .ixc-arreglar { align-self: flex-start; }
+
+  /* El resalte del salto era un filete a la izquierda, y ahí ahora hay un borde de separación: se
+     mueve arriba para no confundirse con él. */
+  .ixc-semana--columnas .ixc-dia--saltado { box-shadow: inset 0 2px 0 var(--c-dark); }
+}
+
 /* ── Modo corrección ──
    APAGADO POR DEFECTO, y esa es la condición no negociable: con la edición siempre activa, la
    comodidad se paga en asientos tocados sin querer dentro de un registro legal. Hay que entrar
